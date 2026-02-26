@@ -96,7 +96,7 @@ export default function Dashboard() {
         supabase.from('wa_contacts').select('id',{count:'exact',head:true}),
         supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(20),
         supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(300),
-        supabase.from('wa_templates').select('*').eq('status','APPROVED'),
+        supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
       ])
       const msgs = msgsRes.data||[]
       const leadsData: Lead[] = leadsRes.data||[]
@@ -465,7 +465,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
         status: 'scheduled',
         scheduled_at,
         template_name: selectedTemplate.name,
-        language_code: selectedTemplate.language_code,
+        language_code: selectedTemplate.language,
         total_contacts: filteredLeads.length,
         sent_count: 0,
         delivered_count: 0,
@@ -544,12 +544,12 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                             <span className="font-medium text-sm text-[#E0E0F0]">{t.display_name||t.name}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">{t.language_code}</span>
+                            <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">{t.language}</span>
                             <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#00FF9440] text-[#00FF94]">{t.category||'MARKETING'}</span>
                           </div>
                         </div>
                         <p className="mono text-[9px] text-[#4A4A6A]">{t.name}</p>
-                        {t.body&&<p className="text-[11px] text-[#6A6A8A] mt-2 leading-relaxed line-clamp-2">{t.body}</p>}
+                        {t.body_text&&<p className="text-[11px] text-[#6A6A8A] mt-2 leading-relaxed line-clamp-2">{t.body_text}</p>}
                       </div>
                     ))}
                   </div>
@@ -647,7 +647,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
               <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">RESUMEN DE CAMPAÑA</p>
               <SummaryRow label="Nombre" value={campaignName}/>
               <SummaryRow label="Template" value={selectedTemplate?.name||'—'}/>
-              <SummaryRow label="Idioma" value={selectedTemplate?.language_code||'—'}/>
+              <SummaryRow label="Idioma" value={selectedTemplate?.language||'—'}/>
               <SummaryRow label="Contactos" value={`${filteredLeads.length} leads seleccionados`} highlight/>
               <SummaryRow label="Envío" value={sendNow?'Inmediato (próx. ciclo ~5min)':`${scheduledDate} a las ${scheduledTime}`}/>
             </div>
