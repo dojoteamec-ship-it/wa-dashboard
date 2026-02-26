@@ -25,8 +25,8 @@ interface Lead {
   created_at: string; updated_at: string
 }
 interface Template {
-  id: string; name: string; display_name: string; language_code: string
-  body: string; status: string; category: string
+  id: string; name: string; display_name: string; language: string
+  body_text: string; status: string; category: string
 }
 interface Campaign {
   id: string; name: string; status: string; sent_count: number
