@@ -478,7 +478,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
       // Insert contacts
       const contacts = filteredLeads.map(l=>({
         campaign_id: camp.id,
-        phone_number: l.phone_number,
+        contact_number: l.phone_number,
         contact_name: l.contact_name||'',
         status: 'pending',
       }))
