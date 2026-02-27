@@ -10,7 +10,8 @@ import {
   MessageSquare, Users, Send, CheckCheck, TrendingUp, Zap,
   RefreshCw, Wifi, WifiOff, X, ChevronRight, Brain, AlertCircle,
   Heart, Flame, Snowflake, Thermometer, Activity, Star, User,
-  Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff
+  Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff,
+  Pause, Square, CheckCircle, Info
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -41,6 +42,7 @@ interface KPI {
 }
 interface ChartPoint { hour: string; inbound: number; outbound: number }
 interface RecentMsg { contact_name: string; body: string; created_at: string; direction: string }
+interface Toast { id: string; type: 'success'|'error'|'warning'|'info'; message: string }
 
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
 
@@ -68,9 +70,9 @@ const segIcon = (s: string) => s==='caliente'
   : <Snowflake size={10} style={{color:'#00b0f6'}}/>
 
 const statusColor = (s: string) =>
-  s==='completed'?'text-[#00FF94]':s==='running'?'text-[#00b0f6]':s==='scheduled'?'text-[#FFB800]':'text-[#4A4A6A]'
+  s==='completed'?'text-[#00FF94]':s==='running'?'text-[#00b0f6]':s==='scheduled'?'text-[#FFB800]':s==='paused'?'text-[#FFB800]':'text-[#4A4A6A]'
 const statusLabel = (s: string) =>
-  ({completed:'COMPLETADA',running:'EN CURSO',scheduled:'PROGRAMADA',draft:'BORRADOR',paused:'PAUSADA'}[s]||s.toUpperCase())
+  ({completed:'COMPLETADA',running:'EN CURSO',scheduled:'PROGRAMADA',draft:'BORRADOR',paused:'PAUSADA',cancelled:'CANCELADA'}[s]||s.toUpperCase())
 
 // ─── KANSHI ISOTIPO SVG ───────────────────────────────────────────────────────
 
@@ -216,6 +218,19 @@ export default function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState(new Date())
   const [activeTab, setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'>('overview')
 
+  // ─── TOAST SYSTEM ──────────────────────────────────────────────────────────
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  const addToast = useCallback((type: Toast['type'], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`
+    setToasts(p => [...p, { id, type, message }])
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4500)
+  }, [])
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(p => p.filter(t => t.id !== id))
+  }, [])
+
   useEffect(() => {
     const stored = localStorage.getItem(AUTH_KEY)
     setAuthenticated(stored === 'true')
@@ -268,13 +283,34 @@ export default function Dashboard() {
     } catch(e){console.error(e);setLoading(false)}
   }, [])
 
+  // ─── CAMPAIGN ACTIONS ──────────────────────────────────────────────────────
+  const handleCampaignAction = useCallback(async (camp: Campaign, action: 'paused' | 'cancelled') => {
+    const { error } = await supabase
+      .from('wa_campaigns')
+      .update({ status: action })
+      .eq('id', camp.id)
+    if (error) {
+      addToast('error', `Error: ${error.message}`)
+    } else {
+      const label = action === 'paused' ? 'pausada' : 'cancelada'
+      addToast(action === 'paused' ? 'warning' : 'error', `"${camp.name}" ${label}`)
+      setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: action } : c))
+    }
+  }, [addToast])
+
   useEffect(()=>{
     if(!authenticated) return
     fetchData()
     const ch = supabase.channel('dash-v2')
       .on('postgres_changes',{event:'*',schema:'public',table:'wa_messages'},fetchData)
       .on('postgres_changes',{event:'*',schema:'public',table:'wa_contacts'},fetchData)
-      .on('postgres_changes',{event:'*',schema:'public',table:'wa_campaigns'},fetchData)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'wa_campaigns'},(payload) => {
+        // Actualización granular de contadores — sin refetch completo
+        setCampaigns(prev => prev.map(c =>
+          c.id === (payload.new as Campaign).id ? { ...c, ...(payload.new as Campaign) } : c
+        ))
+      })
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'wa_campaigns'},fetchData)
       .subscribe(s=>setConnected(s==='SUBSCRIBED'))
     const iv = setInterval(fetchData,30000)
     return ()=>{supabase.removeChannel(ch);clearInterval(iv)}
@@ -302,6 +338,13 @@ export default function Dashboard() {
 
   return(
     <div className="min-h-screen" style={{background:'#0A0A0F'}}>
+      <style>{`
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(20px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
+
       {/* HEADER */}
       <header className="border-b border-[#1E1E2E] px-6 py-4 flex items-center justify-between sticky top-0 z-50"
         style={{background:'rgba(10,10,15,0.97)',backdropFilter:'blur(12px)'}}>
@@ -520,13 +563,13 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead><tr className="border-b border-[#1E1E2E]">
-                  {['CAMPAÑA','TEMPLATE','ESTADO','CONTACTOS','ENVIADOS','ENTREGADOS','LEÍDOS','RESPUESTAS','FECHA'].map(h=>(
+                  {['CAMPAÑA','TEMPLATE','ESTADO','CONTACTOS','ENVIADOS','ENTREGADOS','LEÍDOS','RESPUESTAS','FECHA',''].map(h=>(
                     <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
                   {campaigns.length===0
-                    ?<tr><td colSpan={9} className="px-5 py-8 text-center text-[#4A4A6A] text-xs">Sin campañas — crea una nueva</td></tr>
+                    ?<tr><td colSpan={10} className="px-5 py-8 text-center text-[#4A4A6A] text-xs">Sin campañas — crea una nueva</td></tr>
                     :campaigns.map((c,i)=>(
                     <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors">
                       <td className="px-4 py-3 text-sm text-[#E0E0F0] font-medium">{c.name}</td>
@@ -538,6 +581,26 @@ export default function Dashboard() {
                       <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[#E0E0F0]">{c.read_count}</span>{c.delivered_count>0&&<span className="mono text-[9px] text-[#FF6B35]">{Math.round((c.read_count/c.delivered_count)*100)}%</span>}</div></td>
                       <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[#E0E0F0]">{c.reply_count}</span>{c.sent_count>0&&<span className="mono text-[9px] text-[#00FF94]">{Math.round((c.reply_count/c.sent_count)*100)}%</span>}</div></td>
                       <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{c.scheduled_at?format(new Date(c.scheduled_at),'dd/MM HH:mm'):'—'}</td>
+                      <td className="px-4 py-3">
+                        {(c.status === 'scheduled' || c.status === 'running') && (
+                          <div className="flex items-center gap-1">
+                            {c.status === 'running' && (
+                              <button
+                                onClick={() => handleCampaignAction(c, 'paused')}
+                                title="Pausar campaña"
+                                className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FFB800] transition-colors group">
+                                <Pause size={10} className="text-[#4A4A6A] group-hover:text-[#FFB800]"/>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleCampaignAction(c, 'cancelled')}
+                              title="Cancelar campaña"
+                              className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
+                              <Square size={10} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -557,7 +620,19 @@ export default function Dashboard() {
       </main>
 
       {selectedLead&&<LeadPanel lead={selectedLead} onClose={()=>setSelectedLead(null)}/>}
-      {showCreator&&<CampaignCreator leads={leads} templates={templates} onClose={()=>setShowCreator(false)} onCreated={()=>{setShowCreator(false);fetchData();setActiveTab('campaigns')}}/>}
+      {showCreator&&<CampaignCreator
+        leads={leads}
+        templates={templates}
+        onClose={()=>setShowCreator(false)}
+        onCreated={()=>{
+          setShowCreator(false)
+          fetchData()
+          setActiveTab('campaigns')
+          addToast('success','Campaña creada — el scheduler la procesará en ~5 min')
+        }}
+      />}
+
+      <ToastContainer toasts={toasts} onRemove={removeToast}/>
     </div>
   )
 }
@@ -992,6 +1067,42 @@ function MPin({label,value,color}:{label:string;value:string|undefined;color:str
     <div className="rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
       <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-0.5">{label}</p>
       <p className="mono text-xs font-bold" style={{color}}>{value||'—'}</p>
+    </div>
+  )
+}
+
+// ─── TOAST SYSTEM ─────────────────────────────────────────────────────────────
+
+function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
+  const icons: Record<Toast['type'], React.ReactNode> = {
+    success: <CheckCircle size={13} style={{color:'#00FF94'}}/>,
+    error:   <AlertCircle size={13} style={{color:'#FF6B35'}}/>,
+    warning: <AlertCircle size={13} style={{color:'#FFB800'}}/>,
+    info:    <Info size={13} style={{color:'#00b0f6'}}/>,
+  }
+  const borders: Record<Toast['type'], string> = {
+    success: '#00FF94', error: '#FF6B35', warning: '#FFB800', info: '#00b0f6',
+  }
+  if (toasts.length === 0) return null
+  return (
+    <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
+      {toasts.map(t => (
+        <div key={t.id}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border pointer-events-auto"
+          style={{
+            background: '#111118',
+            borderColor: `${borders[t.type]}40`,
+            boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`,
+            minWidth: '260px', maxWidth: '380px',
+            animation: 'slideInRight 0.25s ease',
+          }}>
+          {icons[t.type]}
+          <span className="text-xs text-[#E0E0F0] flex-1 leading-snug">{t.message}</span>
+          <button onClick={() => onRemove(t.id)} className="text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors flex-shrink-0 ml-1">
+            <X size={11}/>
+          </button>
+        </div>
+      ))}
     </div>
   )
 }
