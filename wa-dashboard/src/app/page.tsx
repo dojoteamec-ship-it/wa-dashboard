@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -11,7 +11,7 @@ import {
   RefreshCw, Wifi, WifiOff, X, ChevronRight, Brain, AlertCircle,
   Heart, Flame, Snowflake, Thermometer, Activity, Star, User,
   Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff,
-  Pause, Square, CheckCircle, Info
+  Pause, Square, CheckCircle, Info, Search
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -78,18 +78,11 @@ const statusLabel = (s: string) =>
 
 function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      xmlnsXlink="http://www.w3.org/1999/xlink"
-      viewBox="0 0 138.99 139"
-      width={size}
-      height={size}
-      className={className}
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink"
+      viewBox="0 0 138.99 139" width={size} height={size} className={className}>
       <defs>
         <linearGradient id="kanshi-grad" y1="69.5" x2="138.99" y2="69.5" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#0014ac"/>
-          <stop offset="1" stopColor="#0099d3"/>
+          <stop offset="0" stopColor="#0014ac"/><stop offset="1" stopColor="#0099d3"/>
         </linearGradient>
       </defs>
       <g>
@@ -118,8 +111,7 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
       localStorage.setItem(AUTH_KEY, 'true')
       onAuth()
     } else {
-      setError(true)
-      setShaking(true)
+      setError(true); setShaking(true)
       setTimeout(() => setShaking(false), 600)
       setTimeout(() => setError(false), 2500)
     }
@@ -127,37 +119,16 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: '#090c4c' }}>
-      {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #0014ad 0%, transparent 70%)' }}/>
-        <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #0014ad 0%, transparent 70%)' }}/>
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
       </div>
-      {/* Grid pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(#00b0f6 1px, transparent 1px), linear-gradient(90deg, #00b0f6 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }}/>
-      {/* Card */}
-      <div
-        className={`relative z-10 w-full max-w-sm mx-4 rounded-2xl border p-8 transition-all ${shaking ? 'animate-bounce' : ''}`}
-        style={{
-          background: 'rgba(9,12,76,0.8)',
-          backdropFilter: 'blur(24px)',
-          borderColor: error ? '#FF6B35' : 'rgba(0,176,246,0.3)',
-          boxShadow: error
-            ? '0 0 40px rgba(255,107,53,0.2), inset 0 0 40px rgba(255,107,53,0.05)'
-            : '0 0 60px rgba(0,176,246,0.15), inset 0 0 40px rgba(0,20,173,0.3)',
-        }}
-      >
+      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#00b0f6 1px, transparent 1px), linear-gradient(90deg, #00b0f6 1px, transparent 1px)', backgroundSize: '40px 40px' }}/>
+      <div className={`relative z-10 w-full max-w-sm mx-4 rounded-2xl border p-8 transition-all ${shaking ? 'animate-bounce' : ''}`}
+        style={{ background: 'rgba(9,12,76,0.8)', backdropFilter: 'blur(24px)', borderColor: error ? '#FF6B35' : 'rgba(0,176,246,0.3)', boxShadow: error ? '0 0 40px rgba(255,107,53,0.2), inset 0 0 40px rgba(255,107,53,0.05)' : '0 0 60px rgba(0,176,246,0.15), inset 0 0 40px rgba(0,20,173,0.3)' }}>
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-5 p-4 rounded-2xl" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
-            <KanshiLogo size={56} />
-          </div>
+          <div className="mb-5 p-4 rounded-2xl" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}><KanshiLogo size={56} /></div>
           <h1 className="text-2xl font-bold tracking-[0.2em] text-white mb-1" style={{ fontFamily: 'monospace' }}>KANSHI</h1>
           <p className="mono text-[10px] tracking-widest" style={{ color: '#00b0f6' }}>MONITORING SYSTEM · GPC</p>
         </div>
@@ -166,22 +137,11 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
             <label className="mono text-[10px] tracking-widest block mb-2" style={{ color: '#00b0f6' }}>ACCESO</label>
             <div className="relative">
               <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#4A4A6A' }}/>
-              <input
-                type={showPwd ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Contraseña del equipo"
-                autoFocus
+              <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="Contraseña del equipo" autoFocus
                 className="w-full rounded-xl px-4 py-3 pl-10 pr-10 text-sm text-white outline-none placeholder:text-[#4A4A6A]"
-                style={{
-                  background: 'rgba(0,0,0,0.4)',
-                  border: `1px solid ${error ? '#FF6B35' : 'rgba(0,176,246,0.3)'}`,
-                  transition: 'border-color 0.3s',
-                }}
-              />
-              <button type="button" onClick={() => setShowPwd(!showPwd)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2"
-                style={{ color: showPwd ? '#00b0f6' : '#4A4A6A' }}>
+                style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${error ? '#FF6B35' : 'rgba(0,176,246,0.3)'}`, transition: 'border-color 0.3s' }}/>
+              <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: showPwd ? '#00b0f6' : '#4A4A6A' }}>
                 {showPwd ? <Eye size={13}/> : <EyeOff size={13}/>}
               </button>
             </div>
@@ -193,10 +153,152 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
             INGRESAR AL SISTEMA
           </button>
         </form>
-        <p className="mono text-[9px] text-center mt-6 tracking-widest" style={{ color: '#2E3E6E' }}>
-          SANTIAGO JIMÉNEZ · GROWTH PARTNER · 2026
-        </p>
+        <p className="mono text-[9px] text-center mt-6 tracking-widest" style={{ color: '#2E3E6E' }}>SANTIAGO JIMÉNEZ · GROWTH PARTNER · 2026</p>
       </div>
+    </div>
+  )
+}
+
+// ─── GLOBAL SEARCH ────────────────────────────────────────────────────────────
+
+function highlightMatch(text: string, query: string): React.ReactNode {
+  if (!query || !text) return text
+  const idx = text.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) return text
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span style={{color:'#00b0f6', fontWeight:'bold'}}>{text.slice(idx, idx + query.length)}</span>
+      {text.slice(idx + query.length)}
+    </>
+  )
+}
+
+function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead) => void }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const results = useMemo(() => {
+    if (!query.trim() || query.length < 2) return []
+    const q = query.toLowerCase()
+    return leads.filter(l =>
+      (l.name||'').toLowerCase().includes(q) ||
+      l.phone_number.includes(q) ||
+      (l.segmento||'').toLowerCase().includes(q) ||
+      (l.situacion_actual||'').toLowerCase().includes(q) ||
+      (l.dolor_declarado||'').toLowerCase().includes(q)
+    ).slice(0, 8)
+  }, [query, leads])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        inputRef.current?.focus()
+        setOpen(true)
+      }
+      if (e.key === 'Escape') {
+        setOpen(false)
+        setQuery('')
+        inputRef.current?.blur()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
+
+  const handleSelect = (lead: Lead) => {
+    onSelect(lead)
+    setOpen(false)
+    setQuery('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors"
+        style={{background:'#111118', width:'220px'}}>
+        <Search size={12} className="text-[#4A4A6A] flex-shrink-0"/>
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true) }}
+          onFocus={() => setOpen(true)}
+          placeholder="Buscar lead..."
+          className="bg-transparent outline-none text-[12px] text-[#E0E0F0] placeholder:text-[#4A4A6A] w-full"
+          style={{fontFamily:'monospace'}}
+        />
+        {query
+          ? <button onClick={() => { setQuery(''); setOpen(false) }} className="text-[#4A4A6A] hover:text-[#E0E0F0] flex-shrink-0"><X size={10}/></button>
+          : <span className="mono text-[9px] text-[#2A2A3A] flex-shrink-0 hidden lg:block">⌘K</span>
+        }
+      </div>
+
+      {open && query.length >= 2 && (
+        <div className="absolute top-[calc(100%+8px)] right-0 w-[380px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
+          style={{background:'#0D0D14', boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
+          {results.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <Search size={16} className="text-[#2A2A3A] mx-auto mb-2"/>
+              <p className="mono text-[10px] text-[#4A4A6A]">Sin resultados para "{query}"</p>
+            </div>
+          ) : (
+            <>
+              <div className="px-4 py-2 border-b border-[#1E1E2E] flex items-center justify-between">
+                <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{results.length} LEAD{results.length !== 1 ? 'S' : ''} ENCONTRADO{results.length !== 1 ? 'S' : ''}</span>
+                <span className="mono text-[9px] text-[#2A2A3A]">ESC para cerrar</span>
+              </div>
+              <div className="max-h-[360px] overflow-y-auto">
+                {results.map((lead) => {
+                  const stage = STAGE_MAP[lead.agent_stage] || { label: lead.agent_stage, color: '#4A4A6A' }
+                  return (
+                    <button key={lead.id} onClick={() => handleSelect(lead)}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left border-b border-[#1E1E2E] last:border-0">
+                      <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center" style={{background:`${stage.color}20`}}>
+                        <User size={12} style={{color:stage.color}}/>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-medium text-[#E0E0F0] truncate">
+                            {highlightMatch(lead.name || 'Sin nombre', query)}
+                          </span>
+                          {lead.segmento && <div className="flex items-center gap-1 flex-shrink-0">{segIcon(lead.segmento)}</div>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="mono text-[10px] text-[#4A4A6A]">{lead.phone_number}</span>
+                          {lead.situacion_actual && (
+                            <span className="mono text-[9px] text-[#4A4A6A] truncate max-w-[160px]">· {lead.situacion_actual}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className="mono text-[9px] px-2 py-0.5 rounded-full border"
+                          style={{color:stage.color,borderColor:`${stage.color}40`,background:`${stage.color}10`}}>
+                          {stage.label.toUpperCase()}
+                        </span>
+                        {lead.engagement_score > 0 && (
+                          <span className="mono text-[9px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★ {lead.engagement_score}</span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -217,8 +319,6 @@ export default function Dashboard() {
   const [connected, setConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState(new Date())
   const [activeTab, setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'>('overview')
-
-  // ─── TOAST SYSTEM ──────────────────────────────────────────────────────────
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const addToast = useCallback((type: Toast['type'], message: string) => {
@@ -283,17 +383,12 @@ export default function Dashboard() {
     } catch(e){console.error(e);setLoading(false)}
   }, [])
 
-  // ─── CAMPAIGN ACTIONS ──────────────────────────────────────────────────────
   const handleCampaignAction = useCallback(async (camp: Campaign, action: 'paused' | 'cancelled') => {
-    const { error } = await supabase
-      .from('wa_campaigns')
-      .update({ status: action })
-      .eq('id', camp.id)
+    const { error } = await supabase.from('wa_campaigns').update({ status: action }).eq('id', camp.id)
     if (error) {
       addToast('error', `Error: ${error.message}`)
     } else {
-      const label = action === 'paused' ? 'pausada' : 'cancelada'
-      addToast(action === 'paused' ? 'warning' : 'error', `"${camp.name}" ${label}`)
+      addToast(action === 'paused' ? 'warning' : 'error', `"${camp.name}" ${action === 'paused' ? 'pausada' : 'cancelada'}`)
       setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: action } : c))
     }
   }, [addToast])
@@ -305,10 +400,7 @@ export default function Dashboard() {
       .on('postgres_changes',{event:'*',schema:'public',table:'wa_messages'},fetchData)
       .on('postgres_changes',{event:'*',schema:'public',table:'wa_contacts'},fetchData)
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'wa_campaigns'},(payload) => {
-        // Actualización granular de contadores — sin refetch completo
-        setCampaigns(prev => prev.map(c =>
-          c.id === (payload.new as Campaign).id ? { ...c, ...(payload.new as Campaign) } : c
-        ))
+        setCampaigns(prev => prev.map(c => c.id === (payload.new as Campaign).id ? { ...c, ...(payload.new as Campaign) } : c))
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'wa_campaigns'},fetchData)
       .subscribe(s=>setConnected(s==='SUBSCRIBED'))
@@ -349,8 +441,7 @@ export default function Dashboard() {
       <header className="border-b border-[#1E1E2E] px-6 py-4 flex items-center justify-between sticky top-0 z-50"
         style={{background:'rgba(10,10,15,0.97)',backdropFilter:'blur(12px)'}}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5"
-            style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5" style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
             <KanshiLogo size={24}/>
           </div>
           <div>
@@ -358,7 +449,7 @@ export default function Dashboard() {
             <p className="mono text-[9px] tracking-widest" style={{color:'#00b0f6'}}>MONITORING SYSTEM · GPC</p>
           </div>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
           <nav className="flex items-center gap-1">
             {(['overview','pipeline','psico','campaigns'] as const).map(k=>(
               <button key={k} onClick={()=>setActiveTab(k)}
@@ -368,6 +459,10 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
+
+          {/* ── BÚSQUEDA GLOBAL ── */}
+          <GlobalSearch leads={leads} onSelect={(lead) => setSelectedLead(lead)}/>
+
           <div className="flex items-center gap-3">
             {connected
               ?<><Wifi size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px]" style={{color:'#00b0f6'}}>LIVE</span><div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{background:'#00b0f6'}}/></>
@@ -585,16 +680,12 @@ export default function Dashboard() {
                         {(c.status === 'scheduled' || c.status === 'running') && (
                           <div className="flex items-center gap-1">
                             {c.status === 'running' && (
-                              <button
-                                onClick={() => handleCampaignAction(c, 'paused')}
-                                title="Pausar campaña"
+                              <button onClick={() => handleCampaignAction(c, 'paused')} title="Pausar campaña"
                                 className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FFB800] transition-colors group">
                                 <Pause size={10} className="text-[#4A4A6A] group-hover:text-[#FFB800]"/>
                               </button>
                             )}
-                            <button
-                              onClick={() => handleCampaignAction(c, 'cancelled')}
-                              title="Cancelar campaña"
+                            <button onClick={() => handleCampaignAction(c, 'cancelled')} title="Cancelar campaña"
                               className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
                               <Square size={10} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
                             </button>
@@ -621,17 +712,10 @@ export default function Dashboard() {
 
       {selectedLead&&<LeadPanel lead={selectedLead} onClose={()=>setSelectedLead(null)}/>}
       {showCreator&&<CampaignCreator
-        leads={leads}
-        templates={templates}
+        leads={leads} templates={templates}
         onClose={()=>setShowCreator(false)}
-        onCreated={()=>{
-          setShowCreator(false)
-          fetchData()
-          setActiveTab('campaigns')
-          addToast('success','Campaña creada — el scheduler la procesará en ~5 min')
-        }}
+        onCreated={()=>{ setShowCreator(false); fetchData(); setActiveTab('campaigns'); addToast('success','Campaña creada — el scheduler la procesará en ~5 min') }}
       />}
-
       <ToastContainer toasts={toasts} onRemove={removeToast}/>
     </div>
   )
@@ -728,8 +812,6 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
           <div className="h-full transition-all duration-500" style={{width:`${(step/3)*100}%`,background:'linear-gradient(90deg,#0014ad,#00a7e3)'}}/>
         </div>
         <div className="p-6 space-y-5">
-
-          {/* STEP 1 */}
           {step===1 && <>
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">NOMBRE DE LA CAMPAÑA</label>
@@ -740,9 +822,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">SELECCIONAR TEMPLATE</label>
               {templates.length===0
-                ?<div className="rounded-xl border border-dashed border-[#1E1E2E] p-6 text-center">
-                    <p className="text-[#4A4A6A] text-xs">No hay templates aprobados</p>
-                  </div>
+                ?<div className="rounded-xl border border-dashed border-[#1E1E2E] p-6 text-center"><p className="text-[#4A4A6A] text-xs">No hay templates aprobados</p></div>
                 :<div className="space-y-2">
                     {templates.map(t=>(
                       <div key={t.id} onClick={()=>{setSelectedTemplate(t);detectVars(t)}}
@@ -822,7 +902,6 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             )}
           </>}
 
-          {/* STEP 2 */}
           {step===2 && <>
             <div className="flex items-center justify-between p-3 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.4)',background:'rgba(0,176,246,0.05)'}}>
               <div className="flex items-center gap-2"><Filter size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px] tracking-widest" style={{color:'#00b0f6'}}>AUDIENCIA SELECCIONADA</span></div>
@@ -868,7 +947,6 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             )}
           </>}
 
-          {/* STEP 3 */}
           {step===3 && <>
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-3">CUÁNDO ENVIAR</label>
@@ -909,7 +987,6 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             </div>
             {error&&<div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3"><p className="text-xs text-[#FF6B35]">{error}</p></div>}
           </>}
-
         </div>
         <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
           <button onClick={()=>step>1?setStep(step-1):onClose()}
@@ -1089,18 +1166,10 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
       {toasts.map(t => (
         <div key={t.id}
           className="flex items-center gap-3 px-4 py-3 rounded-xl border pointer-events-auto"
-          style={{
-            background: '#111118',
-            borderColor: `${borders[t.type]}40`,
-            boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`,
-            minWidth: '260px', maxWidth: '380px',
-            animation: 'slideInRight 0.25s ease',
-          }}>
+          style={{ background: '#111118', borderColor: `${borders[t.type]}40`, boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`, minWidth: '260px', maxWidth: '380px', animation: 'slideInRight 0.25s ease' }}>
           {icons[t.type]}
           <span className="text-xs text-[#E0E0F0] flex-1 leading-snug">{t.message}</span>
-          <button onClick={() => onRemove(t.id)} className="text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors flex-shrink-0 ml-1">
-            <X size={11}/>
-          </button>
+          <button onClick={() => onRemove(t.id)} className="text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors flex-shrink-0 ml-1"><X size={11}/></button>
         </div>
       ))}
     </div>
