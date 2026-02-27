@@ -461,6 +461,29 @@ function ProjectSelector({
 
 // ─── PROJECT WIZARD ───────────────────────────────────────────────────────────
 
+function WInput({
+  label, value, onChange, placeholder, type = 'text',
+}: {
+  label: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string
+  type?: string
+}) {
+  return (
+    <div>
+      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
+      />
+    </div>
+  )
+}
+
 interface WizardData {
   name: string
   product_name: string
@@ -557,23 +580,6 @@ function ProjectWizard({
     }
   }
 
-  const WInput = ({
-    label, field, placeholder, type = 'text',
-  }: {
-    label: string; field: keyof WizardData; placeholder?: string; type?: string
-  }) => (
-    <div>
-      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
-      <input
-        type={type}
-        value={data[field]}
-        onChange={set(field)}
-        placeholder={placeholder}
-        className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
-      />
-    </div>
-  )
-
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
@@ -636,9 +642,9 @@ function ProjectWizard({
           {/* PASO 1 — Identidad */}
           {step === 1 && (
             <>
-              <WInput label="NOMBRE DEL PROYECTO *" field="name" placeholder="ej. SamurAI Abril 2026"/>
-              <WInput label="NOMBRE DEL PRODUCTO" field="product_name" placeholder="ej. SamurAI — Curso de IA para emprendedores"/>
-              <WInput label="PRECIO DEL PRODUCTO (USD)" field="product_price" type="number" placeholder="ej. 297"/>
+              <WInput label="NOMBRE DEL PROYECTO *" value={data.name} onChange={set('name')} placeholder="ej. SamurAI Abril 2026"/>
+              <WInput label="NOMBRE DEL PRODUCTO" value={data.product_name} onChange={set('product_name')} placeholder="ej. SamurAI — Curso de IA para emprendedores"/>
+              <WInput label="PRECIO DEL PRODUCTO (USD)" value={data.product_price} onChange={set('product_price')} type="number" placeholder="ej. 297"/>
               <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
                 <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
                 <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
@@ -658,10 +664,10 @@ function ProjectWizard({
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <WInput label="META DE VENTAS (unidades)" field="sales_goal" type="number" placeholder="ej. 30"/>
-                <WInput label="META DE LEADS" field="leads_goal" type="number" placeholder="ej. 500"/>
+                <WInput label="META DE VENTAS (unidades)" value={data.sales_goal} onChange={set('sales_goal')} type="number" placeholder="ej. 30"/>
+                <WInput label="META DE LEADS" value={data.leads_goal} onChange={set('leads_goal')} type="number" placeholder="ej. 500"/>
               </div>
-              <WInput label="PRESUPUESTO DE ADS (USD)" field="ad_budget" type="number" placeholder="ej. 1500"/>
+              <WInput label="PRESUPUESTO DE ADS (USD)" value={data.ad_budget} onChange={set('ad_budget')} type="number" placeholder="ej. 1500"/>
               {data.sales_goal && data.product_price && (
                 <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
                   <span className="mono text-[10px] text-[#4A4A6A]">REVENUE PROYECTADO</span>
@@ -685,15 +691,15 @@ function ProjectWizard({
               <div>
                 <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CAPTACIÓN DE LEADS</p>
                 <div className="grid grid-cols-2 gap-4">
-                  <WInput label="INICIO CAPTACIÓN" field="captation_start" type="date"/>
-                  <WInput label="FIN CAPTACIÓN" field="captation_end" type="date"/>
+                  <WInput label="INICIO CAPTACIÓN" value={data.captation_start} onChange={set('captation_start')} type="date"/>
+                  <WInput label="FIN CAPTACIÓN" value={data.captation_end} onChange={set('captation_end')} type="date"/>
                 </div>
               </div>
               <div>
                 <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CARRITO</p>
                 <div className="grid grid-cols-2 gap-4">
-                  <WInput label="APERTURA CARRITO" field="cart_open" type="datetime-local"/>
-                  <WInput label="CIERRE CARRITO" field="cart_close" type="datetime-local"/>
+                  <WInput label="APERTURA CARRITO" value={data.cart_open} onChange={set('cart_open')} type="datetime-local"/>
+                  <WInput label="CIERRE CARRITO" value={data.cart_close} onChange={set('cart_close')} type="datetime-local"/>
                 </div>
               </div>
               <div>
