@@ -56,11 +56,12 @@ interface Project {
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
 
 const STAGES = [
-  { key: 'nuevo',           label: 'Nuevo',         color: '#4A4A6A' },
-  { key: 'perfilando_1',    label: 'Perfilando P1', color: '#00b0f6' },
-  { key: 'perfilando_2',    label: 'Perfilando P2', color: '#00b0f6' },
-  { key: 'perfilando_3',    label: 'Perfilando P3', color: '#00b0f6' },
-  { key: 'perfil_completo', label: 'Perfil Listo',  color: '#FF6B35' },
+  { key: 'nuevo',           label: 'Nuevo',          color: '#4A4A6A' },
+  { key: 'descubrimiento',  label: 'Descubrimiento', color: '#4A4A6A' },
+  { key: 'perfilando_1',    label: 'Perfilando P1',  color: '#00b0f6' },
+  { key: 'perfilando_2',    label: 'Perfilando P2',  color: '#00b0f6' },
+  { key: 'perfilando_3',    label: 'Perfilando P3',  color: '#00b0f6' },
+  { key: 'perfil_completo', label: 'Perfil Completo',color: '#0014ad' },
   { key: 'calentando',      label: 'Calentando',    color: '#FFB800' },
   { key: 'lives',           label: 'En Lives',      color: '#00FF94' },
   { key: 'clases',          label: 'En Clases',     color: '#00FF94' },
