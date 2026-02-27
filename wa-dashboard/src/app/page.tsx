@@ -17,7 +17,7 @@ import { format } from 'date-fns'
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface Lead {
-  id: string; phone_number: string; contact_name: string; agent_stage: string
+  id: string; phone_number: string; name: string; agent_stage: string
   engagement_score: number; segmento: string; situacion_actual: string
   dolor_declarado: string; dolor_profundo: string; sueno_declarado: string
   nivel_compromiso: string; urgencia_financiera: string; estilo_decision: string
@@ -284,7 +284,7 @@ export default function Dashboard() {
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex items-center gap-2 min-w-0">
                                 <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center" style={{background:`${stage.color}20`}}><User size={9} style={{color:stage.color}}/></div>
-                                <span className="text-xs font-medium text-[#E0E0F0] truncate">{lead.contact_name||'Desconocido'}</span>
+                                <span className="text-xs font-medium text-[#E0E0F0] truncate">{lead.name||'Desconocido'}</span>
                               </div>
                               <ChevronRight size={9} className="text-[#4A4A6A] group-hover:text-[#E0E0F0] flex-shrink-0 mt-0.5 transition-colors"/>
                             </div>
@@ -339,7 +339,7 @@ export default function Dashboard() {
                       <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
                         <td className="px-4 py-3"><div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-[#1E1E2E] flex items-center justify-center"><User size={10} className="text-[#4A4A6A]"/></div>
-                          <div><p className="text-xs font-medium text-[#E0E0F0]">{lead.contact_name||'—'}</p><p className="mono text-[9px] text-[#4A4A6A]">{lead.phone_number}</p></div>
+                          <div><p className="text-xs font-medium text-[#E0E0F0]">{lead.name||'—'}</p><p className="mono text-[9px] text-[#4A4A6A]">{lead.phone_number}</p></div>
                         </div></td>
                         <td className="px-4 py-3"><StagePill stage={lead.agent_stage}/></td>
                         <td className="px-4 py-3"><div className="flex items-center gap-1">{segIcon(lead.segmento)}<span className="mono text-[10px]" style={{color:segColor(lead.segmento)}}>{lead.segmento||'—'}</span></div></td>
@@ -479,7 +479,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
       const contacts = filteredLeads.map(l=>({
         campaign_id: camp.id,
         contact_number: l.phone_number,
-        contact_name: l.contact_name||'',
+        contact_name: l.name||'',
         status: 'pending',
       }))
       const { error: contErr } = await supabase.from('wa_campaign_contacts').insert(contacts)
@@ -595,7 +595,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                     <div key={i} className="flex items-center justify-between rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full" style={{background:segColor(l.segmento)}}/>
-                        <span className="text-xs text-[#E0E0F0]">{l.contact_name||l.phone_number}</span>
+                        <span className="text-xs text-[#E0E0F0]">{l.name||l.phone_number}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <StagePill stage={l.agent_stage}/>
@@ -765,7 +765,7 @@ function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
         <div className="sticky top-0 z-10 px-6 py-4 border-b border-[#1E1E2E] flex items-center justify-between" style={{background:'rgba(13,13,20,0.97)'}}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:`${stage.color}20`}}><User size={16} style={{color:stage.color}}/></div>
-            <div><p className="font-semibold text-[#E0E0F0] text-sm">{lead.contact_name||'Sin nombre'}</p><p className="mono text-[10px] text-[#4A4A6A]">{lead.phone_number}</p></div>
+            <div><p className="font-semibold text-[#E0E0F0] text-sm">{lead.name||'Sin nombre'}</p><p className="mono text-[10px] text-[#4A4A6A]">{lead.phone_number}</p></div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group"><X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/></button>
         </div>
