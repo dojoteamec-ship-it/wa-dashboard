@@ -11,7 +11,7 @@ import {
   RefreshCw, Wifi, WifiOff, X, ChevronRight, Brain, AlertCircle,
   Heart, Flame, Snowflake, Thermometer, Activity, Star, User,
   Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff,
-  Pause, Square, CheckCircle, Info, Search
+  Pause, Square, CheckCircle, Info, Search, DollarSign, Target, BookOpen
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -321,10 +321,12 @@ function ProjectSelector({
   projects,
   activeProjectId,
   onChange,
+  onNewProject,
 }: {
   projects: Project[]
   activeProjectId: string | null
   onChange: (id: string | null) => void
+  onNewProject: () => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -394,7 +396,6 @@ function ProjectSelector({
             </div>
           ) : (
             <div className="py-1">
-              {/* Opción ver todo sin filtro */}
               <button
                 onClick={() => { onChange(null); setOpen(false) }}
                 className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left"
@@ -442,10 +443,9 @@ function ProjectSelector({
             </div>
           )}
 
-          {/* Footer: crear nuevo proyecto */}
           <div className="border-t border-[#1E1E2E] p-2">
             <button
-              onClick={() => { setOpen(false) /* setShowProjectWizard(true) — se conecta en el próximo item */ }}
+              onClick={() => { setOpen(false); onNewProject() }}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:opacity-90"
               style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}
             >
@@ -455,6 +455,335 @@ function ProjectSelector({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── PROJECT WIZARD ───────────────────────────────────────────────────────────
+
+interface WizardData {
+  name: string
+  product_name: string
+  product_price: string
+  sales_goal: string
+  leads_goal: string
+  ad_budget: string
+  captation_start: string
+  captation_end: string
+  cart_open: string
+  cart_close: string
+  class_dates: string
+  agent_context: string
+}
+
+const WIZARD_STEPS = [
+  { num: 1, label: 'Identidad',  icon: <Rocket size={13}/> },
+  { num: 2, label: 'Metas',      icon: <Target size={13}/> },
+  { num: 3, label: 'Fechas',     icon: <Calendar size={13}/> },
+  { num: 4, label: 'Contexto',   icon: <BookOpen size={13}/> },
+]
+
+function ProjectWizard({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void
+  onCreated: (project: Project) => void
+}) {
+  const [step, setStep] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const [data, setData] = useState<WizardData>({
+    name: '',
+    product_name: '',
+    product_price: '',
+    sales_goal: '',
+    leads_goal: '',
+    ad_budget: '',
+    captation_start: '',
+    captation_end: '',
+    cart_open: '',
+    cart_close: '',
+    class_dates: '',
+    agent_context: '',
+  })
+
+  const set = (field: keyof WizardData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setData(d => ({ ...d, [field]: e.target.value }))
+
+  const canStep1 = data.name.trim().length > 0
+  const canStep2 = true // metas son opcionales
+  const canStep3 = true // fechas son opcionales
+  const canFinish = canStep1
+
+  const handleCreate = async () => {
+    if (!canFinish) return
+    setSaving(true)
+    setError('')
+    try {
+      const payload: Record<string, any> = {
+        name: data.name.trim(),
+        product_name: data.product_name.trim() || null,
+        product_price: data.product_price ? parseFloat(data.product_price) : null,
+        sales_goal: data.sales_goal ? parseInt(data.sales_goal) : null,
+        leads_goal: data.leads_goal ? parseInt(data.leads_goal) : null,
+        ad_budget: data.ad_budget ? parseFloat(data.ad_budget) : null,
+        captation_start: data.captation_start || null,
+        captation_end: data.captation_end || null,
+        cart_open: data.cart_open ? new Date(data.cart_open).toISOString() : null,
+        cart_close: data.cart_close ? new Date(data.cart_close).toISOString() : null,
+        agent_context: data.agent_context.trim() || null,
+        status: 'planning',
+      }
+
+      // class_dates: convertir texto libre en array JSON si hay contenido
+      if (data.class_dates.trim()) {
+        payload.class_dates = data.class_dates.trim().split('\n').filter(Boolean).map(d => d.trim())
+      }
+
+      const { data: newProject, error: err } = await supabase
+        .from('kanshi_projects')
+        .insert(payload)
+        .select('id, name, product_name, status, captation_start, cart_open')
+        .single()
+
+      if (err) throw err
+      onCreated(newProject as Project)
+    } catch (e: any) {
+      setError(e?.message || 'Error al crear el proyecto')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const WInput = ({
+    label, field, placeholder, type = 'text',
+  }: {
+    label: string; field: keyof WizardData; placeholder?: string; type?: string
+  }) => (
+    <div>
+      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
+      <input
+        type={type}
+        value={data[field]}
+        onChange={set(field)}
+        placeholder={placeholder}
+        className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
+      />
+    </div>
+  )
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
+      <div className="relative w-full max-w-xl rounded-2xl border border-[#1E1E2E] overflow-hidden"
+        style={{ background: '#0D0D14', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+
+        {/* ── Header ── */}
+        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between sticky top-0 z-10"
+          style={{ background: 'rgba(13,13,20,0.98)' }}>
+          <div>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVO PROYECTO — PASO {step} DE 4</p>
+            <p className="font-semibold text-[#E0E0F0] text-sm mt-0.5">
+              {step === 1 ? 'Identidad del lanzamiento'
+               : step === 2 ? 'Metas del lanzamiento'
+               : step === 3 ? 'Fechas del calendario'
+               : 'Contexto para el agente SAM'}
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
+            <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+          </button>
+        </div>
+
+        {/* ── Progress bar ── */}
+        <div className="h-0.5 bg-[#1E1E2E]">
+          <div className="h-full transition-all duration-500"
+            style={{ width: `${(step / 4) * 100}%`, background: 'linear-gradient(90deg,#0014ad,#00a7e3)' }}/>
+        </div>
+
+        {/* ── Step indicators ── */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-[#1E1E2E]">
+          {WIZARD_STEPS.map((s, i) => (
+            <div key={s.num} className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center mono text-[9px] font-bold transition-all"
+                  style={{
+                    background: step > s.num ? '#00FF94' : step === s.num ? 'linear-gradient(135deg,#0014ad,#00a7e3)' : '#1E1E2E',
+                    color: step >= s.num ? 'white' : '#4A4A6A',
+                  }}
+                >
+                  {step > s.num ? '✓' : s.num}
+                </div>
+                <span className="mono text-[9px] tracking-widest hidden sm:block"
+                  style={{ color: step === s.num ? '#E0E0F0' : '#4A4A6A' }}>
+                  {s.label.toUpperCase()}
+                </span>
+              </div>
+              {i < WIZARD_STEPS.length - 1 && (
+                <div className="w-6 h-px mx-1" style={{ background: step > s.num ? '#00FF94' : '#1E1E2E' }}/>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Content ── */}
+        <div className="p-6 space-y-4">
+
+          {/* PASO 1 — Identidad */}
+          {step === 1 && (
+            <>
+              <WInput label="NOMBRE DEL PROYECTO *" field="name" placeholder="ej. SamurAI Abril 2026"/>
+              <WInput label="NOMBRE DEL PRODUCTO" field="product_name" placeholder="ej. SamurAI — Curso de IA para emprendedores"/>
+              <WInput label="PRECIO DEL PRODUCTO (USD)" field="product_price" type="number" placeholder="ej. 297"/>
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+                <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+                  El nombre del proyecto aparecerá en el selector del header. Usa un nombre que identifique claramente el lanzamiento.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* PASO 2 — Metas */}
+          {step === 2 && (
+            <>
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
+                <Target size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+                  Todas las metas son opcionales, pero si las defines KANSHI podrá mostrarte el avance vs objetivo en tiempo real.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <WInput label="META DE VENTAS (unidades)" field="sales_goal" type="number" placeholder="ej. 30"/>
+                <WInput label="META DE LEADS" field="leads_goal" type="number" placeholder="ej. 500"/>
+              </div>
+              <WInput label="PRESUPUESTO DE ADS (USD)" field="ad_budget" type="number" placeholder="ej. 1500"/>
+              {data.sales_goal && data.product_price && (
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+                  <span className="mono text-[10px] text-[#4A4A6A]">REVENUE PROYECTADO</span>
+                  <span className="mono text-sm font-bold" style={{ color: '#00FF94' }}>
+                    ${(parseFloat(data.sales_goal) * parseFloat(data.product_price)).toLocaleString('en-US')} USD
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* PASO 3 — Fechas */}
+          {step === 3 && (
+            <>
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
+                <Calendar size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+                  Las fechas permiten que el agente SAM entienda en qué fase del lanzamiento está y ajuste su comunicación automáticamente.
+                </p>
+              </div>
+              <div>
+                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CAPTACIÓN DE LEADS</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <WInput label="INICIO CAPTACIÓN" field="captation_start" type="date"/>
+                  <WInput label="FIN CAPTACIÓN" field="captation_end" type="date"/>
+                </div>
+              </div>
+              <div>
+                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CARRITO</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <WInput label="APERTURA CARRITO" field="cart_open" type="datetime-local"/>
+                  <WInput label="CIERRE CARRITO" field="cart_close" type="datetime-local"/>
+                </div>
+              </div>
+              <div>
+                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">
+                  FECHAS DE CLASES / LIVES (una por línea)
+                </label>
+                <textarea
+                  value={data.class_dates}
+                  onChange={set('class_dates')}
+                  placeholder={'2026-04-07 — Clase 1: Introducción\n2026-04-09 — Clase 2: Estrategia\n2026-04-11 — Live de cierre'}
+                  rows={4}
+                  className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
+                />
+              </div>
+            </>
+          )}
+
+          {/* PASO 4 — Contexto SAM */}
+          {step === 4 && (
+            <>
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
+                <Brain size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+                  Este texto se inyectará en el prompt del agente SAM cuando opere en este proyecto. Descríbele el producto, el avatar del cliente ideal, objeciones frecuentes y tono de comunicación.
+                </p>
+              </div>
+              <div>
+                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">
+                  CONTEXTO DEL AGENTE (opcional)
+                </label>
+                <textarea
+                  value={data.agent_context}
+                  onChange={set('agent_context')}
+                  placeholder="ej. SamurAI es un curso de 6 semanas para emprendedores latinoamericanos que quieren implementar IA en sus negocios sin saber programar. El cliente ideal tiene entre 28-45 años, tiene un negocio propio o trabaja como freelancer, y siente que la IA lo está dejando atrás. El precio es $297. La principal objeción es el tiempo..."
+                  rows={8}
+                  className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
+                />
+              </div>
+              <div className="mono text-[9px] text-[#4A4A6A] text-right">{data.agent_context.length} caracteres</div>
+
+              {/* Resumen final */}
+              <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#111118' }}>
+                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">RESUMEN DEL PROYECTO</p>
+                <SummaryRow label="Nombre" value={data.name || '—'}/>
+                {data.product_name && <SummaryRow label="Producto" value={data.product_name}/>}
+                {data.product_price && <SummaryRow label="Precio" value={`$${data.product_price} USD`}/>}
+                {data.sales_goal && <SummaryRow label="Meta ventas" value={`${data.sales_goal} unidades`} highlight/>}
+                {data.captation_start && <SummaryRow label="Inicio captación" value={data.captation_start}/>}
+                {data.cart_open && <SummaryRow label="Apertura carrito" value={data.cart_open.replace('T', ' ')}/>}
+              </div>
+            </>
+          )}
+
+          {error && (
+            <div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3">
+              <p className="text-xs text-[#FF6B35]">{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer navigation ── */}
+        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0"
+          style={{ background: 'rgba(13,13,20,0.98)' }}>
+          <button
+            onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            <ChevronLeft size={12}/> {step === 1 ? 'CANCELAR' : 'ANTERIOR'}
+          </button>
+          {step < 4 ? (
+            <button
+              onClick={() => setStep(step + 1)}
+              disabled={step === 1 && !canStep1}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+              SIGUIENTE <ChevronRight size={12}/>
+            </button>
+          ) : (
+            <button
+              onClick={handleCreate}
+              disabled={!canFinish || saving}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+              {saving
+                ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> CREANDO...</>
+                : <><Rocket size={12}/> CREAR PROYECTO</>
+              }
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -471,6 +800,7 @@ export default function Dashboard() {
   const [recentMsgs, setRecentMsgs] = useState<RecentMsg[]>([])
   const [selectedLead, setSelectedLead] = useState<Lead|null>(null)
   const [showCreator, setShowCreator] = useState(false)
+  const [showProjectWizard, setShowProjectWizard] = useState(false)
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState(new Date())
@@ -496,7 +826,6 @@ export default function Dashboard() {
     setToasts(p => p.filter(t => t.id !== id))
   }, [])
 
-  // Reset a página 1 al cambiar de tab
   useEffect(() => {
     setLeadsPage(1)
     setCampaignsPage(1)
@@ -572,6 +901,14 @@ export default function Dashboard() {
     else localStorage.removeItem('kanshi_active_project')
   }, [])
 
+  const handleProjectCreated = useCallback((newProject: Project) => {
+    setProjects(prev => [newProject, ...prev])
+    setActiveProjectId(newProject.id)
+    localStorage.setItem('kanshi_active_project', newProject.id)
+    setShowProjectWizard(false)
+    addToast('success', `Proyecto "${newProject.name}" creado — ahora está activo`)
+  }, [addToast])
+
   useEffect(()=>{
     if(!authenticated) return
     fetchData()
@@ -591,7 +928,6 @@ export default function Dashboard() {
   const urgDist = ['alta','media','baja'].map(u=>({name:u.charAt(0).toUpperCase()+u.slice(1),value:leads.filter(l=>l.urgencia_financiera===u).length,color:urgColor(u)})).filter(d=>d.value>0)
   const comDist  = ['alto','medio','bajo'].map(c=>({name:c.charAt(0).toUpperCase()+c.slice(1),value:leads.filter(l=>l.nivel_compromiso===c).length,color:comColor(c)})).filter(d=>d.value>0)
 
-  // Paginación
   const profiledLeads = useMemo(() => leads.filter(l => l.situacion_actual), [leads])
   const paginatedLeads = useMemo(() => profiledLeads.slice((leadsPage-1)*PAGE_SIZE, leadsPage*PAGE_SIZE), [profiledLeads, leadsPage])
   const paginatedCampaigns = useMemo(() => campaigns.slice((campaignsPage-1)*PAGE_SIZE, campaignsPage*PAGE_SIZE), [campaigns, campaignsPage])
@@ -649,6 +985,7 @@ export default function Dashboard() {
             projects={projects}
             activeProjectId={activeProjectId}
             onChange={handleProjectChange}
+            onNewProject={() => setShowProjectWizard(true)}
           />
 
           {/* ── BÚSQUEDA GLOBAL ── */}
@@ -831,12 +1168,7 @@ export default function Dashboard() {
                 </table>
               </div>
               {profiledLeads.length > PAGE_SIZE && (
-                <Pagination
-                  total={profiledLeads.length}
-                  page={leadsPage}
-                  pageSize={PAGE_SIZE}
-                  onPage={setLeadsPage}
-                />
+                <Pagination total={profiledLeads.length} page={leadsPage} pageSize={PAGE_SIZE} onPage={setLeadsPage}/>
               )}
             </div>
           </Sec>
@@ -896,12 +1228,7 @@ export default function Dashboard() {
               </table>
             </div>
             {campaigns.length > PAGE_SIZE && (
-              <Pagination
-                total={campaigns.length}
-                page={campaignsPage}
-                pageSize={PAGE_SIZE}
-                onPage={setCampaignsPage}
-              />
+              <Pagination total={campaigns.length} page={campaignsPage} pageSize={PAGE_SIZE} onPage={setCampaignsPage}/>
             )}
           </div>
         </>}
@@ -922,6 +1249,12 @@ export default function Dashboard() {
         onClose={()=>setShowCreator(false)}
         onCreated={()=>{ setShowCreator(false); fetchData(); setActiveTab('campaigns'); addToast('success','Campaña creada — el scheduler la procesará en ~5 min') }}
       />}
+      {showProjectWizard && (
+        <ProjectWizard
+          onClose={() => setShowProjectWizard(false)}
+          onCreated={handleProjectCreated}
+        />
+      )}
       <ToastContainer toasts={toasts} onRemove={removeToast}/>
     </div>
   )
