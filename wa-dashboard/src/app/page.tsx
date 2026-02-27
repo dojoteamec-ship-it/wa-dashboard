@@ -74,6 +74,9 @@ const statusColor = (s: string) =>
 const statusLabel = (s: string) =>
   ({completed:'COMPLETADA',running:'EN CURSO',scheduled:'PROGRAMADA',draft:'BORRADOR',paused:'PAUSADA',cancelled:'CANCELADA'}[s]||s.toUpperCase())
 
+// ─── PAGINATION ───────────────────────────────────────────────────────────────
+const PAGE_SIZE = 50
+
 // ─── KANSHI ISOTIPO SVG ───────────────────────────────────────────────────────
 
 function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: string }) {
@@ -320,6 +323,8 @@ export default function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState(new Date())
   const [activeTab, setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'>('overview')
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [leadsPage, setLeadsPage] = useState(1)
+  const [campaignsPage, setCampaignsPage] = useState(1)
 
   const addToast = useCallback((type: Toast['type'], message: string) => {
     const id = `${Date.now()}-${Math.random()}`
@@ -330,6 +335,12 @@ export default function Dashboard() {
   const removeToast = useCallback((id: string) => {
     setToasts(p => p.filter(t => t.id !== id))
   }, [])
+
+  // Reset a página 1 al cambiar de tab
+  useEffect(() => {
+    setLeadsPage(1)
+    setCampaignsPage(1)
+  }, [activeTab])
 
   useEffect(() => {
     const stored = localStorage.getItem(AUTH_KEY)
@@ -342,8 +353,8 @@ export default function Dashboard() {
         supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200),
         supabase.from('wa_conversations').select('status'),
         supabase.from('wa_contacts').select('id',{count:'exact',head:true}),
-        supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(20),
-        supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(300),
+        supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200),
+        supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500),
         supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
       ])
       const msgs = msgsRes.data||[]
@@ -411,6 +422,11 @@ export default function Dashboard() {
   const segDist = ['caliente','templado','frio'].map(s=>({name:s==='frio'?'Frío':s.charAt(0).toUpperCase()+s.slice(1),value:leads.filter(l=>l.segmento===s).length,color:segColor(s)})).filter(d=>d.value>0)
   const urgDist = ['alta','media','baja'].map(u=>({name:u.charAt(0).toUpperCase()+u.slice(1),value:leads.filter(l=>l.urgencia_financiera===u).length,color:urgColor(u)})).filter(d=>d.value>0)
   const comDist  = ['alto','medio','bajo'].map(c=>({name:c.charAt(0).toUpperCase()+c.slice(1),value:leads.filter(l=>l.nivel_compromiso===c).length,color:comColor(c)})).filter(d=>d.value>0)
+
+  // Paginación
+  const profiledLeads = useMemo(() => leads.filter(l => l.situacion_actual), [leads])
+  const paginatedLeads = useMemo(() => profiledLeads.slice((leadsPage-1)*PAGE_SIZE, leadsPage*PAGE_SIZE), [profiledLeads, leadsPage])
+  const paginatedCampaigns = useMemo(() => campaigns.slice((campaignsPage-1)*PAGE_SIZE, campaignsPage*PAGE_SIZE), [campaigns, campaignsPage])
 
   if (authenticated === null) return (
     <div className="min-h-screen flex items-center justify-center" style={{background:'#090c4c'}}>
@@ -610,7 +626,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
           </Sec>
-          <Sec label="LEADS PERFILADOS">
+          <Sec label={`LEADS PERFILADOS — ${profiledLeads.length} TOTAL`}>
             <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -620,9 +636,9 @@ export default function Dashboard() {
                     ))}
                   </tr></thead>
                   <tbody>
-                    {leads.filter(l=>l.situacion_actual).length===0
+                    {profiledLeads.length===0
                       ?<tr><td colSpan={8} className="px-4 py-8 text-center text-[#4A4A6A] text-xs">Sin leads perfilados aún</td></tr>
-                      :leads.filter(l=>l.situacion_actual).map((lead,i)=>(
+                      :paginatedLeads.map((lead,i)=>(
                       <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
                         <td className="px-4 py-3"><div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-[#1E1E2E] flex items-center justify-center"><User size={10} className="text-[#4A4A6A]"/></div>
@@ -640,6 +656,14 @@ export default function Dashboard() {
                   </tbody>
                 </table>
               </div>
+              {profiledLeads.length > PAGE_SIZE && (
+                <Pagination
+                  total={profiledLeads.length}
+                  page={leadsPage}
+                  pageSize={PAGE_SIZE}
+                  onPage={setLeadsPage}
+                />
+              )}
             </div>
           </Sec>
         </>}
@@ -665,7 +689,7 @@ export default function Dashboard() {
                 <tbody>
                   {campaigns.length===0
                     ?<tr><td colSpan={10} className="px-5 py-8 text-center text-[#4A4A6A] text-xs">Sin campañas — crea una nueva</td></tr>
-                    :campaigns.map((c,i)=>(
+                    :paginatedCampaigns.map((c,i)=>(
                     <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors">
                       <td className="px-4 py-3 text-sm text-[#E0E0F0] font-medium">{c.name}</td>
                       <td className="px-4 py-3"><span className="mono text-[10px] text-[#4A4A6A]">{c.template_name||'—'}</span></td>
@@ -697,6 +721,14 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+            {campaigns.length > PAGE_SIZE && (
+              <Pagination
+                total={campaigns.length}
+                page={campaignsPage}
+                pageSize={PAGE_SIZE}
+                onPage={setCampaignsPage}
+              />
+            )}
           </div>
         </>}
 
@@ -1144,6 +1176,61 @@ function MPin({label,value,color}:{label:string;value:string|undefined;color:str
     <div className="rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
       <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-0.5">{label}</p>
       <p className="mono text-xs font-bold" style={{color}}>{value||'—'}</p>
+    </div>
+  )
+}
+
+// ─── PAGINATION COMPONENT ─────────────────────────────────────────────────────
+
+function Pagination({ total, page, pageSize, onPage }: { total: number; page: number; pageSize: number; onPage: (p: number) => void }) {
+  const totalPages = Math.ceil(total / pageSize)
+  if (totalPages <= 1) return null
+
+  const from = (page - 1) * pageSize + 1
+  const to   = Math.min(page * pageSize, total)
+
+  // Genera array de páginas con ellipsis
+  const pages: (number | '…')[] = []
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (page > 4) pages.push('…')
+    const start = Math.max(2, page - 2)
+    const end   = Math.min(totalPages - 1, page + 2)
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (page < totalPages - 3) pages.push('…')
+    pages.push(totalPages)
+  }
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-[#1E1E2E]">
+      <span className="mono text-[10px] text-[#4A4A6A]">{from}–{to} de {total}</span>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onPage(page - 1)} disabled={page === 1}
+          className="p-1.5 rounded-lg border border-[#1E1E2E] disabled:opacity-30 hover:border-[#00b0f6] transition-colors group disabled:cursor-not-allowed">
+          <ChevronLeft size={11} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
+        </button>
+        {pages.map((p, i) =>
+          p === '…'
+            ? <span key={`ellipsis-${i}`} className="mono text-[10px] text-[#4A4A6A] px-1">…</span>
+            : <button key={p} onClick={() => onPage(p as number)}
+                className="min-w-[28px] h-7 rounded-lg border mono text-[10px] transition-all"
+                style={{
+                  borderColor: page === p ? '#00b0f6' : '#1E1E2E',
+                  background:  page === p ? 'rgba(0,176,246,0.12)' : 'transparent',
+                  color:       page === p ? '#00b0f6' : '#4A4A6A',
+                }}>
+                {p}
+              </button>
+        )}
+        <button
+          onClick={() => onPage(page + 1)} disabled={page === totalPages}
+          className="p-1.5 rounded-lg border border-[#1E1E2E] disabled:opacity-30 hover:border-[#00b0f6] transition-colors group disabled:cursor-not-allowed">
+          <ChevronRight size={11} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
+        </button>
+      </div>
     </div>
   )
 }
