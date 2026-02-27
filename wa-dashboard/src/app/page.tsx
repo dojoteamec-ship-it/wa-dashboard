@@ -48,33 +48,43 @@ interface Project {
   id: string
   name: string
   product_name: string | null
+  product_price: number | null
   status: string
   captation_start: string | null
+  captation_end: string | null
   cart_open: string | null
+  cart_close: string | null
+  class_dates: string[] | null
+  sales_goal: number | null
+  leads_goal: number | null
+  ad_budget: number | null
+  agent_context: string | null
+  color: string | null
+  emoji: string | null
 }
 
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
 
 const STAGES = [
-  { key: 'nuevo',           label: 'Nuevo',          color: '#4A4A6A' },
-  { key: 'descubrimiento',  label: 'Descubrimiento', color: '#4A4A6A' },
-  { key: 'perfilando_1',    label: 'Perfilando P1',  color: '#00b0f6' },
-  { key: 'perfilando_2',    label: 'Perfilando P2',  color: '#00b0f6' },
-  { key: 'perfilando_3',    label: 'Perfilando P3',  color: '#00b0f6' },
-  { key: 'perfil_completo', label: 'Perfil Completo',color: '#0014ad' },
-  { key: 'calentando',      label: 'Calentando',    color: '#FFB800' },
-  { key: 'lives',           label: 'En Lives',      color: '#00FF94' },
-  { key: 'clases',          label: 'En Clases',     color: '#00FF94' },
-  { key: 'VIP',             label: 'VIP',           color: '#C084FC' },
-  { key: 'comprador',       label: 'Comprador',     color: '#00FF94' },
+  { key: 'nuevo',           label: 'Nuevo',           color: '#4A4A6A' },
+  { key: 'descubrimiento',  label: 'Descubrimiento',  color: '#4A4A6A' },
+  { key: 'perfilando_1',    label: 'Perfilando P1',   color: '#00b0f6' },
+  { key: 'perfilando_2',    label: 'Perfilando P2',   color: '#00b0f6' },
+  { key: 'perfilando_3',    label: 'Perfilando P3',   color: '#00b0f6' },
+  { key: 'perfil_completo', label: 'Perfil Completo', color: '#0014ad' },
+  { key: 'calentando',      label: 'Calentando',      color: '#FFB800' },
+  { key: 'lives',           label: 'En Lives',        color: '#00FF94' },
+  { key: 'clases',          label: 'En Clases',       color: '#00FF94' },
+  { key: 'VIP',             label: 'VIP',             color: '#C084FC' },
+  { key: 'comprador',       label: 'Comprador',       color: '#00FF94' },
 ]
 const STAGE_MAP = Object.fromEntries(STAGES.map(s => [s.key, s]))
 
-const segColor = (s: string) => s==='caliente'?'#FF6B35':s==='templado'?'#FFB800':'#00b0f6'
-const urgColor = (u: string) => u==='alta'?'#FF6B35':u==='media'?'#FFB800':'#4A4A6A'
-const comColor = (c: string) => c==='alto'?'#00FF94':c==='medio'?'#FFB800':'#4A4A6A'
-const scoreColor = (n: number) => n>=8?'#00FF94':n>=5?'#FFB800':'#FF6B35'
-const segIcon = (s: string) => s==='caliente'
+const segColor  = (s: string) => s==='caliente'?'#FF6B35':s==='templado'?'#FFB800':'#00b0f6'
+const urgColor  = (u: string) => u==='alta'?'#FF6B35':u==='media'?'#FFB800':'#4A4A6A'
+const comColor  = (c: string) => c==='alto'?'#00FF94':c==='medio'?'#FFB800':'#4A4A6A'
+const scoreColor= (n: number) => n>=8?'#00FF94':n>=5?'#FFB800':'#FF6B35'
+const segIcon   = (s: string) => s==='caliente'
   ? <Flame size={10} className="text-[#FF6B35]"/>
   : s==='templado' ? <Thermometer size={10} className="text-[#FFB800]"/>
   : <Snowflake size={10} style={{color:'#00b0f6'}}/>
@@ -84,15 +94,13 @@ const statusColor = (s: string) =>
 const statusLabel = (s: string) =>
   ({completed:'COMPLETADA',running:'EN CURSO',scheduled:'PROGRAMADA',draft:'BORRADOR',paused:'PAUSADA',cancelled:'CANCELADA'}[s]||s.toUpperCase())
 
-// ─── PAGINATION ───────────────────────────────────────────────────────────────
 const PAGE_SIZE = 50
 
-// ─── KANSHI ISOTIPO SVG ───────────────────────────────────────────────────────
+// ─── KANSHI LOGO ──────────────────────────────────────────────────────────────
 
 function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink"
-      viewBox="0 0 138.99 139" width={size} height={size} className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 138.99 139" width={size} height={size} className={className}>
       <defs>
         <linearGradient id="kanshi-grad" y1="69.5" x2="138.99" y2="69.5" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#0014ac"/><stop offset="1" stopColor="#0099d3"/>
@@ -121,8 +129,7 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (password === KANSHI_PASSWORD) {
-      localStorage.setItem(AUTH_KEY, 'true')
-      onAuth()
+      localStorage.setItem(AUTH_KEY, 'true'); onAuth()
     } else {
       setError(true); setShaking(true)
       setTimeout(() => setShaking(false), 600)
@@ -135,11 +142,10 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #0014ad 0%, transparent 70%)' }}/>
-        <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
       </div>
       <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#00b0f6 1px, transparent 1px), linear-gradient(90deg, #00b0f6 1px, transparent 1px)', backgroundSize: '40px 40px' }}/>
       <div className={`relative z-10 w-full max-w-sm mx-4 rounded-2xl border p-8 transition-all ${shaking ? 'animate-bounce' : ''}`}
-        style={{ background: 'rgba(9,12,76,0.8)', backdropFilter: 'blur(24px)', borderColor: error ? '#FF6B35' : 'rgba(0,176,246,0.3)', boxShadow: error ? '0 0 40px rgba(255,107,53,0.2), inset 0 0 40px rgba(255,107,53,0.05)' : '0 0 60px rgba(0,176,246,0.15), inset 0 0 40px rgba(0,20,173,0.3)' }}>
+        style={{ background: 'rgba(9,12,76,0.8)', backdropFilter: 'blur(24px)', borderColor: error ? '#FF6B35' : 'rgba(0,176,246,0.3)', boxShadow: error ? '0 0 40px rgba(255,107,53,0.2)' : '0 0 60px rgba(0,176,246,0.15)' }}>
         <div className="flex flex-col items-center mb-8">
           <div className="mb-5 p-4 rounded-2xl" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}><KanshiLogo size={56} /></div>
           <h1 className="text-2xl font-bold tracking-[0.2em] text-white mb-1" style={{ fontFamily: 'monospace' }}>KANSHI</h1>
@@ -153,7 +159,7 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
               <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="Contraseña del equipo" autoFocus
                 className="w-full rounded-xl px-4 py-3 pl-10 pr-10 text-sm text-white outline-none placeholder:text-[#4A4A6A]"
-                style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${error ? '#FF6B35' : 'rgba(0,176,246,0.3)'}`, transition: 'border-color 0.3s' }}/>
+                style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${error ? '#FF6B35' : 'rgba(0,176,246,0.3)'}` }}/>
               <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: showPwd ? '#00b0f6' : '#4A4A6A' }}>
                 {showPwd ? <Eye size={13}/> : <EyeOff size={13}/>}
               </button>
@@ -161,7 +167,7 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
             {error && <p className="mono text-[10px] text-[#FF6B35] mt-2 tracking-widest">✕ ACCESO DENEGADO</p>}
           </div>
           <button type="submit" disabled={!password}
-            className="w-full rounded-xl py-3 font-bold mono text-[12px] tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full rounded-xl py-3 font-bold mono text-[12px] tracking-widest text-white transition-all disabled:opacity-30 hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: 'linear-gradient(135deg, #0014ad, #00b0f6)', boxShadow: '0 4px 20px rgba(0,176,246,0.3)' }}>
             INGRESAR AL SISTEMA
           </button>
@@ -178,13 +184,7 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   if (!query || !text) return text
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
   if (idx === -1) return text
-  return (
-    <>
-      {text.slice(0, idx)}
-      <span style={{color:'#00b0f6', fontWeight:'bold'}}>{text.slice(idx, idx + query.length)}</span>
-      {text.slice(idx + query.length)}
-    </>
-  )
+  return <>{text.slice(0, idx)}<span style={{color:'#00b0f6',fontWeight:'bold'}}>{text.slice(idx, idx+query.length)}</span>{text.slice(idx+query.length)}</>
 }
 
 function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead) => void }) {
@@ -197,260 +197,316 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
     if (!query.trim() || query.length < 2) return []
     const q = query.toLowerCase()
     return leads.filter(l =>
-      (l.name||'').toLowerCase().includes(q) ||
-      l.phone_number.includes(q) ||
-      (l.segmento||'').toLowerCase().includes(q) ||
-      (l.situacion_actual||'').toLowerCase().includes(q) ||
+      (l.name||'').toLowerCase().includes(q) || l.phone_number.includes(q) ||
+      (l.segmento||'').toLowerCase().includes(q) || (l.situacion_actual||'').toLowerCase().includes(q) ||
       (l.dolor_declarado||'').toLowerCase().includes(q)
     ).slice(0, 8)
   }, [query, leads])
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
+    const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false) }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        inputRef.current?.focus()
-        setOpen(true)
-      }
-      if (e.key === 'Escape') {
-        setOpen(false)
-        setQuery('')
-        inputRef.current?.blur()
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); inputRef.current?.focus(); setOpen(true) }
+      if (e.key === 'Escape') { setOpen(false); setQuery(''); inputRef.current?.blur() }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
-  const handleSelect = (lead: Lead) => {
-    onSelect(lead)
-    setOpen(false)
-    setQuery('')
-  }
-
   return (
     <div ref={containerRef} className="relative">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors"
-        style={{background:'#111118', width:'220px'}}>
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors" style={{background:'#111118',width:'220px'}}>
         <Search size={12} className="text-[#4A4A6A] flex-shrink-0"/>
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={e => { setQuery(e.target.value); setOpen(true) }}
-          onFocus={() => setOpen(true)}
-          placeholder="Buscar lead..."
-          className="bg-transparent outline-none text-[12px] text-[#E0E0F0] placeholder:text-[#4A4A6A] w-full"
-          style={{fontFamily:'monospace'}}
-        />
-        {query
-          ? <button onClick={() => { setQuery(''); setOpen(false) }} className="text-[#4A4A6A] hover:text-[#E0E0F0] flex-shrink-0"><X size={10}/></button>
-          : <span className="mono text-[9px] text-[#2A2A3A] flex-shrink-0 hidden lg:block">⌘K</span>
-        }
+        <input ref={inputRef} value={query} onChange={e=>{setQuery(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)}
+          placeholder="Buscar lead... ⌘K" className="flex-1 bg-transparent text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
+        {query && <button onClick={()=>{setQuery('');setOpen(false)}} className="text-[#4A4A6A] hover:text-[#E0E0F0]"><X size={10}/></button>}
       </div>
-
-      {open && query.length >= 2 && (
-        <div className="absolute top-[calc(100%+8px)] right-0 w-[380px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
-          style={{background:'#0D0D14', boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
-          {results.length === 0 ? (
-            <div className="px-4 py-6 text-center">
-              <Search size={16} className="text-[#2A2A3A] mx-auto mb-2"/>
-              <p className="mono text-[10px] text-[#4A4A6A]">Sin resultados para "{query}"</p>
-            </div>
-          ) : (
-            <>
-              <div className="px-4 py-2 border-b border-[#1E1E2E] flex items-center justify-between">
-                <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{results.length} LEAD{results.length !== 1 ? 'S' : ''} ENCONTRADO{results.length !== 1 ? 'S' : ''}</span>
-                <span className="mono text-[9px] text-[#2A2A3A]">ESC para cerrar</span>
-              </div>
-              <div className="max-h-[360px] overflow-y-auto">
-                {results.map((lead) => {
-                  const stage = STAGE_MAP[lead.agent_stage] || { label: lead.agent_stage, color: '#4A4A6A' }
-                  return (
-                    <button key={lead.id} onClick={() => handleSelect(lead)}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left border-b border-[#1E1E2E] last:border-0">
-                      <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center" style={{background:`${stage.color}20`}}>
-                        <User size={12} style={{color:stage.color}}/>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-medium text-[#E0E0F0] truncate">
-                            {highlightMatch(lead.name || 'Sin nombre', query)}
-                          </span>
-                          {lead.segmento && <div className="flex items-center gap-1 flex-shrink-0">{segIcon(lead.segmento)}</div>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="mono text-[10px] text-[#4A4A6A]">{lead.phone_number}</span>
-                          {lead.situacion_actual && (
-                            <span className="mono text-[9px] text-[#4A4A6A] truncate max-w-[160px]">· {lead.situacion_actual}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className="mono text-[9px] px-2 py-0.5 rounded-full border"
-                          style={{color:stage.color,borderColor:`${stage.color}40`,background:`${stage.color}10`}}>
-                          {stage.label.toUpperCase()}
-                        </span>
-                        {lead.engagement_score > 0 && (
-                          <span className="mono text-[9px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★ {lead.engagement_score}</span>
-                        )}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
+      {open && results.length > 0 && (
+        <div className="absolute top-[calc(100%+8px)] left-0 w-[320px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
+          style={{background:'#0D0D14',boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
+          <div className="px-4 py-2 border-b border-[#1E1E2E]">
+            <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{results.length} RESULTADO{results.length!==1?'S':''}</span>
+          </div>
+          {results.map((lead,i) => {
+            const stage = STAGE_MAP[lead.agent_stage]||{label:lead.agent_stage,color:'#4A4A6A'}
+            return (
+              <button key={i} onClick={()=>{onSelect(lead);setOpen(false);setQuery('')}}
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left border-b border-[#0D0D14] last:border-0">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{background:`${stage.color}20`}}>
+                  <User size={11} style={{color:stage.color}}/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[#E0E0F0] truncate">{highlightMatch(lead.name||lead.phone_number,query)}</p>
+                  <p className="mono text-[9px] text-[#4A4A6A] truncate">{lead.phone_number}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{color:stage.color,background:`${stage.color}10`}}>{stage.label.toUpperCase()}</span>
+                  {lead.engagement_score>0 && <span className="mono text-[9px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★ {lead.engagement_score}</span>}
+                </div>
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
   )
 }
 
+// ─── PROJECT TIMELINE ─────────────────────────────────────────────────────────
+
+function ProjectTimeline({ project }: { project: Project }) {
+  const today = new Date(); today.setHours(0,0,0,0)
+  const parseDate = (d: string|null): Date|null => { if(!d) return null; const p=new Date(d); return isNaN(p.getTime())?null:p }
+  const daysDiff = (a: Date, b: Date) => Math.round((b.getTime()-a.getTime())/86400000)
+
+  const captStart = parseDate(project.captation_start)
+  const captEnd   = parseDate(project.captation_end)
+  const cartOpen  = parseDate(project.cart_open)
+  const cartClose = parseDate(project.cart_close)
+  const classDates: Date[] = (project.class_dates??[]).map((d:string)=>parseDate(d)).filter((d):d is Date=>d!==null).sort((a,b)=>a.getTime()-b.getTime())
+
+  const allDates = [captStart,captEnd,...classDates,cartOpen,cartClose].filter((d):d is Date=>d!==null)
+  if (allDates.length===0) return (
+    <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
+      <div className="flex items-center gap-3">
+        <Calendar size={14} style={{color:'#4A4A6A'}}/>
+        <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">{project.name} — Sin fechas configuradas. Edita el proyecto para agregar el calendario.</p>
+      </div>
+    </div>
+  )
+
+  const minDate = new Date(Math.min(...allDates.map(d=>d.getTime())))
+  const maxDate = new Date(Math.max(...allDates.map(d=>d.getTime())))
+  const totalSpan = Math.max(daysDiff(minDate,maxDate),1)
+  const pct = (d:Date|null) => d===null?-1:Math.min(100,Math.max(0,(daysDiff(minDate,d)/totalSpan)*100))
+  const todayPct = Math.min(100,Math.max(0,(daysDiff(minDate,today)/totalSpan)*100))
+
+  const getPhase = () => {
+    if (cartClose&&today>cartClose) return {label:'LANZAMIENTO CERRADO',color:'#4A4A6A'}
+    if (cartOpen&&today>=cartOpen)  return {label:'CARRITO ABIERTO',color:'#00FF94'}
+    if (classDates.length>0&&today>=classDates[0]) return {label:'EN LIVES/CLASES',color:'#FFB800'}
+    if (captEnd&&today>captEnd)    return {label:'CAPTACIÓN TERMINADA',color:'#FF6B35'}
+    if (captStart&&today>=captStart) return {label:'EN CAPTACIÓN',color:'#00b0f6'}
+    return {label:'PRE-LANZAMIENTO',color:'#4A4A6A'}
+  }
+  const phase = getPhase()
+
+  const nextMilestone = (() => {
+    const up = [
+      captStart&&today<captStart?{label:'Inicio captación',date:captStart}:null,
+      captEnd&&today<captEnd?{label:'Fin captación',date:captEnd}:null,
+      classDates[0]&&today<classDates[0]?{label:'Primer live',date:classDates[0]}:null,
+      cartOpen&&today<cartOpen?{label:'Carrito abre',date:cartOpen}:null,
+      cartClose&&today<cartClose?{label:'Carrito cierra',date:cartClose}:null,
+    ].filter(Boolean) as {label:string;date:Date}[]
+    return up.length?up.sort((a,b)=>a.date.getTime()-b.date.getTime())[0]:null
+  })()
+
+  const fmtDate = (d:Date) => d.toLocaleDateString('es-EC',{day:'2-digit',month:'short'}).toUpperCase()
+
+  const milestones = [
+    captStart ?{label:'INICIO CAPTACIÓN',date:captStart, color:'#00b0f6'}:null,
+    captEnd   ?{label:'FIN CAPTACIÓN',   date:captEnd,   color:'#FFB800'}:null,
+    ...classDates.map((d,i)=>({label:i===0?'PRIMER LIVE':`LIVE ${i+1}`,date:d,color:'#C084FC'})),
+    cartOpen  ?{label:'CARRITO ABRE',    date:cartOpen,  color:'#00FF94'}:null,
+    cartClose ?{label:'CARRITO CIERRA',  date:cartClose, color:'#FF6B35'}:null,
+  ].filter(Boolean) as {label:string;date:Date;color:string}[]
+
+  return (
+    <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
+      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
+            style={{background:`${project.color||'#00b0f6'}20`,border:`1px solid ${project.color||'#00b0f6'}30`}}>
+            {project.emoji||'🚀'}
+          </div>
+          <div>
+            <p className="font-semibold text-[#E0E0F0] text-sm">{project.name}</p>
+            {project.product_name && (
+              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+                {project.product_name}{project.product_price?` · $${project.product_price.toLocaleString()}`:''}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] px-3 py-1.5 rounded-full font-bold tracking-widest"
+            style={{color:phase.color,background:`${phase.color}18`,border:`1px solid ${phase.color}30`}}>
+            {phase.label}
+          </span>
+          {nextMilestone && (
+            <span className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+              <span style={{color:'#00b0f6'}}>{daysDiff(today,nextMilestone.date)}</span> días para {nextMilestone.label.toLowerCase()}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="px-6 pt-5 pb-6">
+        {/* Barra */}
+        <div className="relative h-1.5 rounded-full mb-8" style={{background:'#1E1E2E'}}>
+          <div className="absolute h-full rounded-full" style={{width:`${todayPct}%`,background:'linear-gradient(90deg,#0014ad,#00b0f6)'}}/>
+          {todayPct>=0&&todayPct<=100&&(
+            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center" style={{left:`${todayPct}%`}}>
+              <div className="w-3 h-3 rounded-full border-2 border-[#00b0f6] z-10" style={{background:'#0A0A0F',boxShadow:'0 0 8px #00b0f6'}}/>
+              <span className="mono text-[8px] text-[#00b0f6] mt-6 whitespace-nowrap tracking-widest">HOY</span>
+            </div>
+          )}
+          {milestones.map((m,i)=>{
+            const p=pct(m.date); if(p<0) return null
+            const isPast=m.date<=today
+            return (
+              <div key={i} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center group" style={{left:`${p}%`}}>
+                <div className="w-3 h-3 rounded-full border-2 z-10 transition-all"
+                  style={{borderColor:isPast?'#2A2A4A':m.color,background:isPast?'#1E1E2E':m.color,boxShadow:isPast?'none':`0 0 6px ${m.color}80`}}/>
+                <div className="absolute bottom-6 bg-[#0D0D14] border border-[#1E1E2E] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap"
+                  style={{boxShadow:'0 4px 16px rgba(0,0,0,0.6)'}}>
+                  <p className="mono text-[9px] font-bold tracking-widest" style={{color:m.color}}>{m.label}</p>
+                  <p className="mono text-[9px] text-[#4A4A6A]">{fmtDate(m.date)}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Labels */}
+        <div className="relative">
+          {milestones.map((m,i)=>{
+            const p=pct(m.date); if(p<0) return null
+            const isPast=m.date<=today; const daysTo=daysDiff(today,m.date)
+            return (
+              <div key={i} className="absolute flex flex-col items-center -translate-x-1/2" style={{left:`${p}%`}}>
+                <span className="mono text-[9px] font-bold tracking-widest" style={{color:isPast?'#2A2A4A':m.color}}>{fmtDate(m.date)}</span>
+                <span className="mono text-[8px] mt-0.5" style={{color:'#4A4A6A'}}>
+                  {isPast?`hace ${Math.abs(daysTo)}d`:daysTo===0?'HOY':`en ${daysTo}d`}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+        <div className="h-8"/>
+
+        {/* Leyenda */}
+        <div className="flex gap-4 flex-wrap mt-2">
+          {captStart&&captEnd&&(
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{background:'#00b0f6'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                CAPTACIÓN · {fmtDate(captStart)} → {fmtDate(captEnd)}<span style={{color:'#00b0f6'}}> ({daysDiff(captStart,captEnd)}d)</span>
+              </span>
+            </div>
+          )}
+          {classDates.length>0&&(
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{background:'#C084FC'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">LIVES · {classDates.length} clase{classDates.length>1?'s':''}</span>
+            </div>
+          )}
+          {cartOpen&&cartClose&&(
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{background:'#00FF94'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                CARRITO · {fmtDate(cartOpen)} → {fmtDate(cartClose)}<span style={{color:'#00FF94'}}> ({daysDiff(cartOpen,cartClose)}d)</span>
+              </span>
+            </div>
+          )}
+          {project.sales_goal&&(
+            <div className="flex items-center gap-1.5">
+              <DollarSign size={9} style={{color:'#FFB800'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                META · <span style={{color:'#FFB800'}}>{project.sales_goal} ventas</span>
+                {project.product_price?` · $${(project.sales_goal*project.product_price).toLocaleString()}`:''}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── PROJECT SELECTOR ─────────────────────────────────────────────────────────
 
-function ProjectSelector({
-  projects,
-  activeProjectId,
-  onChange,
-  onNewProject,
-}: {
-  projects: Project[]
-  activeProjectId: string | null
-  onChange: (id: string | null) => void
-  onNewProject: () => void
+function ProjectSelector({ projects, activeProjectId, onChange, onNewProject }: {
+  projects: Project[]; activeProjectId: string|null
+  onChange: (id: string|null) => void; onNewProject: () => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-
-  const activeProject = projects.find(p => p.id === activeProjectId) ?? null
-
-  const projectStatusColor = (s: string) =>
-    s === 'active' ? '#00FF94' : s === 'planning' ? '#FFB800' : '#4A4A6A'
-  const projectStatusLabel = (s: string) =>
-    ({ active: 'ACTIVO', planning: 'PLANIFICANDO', closed: 'CERRADO' }[s] || s.toUpperCase())
+  const activeProject = projects.find(p=>p.id===activeProjectId)??null
+  const psc = (s:string) => s==='active'?'#00FF94':s==='planning'?'#FFB800':'#4A4A6A'
+  const psl = (s:string) => ({active:'ACTIVO',planning:'PLANIFICANDO',closed:'CERRADO'}[s]||s.toUpperCase())
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    const h = (e:MouseEvent) => { if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
   }, [])
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(o => !o)}
+      <button onClick={()=>setOpen(o=>!o)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:border-[#2E2E4E]"
-        style={{
-          background: '#111118',
-          borderColor: activeProject ? '#0014ad' : '#1E1E2E',
-          minWidth: '180px',
-        }}
-      >
-        <Rocket size={11} style={{ color: activeProject ? '#00b0f6' : '#4A4A6A', flexShrink: 0 }} />
-        <span className="mono text-[11px] flex-1 text-left truncate" style={{ color: activeProject ? '#E0E0F0' : '#4A4A6A' }}>
-          {activeProject ? activeProject.name : 'SIN PROYECTO'}
+        style={{background:'#111118',borderColor:activeProject?'#0014ad':'#1E1E2E',minWidth:'180px'}}>
+        <Rocket size={11} style={{color:activeProject?'#00b0f6':'#4A4A6A',flexShrink:0}}/>
+        <span className="mono text-[11px] flex-1 text-left truncate" style={{color:activeProject?'#E0E0F0':'#4A4A6A'}}>
+          {activeProject?activeProject.name:'SIN PROYECTO'}
         </span>
-        {activeProject && (
-          <span
-            className="mono text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{
-              color: projectStatusColor(activeProject.status),
-              background: `${projectStatusColor(activeProject.status)}15`,
-            }}
-          >
-            {projectStatusLabel(activeProject.status)}
+        {activeProject&&(
+          <span className="mono text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+            style={{color:psc(activeProject.status),background:`${psc(activeProject.status)}15`}}>
+            {psl(activeProject.status)}
           </span>
         )}
-        <ChevronRight
-          size={10}
-          className="text-[#4A4A6A] flex-shrink-0 transition-transform"
-          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
-        />
+        <ChevronRight size={10} className="text-[#4A4A6A] flex-shrink-0 transition-transform" style={{transform:open?'rotate(90deg)':'rotate(0deg)'}}/>
       </button>
 
-      {open && (
-        <div
-          className="absolute top-[calc(100%+8px)] left-0 w-[280px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
-          style={{ background: '#0D0D14', boxShadow: '0 16px 48px rgba(0,0,0,0.6)' }}
-        >
+      {open&&(
+        <div className="absolute top-[calc(100%+8px)] left-0 w-[280px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
+          style={{background:'#0D0D14',boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
           <div className="px-4 py-2 border-b border-[#1E1E2E]">
             <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">PROYECTOS DISPONIBLES</span>
           </div>
-
-          {projects.length === 0 ? (
+          {projects.length===0?(
             <div className="px-4 py-5 text-center">
-              <Rocket size={16} className="text-[#2A2A3A] mx-auto mb-2" />
+              <Rocket size={16} className="text-[#2A2A3A] mx-auto mb-2"/>
               <p className="mono text-[10px] text-[#4A4A6A] mb-1">Sin proyectos creados</p>
-              <p className="mono text-[9px] text-[#2A2A3A]">Crea uno con el botón de abajo</p>
             </div>
-          ) : (
+          ):(
             <div className="py-1">
-              <button
-                onClick={() => { onChange(null); setOpen(false) }}
-                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left"
-              >
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center border border-[#1E1E2E]">
-                  <Star size={10} className="text-[#4A4A6A]" />
-                </div>
+              <button onClick={()=>{onChange(null);setOpen(false)}}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center border border-[#1E1E2E]"><Star size={10} className="text-[#4A4A6A]"/></div>
                 <span className="mono text-[10px] text-[#4A4A6A] flex-1">TODOS LOS DATOS</span>
-                {activeProjectId === null && (
-                  <CheckCircle size={10} style={{ color: '#00b0f6' }} />
-                )}
+                {activeProjectId===null&&<CheckCircle size={10} style={{color:'#00b0f6'}}/>}
               </button>
-
-              {projects.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => { onChange(p.id); setOpen(false) }}
-                  className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left"
-                >
-                  <div
-                    className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${projectStatusColor(p.status)}20` }}
-                  >
-                    <Rocket size={10} style={{ color: projectStatusColor(p.status) }} />
+              {projects.map(p=>(
+                <button key={p.id} onClick={()=>{onChange(p.id);setOpen(false)}}
+                  className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:`${psc(p.status)}20`}}>
+                    <Rocket size={10} style={{color:psc(p.status)}}/>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="mono text-[11px] text-[#E0E0F0] truncate">{p.name}</p>
-                    {p.product_name && (
-                      <p className="mono text-[9px] text-[#4A4A6A] truncate">{p.product_name}</p>
-                    )}
+                    {p.product_name&&<p className="mono text-[9px] text-[#4A4A6A] truncate">{p.product_name}</p>}
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span
-                      className="mono text-[8px] px-1.5 py-0.5 rounded-full"
-                      style={{ color: projectStatusColor(p.status), background: `${projectStatusColor(p.status)}15` }}
-                    >
-                      {projectStatusLabel(p.status)}
-                    </span>
-                    {p.id === activeProjectId && (
-                      <CheckCircle size={9} style={{ color: '#00b0f6' }} />
-                    )}
+                    <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{color:psc(p.status),background:`${psc(p.status)}15`}}>{psl(p.status)}</span>
+                    {p.id===activeProjectId&&<CheckCircle size={9} style={{color:'#00b0f6'}}/>}
                   </div>
                 </button>
               ))}
             </div>
           )}
-
           <div className="border-t border-[#1E1E2E] p-2">
-            <button
-              onClick={() => { setOpen(false); onNewProject() }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}
-            >
-              <Plus size={11} className="text-white" />
+            <button onClick={()=>{setOpen(false);onNewProject()}}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:opacity-90 transition-all"
+              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+              <Plus size={11} className="text-white"/>
               <span className="mono text-[10px] text-white font-bold tracking-widest">NUEVO PROYECTO</span>
             </button>
           </div>
@@ -462,331 +518,194 @@ function ProjectSelector({
 
 // ─── PROJECT WIZARD ───────────────────────────────────────────────────────────
 
-function WInput({
-  label, value, onChange, placeholder, type = 'text',
-}: {
-  label: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  placeholder?: string
-  type?: string
+function WInput({ label,value,onChange,placeholder,type='text' }: {
+  label:string; value:string; onChange:(e:React.ChangeEvent<HTMLInputElement>)=>void; placeholder?:string; type?:string
 }) {
   return (
     <div>
       <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
-      />
+      <input type={type} value={value} onChange={onChange} placeholder={placeholder}
+        className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"/>
     </div>
   )
 }
 
 interface WizardData {
-  name: string
-  product_name: string
-  product_price: string
-  sales_goal: string
-  leads_goal: string
-  ad_budget: string
-  captation_start: string
-  captation_end: string
-  cart_open: string
-  cart_close: string
-  class_dates: string
-  agent_context: string
+  name:string; product_name:string; product_price:string; sales_goal:string; leads_goal:string
+  ad_budget:string; captation_start:string; captation_end:string; cart_open:string; cart_close:string
+  class_dates:string; agent_context:string
 }
-
 const WIZARD_STEPS = [
-  { num: 1, label: 'Identidad',  icon: <Rocket size={13}/> },
-  { num: 2, label: 'Metas',      icon: <Target size={13}/> },
-  { num: 3, label: 'Fechas',     icon: <Calendar size={13}/> },
-  { num: 4, label: 'Contexto',   icon: <BookOpen size={13}/> },
+  {num:1,label:'Identidad'},{num:2,label:'Metas'},{num:3,label:'Fechas'},{num:4,label:'Contexto'},
 ]
 
-function ProjectWizard({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void
-  onCreated: (project: Project) => void
-}) {
-  const [step, setStep] = useState(1)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
-  const [data, setData] = useState<WizardData>({
-    name: '',
-    product_name: '',
-    product_price: '',
-    sales_goal: '',
-    leads_goal: '',
-    ad_budget: '',
-    captation_start: '',
-    captation_end: '',
-    cart_open: '',
-    cart_close: '',
-    class_dates: '',
-    agent_context: '',
+function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:Project)=>void }) {
+  const [step,setStep] = useState(1)
+  const [saving,setSaving] = useState(false)
+  const [error,setError] = useState('')
+  const [data,setData] = useState<WizardData>({
+    name:'',product_name:'',product_price:'',sales_goal:'',leads_goal:'',
+    ad_budget:'',captation_start:'',captation_end:'',cart_open:'',cart_close:'',
+    class_dates:'',agent_context:'',
   })
-
-  const set = (field: keyof WizardData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setData(d => ({ ...d, [field]: e.target.value }))
-
-  const canStep1 = data.name.trim().length > 0
-  const canStep2 = true // metas son opcionales
-  const canStep3 = true // fechas son opcionales
-  const canFinish = canStep1
+  const set = (f:keyof WizardData) => (e:React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>) => setData(d=>({...d,[f]:e.target.value}))
+  const canStep1 = data.name.trim().length>0
 
   const handleCreate = async () => {
-    if (!canFinish) return
-    setSaving(true)
-    setError('')
+    if(!data.name.trim()) return
+    setSaving(true); setError('')
     try {
-      const payload: Record<string, any> = {
-        name: data.name.trim(),
-        product_name: data.product_name.trim() || null,
-        product_price: data.product_price ? parseFloat(data.product_price) : null,
-        sales_goal: data.sales_goal ? parseInt(data.sales_goal) : null,
-        leads_goal: data.leads_goal ? parseInt(data.leads_goal) : null,
-        ad_budget: data.ad_budget ? parseFloat(data.ad_budget) : null,
-        captation_start: data.captation_start || null,
-        captation_end: data.captation_end || null,
-        cart_open: data.cart_open ? new Date(data.cart_open).toISOString() : null,
-        cart_close: data.cart_close ? new Date(data.cart_close).toISOString() : null,
-        agent_context: data.agent_context.trim() || null,
-        status: 'planning',
+      const payload: Record<string,any> = {
+        name:data.name.trim(), product_name:data.product_name.trim()||null,
+        product_price:data.product_price?parseFloat(data.product_price):null,
+        sales_goal:data.sales_goal?parseInt(data.sales_goal):null,
+        leads_goal:data.leads_goal?parseInt(data.leads_goal):null,
+        ad_budget:data.ad_budget?parseFloat(data.ad_budget):null,
+        captation_start:data.captation_start||null, captation_end:data.captation_end||null,
+        cart_open:data.cart_open?new Date(data.cart_open).toISOString():null,
+        cart_close:data.cart_close?new Date(data.cart_close).toISOString():null,
+        agent_context:data.agent_context.trim()||null, status:'planning',
       }
-
-      // class_dates: convertir texto libre en array JSON si hay contenido
-      if (data.class_dates.trim()) {
-        payload.class_dates = data.class_dates.trim().split('\n').filter(Boolean).map(d => d.trim())
-      }
-
-      const { data: newProject, error: err } = await supabase
-        .from('kanshi_projects')
-        .insert(payload)
-        .select('id, name, product_name, status, captation_start, cart_open')
-        .single()
-
-      if (err) throw err
-      onCreated(newProject as Project)
-    } catch (e: any) {
-      setError(e?.message || 'Error al crear el proyecto')
-    } finally {
-      setSaving(false)
-    }
+      if(data.class_dates.trim()) payload.class_dates=data.class_dates.trim().split('\n').filter(Boolean).map(d=>d.trim())
+      const {data:np,error:err} = await supabase.from('kanshi_projects').insert(payload)
+        .select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji').single()
+      if(err) throw err
+      onCreated(np as Project)
+    } catch(e:any) { setError(e?.message||'Error al crear el proyecto') }
+    finally { setSaving(false) }
   }
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
       <div className="relative w-full max-w-xl rounded-2xl border border-[#1E1E2E] overflow-hidden"
-        style={{ background: '#0D0D14', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
-
-        {/* ── Header ── */}
-        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between sticky top-0 z-10"
-          style={{ background: 'rgba(13,13,20,0.98)' }}>
+        style={{background:'#0D0D14',maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,0.7)'}}>
+        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between sticky top-0 z-10" style={{background:'rgba(13,13,20,0.98)'}}>
           <div>
             <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVO PROYECTO — PASO {step} DE 4</p>
             <p className="font-semibold text-[#E0E0F0] text-sm mt-0.5">
-              {step === 1 ? 'Identidad del lanzamiento'
-               : step === 2 ? 'Metas del lanzamiento'
-               : step === 3 ? 'Fechas del calendario'
-               : 'Contexto para el agente SAM'}
+              {step===1?'Identidad del lanzamiento':step===2?'Metas del lanzamiento':step===3?'Fechas del calendario':'Contexto para el agente SAM'}
             </p>
           </div>
-          <button onClick={onClose}
-            className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
+          <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
             <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
           </button>
         </div>
-
-        {/* ── Progress bar ── */}
         <div className="h-0.5 bg-[#1E1E2E]">
-          <div className="h-full transition-all duration-500"
-            style={{ width: `${(step / 4) * 100}%`, background: 'linear-gradient(90deg,#0014ad,#00a7e3)' }}/>
+          <div className="h-full transition-all duration-500" style={{width:`${(step/4)*100}%`,background:'linear-gradient(90deg,#0014ad,#00a7e3)'}}/>
         </div>
-
-        {/* ── Step indicators ── */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-[#1E1E2E]">
-          {WIZARD_STEPS.map((s, i) => (
+          {WIZARD_STEPS.map((s,i)=>(
             <div key={s.num} className="flex items-center gap-2">
               <div className="flex items-center gap-1.5">
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center mono text-[9px] font-bold transition-all"
-                  style={{
-                    background: step > s.num ? '#00FF94' : step === s.num ? 'linear-gradient(135deg,#0014ad,#00a7e3)' : '#1E1E2E',
-                    color: step >= s.num ? 'white' : '#4A4A6A',
-                  }}
-                >
-                  {step > s.num ? '✓' : s.num}
+                <div className="w-5 h-5 rounded-full flex items-center justify-center mono text-[9px] font-bold transition-all"
+                  style={{background:step>s.num?'#00FF94':step===s.num?'linear-gradient(135deg,#0014ad,#00a7e3)':'#1E1E2E',color:step>=s.num?'white':'#4A4A6A'}}>
+                  {step>s.num?'✓':s.num}
                 </div>
-                <span className="mono text-[9px] tracking-widest hidden sm:block"
-                  style={{ color: step === s.num ? '#E0E0F0' : '#4A4A6A' }}>
-                  {s.label.toUpperCase()}
-                </span>
+                <span className="mono text-[9px] tracking-widest hidden sm:block" style={{color:step===s.num?'#E0E0F0':'#4A4A6A'}}>{s.label.toUpperCase()}</span>
               </div>
-              {i < WIZARD_STEPS.length - 1 && (
-                <div className="w-6 h-px mx-1" style={{ background: step > s.num ? '#00FF94' : '#1E1E2E' }}/>
-              )}
+              {i<WIZARD_STEPS.length-1&&<div className="w-6 h-px mx-1" style={{background:step>s.num?'#00FF94':'#1E1E2E'}}/>}
             </div>
           ))}
         </div>
 
-        {/* ── Content ── */}
         <div className="p-6 space-y-4">
-
-          {/* PASO 1 — Identidad */}
-          {step === 1 && (
-            <>
-              <WInput label="NOMBRE DEL PROYECTO *" value={data.name} onChange={set('name')} placeholder="ej. SamurAI Abril 2026"/>
-              <WInput label="NOMBRE DEL PRODUCTO" value={data.product_name} onChange={set('product_name')} placeholder="ej. SamurAI — Curso de IA para emprendedores"/>
-              <WInput label="PRECIO DEL PRODUCTO (USD)" value={data.product_price} onChange={set('product_price')} type="number" placeholder="ej. 297"/>
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
-                <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
-                  El nombre del proyecto aparecerá en el selector del header. Usa un nombre que identifique claramente el lanzamiento.
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* PASO 2 — Metas */}
-          {step === 2 && (
-            <>
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
-                <Target size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
-                  Todas las metas son opcionales, pero si las defines KANSHI podrá mostrarte el avance vs objetivo en tiempo real.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <WInput label="META DE VENTAS (unidades)" value={data.sales_goal} onChange={set('sales_goal')} type="number" placeholder="ej. 30"/>
-                <WInput label="META DE LEADS" value={data.leads_goal} onChange={set('leads_goal')} type="number" placeholder="ej. 500"/>
-              </div>
-              <WInput label="PRESUPUESTO DE ADS (USD)" value={data.ad_budget} onChange={set('ad_budget')} type="number" placeholder="ej. 1500"/>
-              {data.sales_goal && data.product_price && (
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
-                  <span className="mono text-[10px] text-[#4A4A6A]">REVENUE PROYECTADO</span>
-                  <span className="mono text-sm font-bold" style={{ color: '#00FF94' }}>
-                    ${(parseFloat(data.sales_goal) * parseFloat(data.product_price)).toLocaleString('en-US')} USD
-                  </span>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* PASO 3 — Fechas */}
-          {step === 3 && (
-            <>
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
-                <Calendar size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
-                  Las fechas permiten que el agente SAM entienda en qué fase del lanzamiento está y ajuste su comunicación automáticamente.
-                </p>
-              </div>
-              <div>
-                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CAPTACIÓN DE LEADS</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <WInput label="INICIO CAPTACIÓN" value={data.captation_start} onChange={set('captation_start')} type="date"/>
-                  <WInput label="FIN CAPTACIÓN" value={data.captation_end} onChange={set('captation_end')} type="date"/>
-                </div>
-              </div>
-              <div>
-                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CARRITO</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <WInput label="APERTURA CARRITO" value={data.cart_open} onChange={set('cart_open')} type="datetime-local"/>
-                  <WInput label="CIERRE CARRITO" value={data.cart_close} onChange={set('cart_close')} type="datetime-local"/>
-                </div>
-              </div>
-              <div>
-                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">
-                  FECHAS DE CLASES / LIVES (una por línea)
-                </label>
-                <textarea
-                  value={data.class_dates}
-                  onChange={set('class_dates')}
-                  placeholder={'2026-04-07 — Clase 1: Introducción\n2026-04-09 — Clase 2: Estrategia\n2026-04-11 — Live de cierre'}
-                  rows={4}
-                  className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
-                />
-              </div>
-            </>
-          )}
-
-          {/* PASO 4 — Contexto SAM */}
-          {step === 4 && (
-            <>
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
-                <Brain size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-                <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
-                  Este texto se inyectará en el prompt del agente SAM cuando opere en este proyecto. Descríbele el producto, el avatar del cliente ideal, objeciones frecuentes y tono de comunicación.
-                </p>
-              </div>
-              <div>
-                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">
-                  CONTEXTO DEL AGENTE (opcional)
-                </label>
-                <textarea
-                  value={data.agent_context}
-                  onChange={set('agent_context')}
-                  placeholder="ej. SamurAI es un curso de 6 semanas para emprendedores latinoamericanos que quieren implementar IA en sus negocios sin saber programar. El cliente ideal tiene entre 28-45 años, tiene un negocio propio o trabaja como freelancer, y siente que la IA lo está dejando atrás. El precio es $297. La principal objeción es el tiempo..."
-                  rows={8}
-                  className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
-                />
-              </div>
-              <div className="mono text-[9px] text-[#4A4A6A] text-right">{data.agent_context.length} caracteres</div>
-
-              {/* Resumen final */}
-              <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#111118' }}>
-                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">RESUMEN DEL PROYECTO</p>
-                <SummaryRow label="Nombre" value={data.name || '—'}/>
-                {data.product_name && <SummaryRow label="Producto" value={data.product_name}/>}
-                {data.product_price && <SummaryRow label="Precio" value={`$${data.product_price} USD`}/>}
-                {data.sales_goal && <SummaryRow label="Meta ventas" value={`${data.sales_goal} unidades`} highlight/>}
-                {data.captation_start && <SummaryRow label="Inicio captación" value={data.captation_start}/>}
-                {data.cart_open && <SummaryRow label="Apertura carrito" value={data.cart_open.replace('T', ' ')}/>}
-              </div>
-            </>
-          )}
-
-          {error && (
-            <div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3">
-              <p className="text-xs text-[#FF6B35]">{error}</p>
+          {step===1&&<>
+            <WInput label="NOMBRE DEL PROYECTO *" value={data.name} onChange={set('name')} placeholder="ej. SamurAI Abril 2026"/>
+            <WInput label="NOMBRE DEL PRODUCTO" value={data.product_name} onChange={set('product_name')} placeholder="ej. SamurAI — Curso de IA"/>
+            <WInput label="PRECIO DEL PRODUCTO (USD)" value={data.product_price} onChange={set('product_price')} type="number" placeholder="ej. 297"/>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
+              <Info size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">El nombre del proyecto aparecerá en el selector del header.</p>
             </div>
-          )}
+          </>}
+
+          {step===2&&<>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
+              <Target size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">Todas las metas son opcionales pero KANSHI las usará para mostrar avance vs objetivo.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <WInput label="META DE VENTAS (unidades)" value={data.sales_goal} onChange={set('sales_goal')} type="number" placeholder="ej. 30"/>
+              <WInput label="META DE LEADS" value={data.leads_goal} onChange={set('leads_goal')} type="number" placeholder="ej. 500"/>
+            </div>
+            <WInput label="PRESUPUESTO DE ADS (USD)" value={data.ad_budget} onChange={set('ad_budget')} type="number" placeholder="ej. 1500"/>
+            {data.sales_goal&&data.product_price&&(
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
+                <span className="mono text-[10px] text-[#4A4A6A]">REVENUE PROYECTADO</span>
+                <span className="mono text-sm font-bold" style={{color:'#00FF94'}}>${(parseFloat(data.sales_goal)*parseFloat(data.product_price)).toLocaleString('en-US')} USD</span>
+              </div>
+            )}
+          </>}
+
+          {step===3&&<>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
+              <Calendar size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">Las fechas permiten que SAM entienda en qué fase del lanzamiento está.</p>
+            </div>
+            <div>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CAPTACIÓN DE LEADS</p>
+              <div className="grid grid-cols-2 gap-4">
+                <WInput label="INICIO CAPTACIÓN" value={data.captation_start} onChange={set('captation_start')} type="date"/>
+                <WInput label="FIN CAPTACIÓN" value={data.captation_end} onChange={set('captation_end')} type="date"/>
+              </div>
+            </div>
+            <div>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CARRITO</p>
+              <div className="grid grid-cols-2 gap-4">
+                <WInput label="APERTURA CARRITO" value={data.cart_open} onChange={set('cart_open')} type="datetime-local"/>
+                <WInput label="CIERRE CARRITO" value={data.cart_close} onChange={set('cart_close')} type="datetime-local"/>
+              </div>
+            </div>
+            <div>
+              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">FECHAS DE CLASES / LIVES (una por línea)</label>
+              <textarea value={data.class_dates} onChange={set('class_dates')}
+                placeholder={'2026-04-07\n2026-04-09\n2026-04-11'} rows={4}
+                className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"/>
+            </div>
+          </>}
+
+          {step===4&&<>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
+              <Brain size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">Este texto se inyectará en el prompt de SAM para que conozca el producto y el avatar.</p>
+            </div>
+            <div>
+              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">CONTEXTO DEL AGENTE (opcional)</label>
+              <textarea value={data.agent_context} onChange={set('agent_context')}
+                placeholder="ej. SamurAI es un curso de 6 semanas para emprendedores latinoamericanos..." rows={8}
+                className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"/>
+            </div>
+            <div className="mono text-[9px] text-[#4A4A6A] text-right">{data.agent_context.length} caracteres</div>
+            <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-2" style={{background:'#111118'}}>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">RESUMEN DEL PROYECTO</p>
+              <SummaryRow label="Nombre" value={data.name||'—'}/>
+              {data.product_name&&<SummaryRow label="Producto" value={data.product_name}/>}
+              {data.product_price&&<SummaryRow label="Precio" value={`$${data.product_price} USD`}/>}
+              {data.sales_goal&&<SummaryRow label="Meta ventas" value={`${data.sales_goal} unidades`} highlight/>}
+              {data.captation_start&&<SummaryRow label="Inicio captación" value={data.captation_start}/>}
+              {data.cart_open&&<SummaryRow label="Apertura carrito" value={data.cart_open.replace('T',' ')}/>}
+            </div>
+          </>}
+          {error&&<div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3"><p className="text-xs text-[#FF6B35]">{error}</p></div>}
         </div>
 
-        {/* ── Footer navigation ── */}
-        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0"
-          style={{ background: 'rgba(13,13,20,0.98)' }}>
-          <button
-            onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
+          <button onClick={()=>step>1?setStep(step-1):onClose()}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
-            <ChevronLeft size={12}/> {step === 1 ? 'CANCELAR' : 'ANTERIOR'}
+            <ChevronLeft size={12}/> {step===1?'CANCELAR':'ANTERIOR'}
           </button>
-          {step < 4 ? (
-            <button
-              onClick={() => setStep(step + 1)}
-              disabled={step === 1 && !canStep1}
+          {step<4?(
+            <button onClick={()=>setStep(step+1)} disabled={step===1&&!canStep1}
               className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
               SIGUIENTE <ChevronRight size={12}/>
             </button>
-          ) : (
-            <button
-              onClick={handleCreate}
-              disabled={!canFinish || saving}
+          ):(
+            <button onClick={handleCreate} disabled={!canStep1||saving}
               className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
-              {saving
-                ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> CREANDO...</>
-                : <><Rocket size={12}/> CREAR PROYECTO</>
-              }
+              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+              {saving?<><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> CREANDO...</>:<><Rocket size={12}/> CREAR PROYECTO</>}
             </button>
           )}
         </div>
@@ -798,172 +717,140 @@ function ProjectWizard({
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
-  const [kpi, setKpi] = useState<KPI|null>(null)
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [templates, setTemplates] = useState<Template[]>([])
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [chartData, setChartData] = useState<ChartPoint[]>([])
-  const [recentMsgs, setRecentMsgs] = useState<RecentMsg[]>([])
-  const [selectedLead, setSelectedLead] = useState<Lead|null>(null)
-  const [showCreator, setShowCreator] = useState(false)
-  const [showProjectWizard, setShowProjectWizard] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [connected, setConnected] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState(new Date())
-  const [activeTab, setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'>('overview')
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const [leadsPage, setLeadsPage] = useState(1)
-  const [campaignsPage, setCampaignsPage] = useState(1)
-
-  // ── PROYECTOS ──
-  const [projects, setProjects] = useState<Project[]>([])
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('kanshi_active_project')
+  const [authenticated,setAuthenticated] = useState<boolean|null>(null)
+  const [kpi,setKpi] = useState<KPI|null>(null)
+  const [leads,setLeads] = useState<Lead[]>([])
+  const [templates,setTemplates] = useState<Template[]>([])
+  const [campaigns,setCampaigns] = useState<Campaign[]>([])
+  const [chartData,setChartData] = useState<ChartPoint[]>([])
+  const [recentMsgs,setRecentMsgs] = useState<RecentMsg[]>([])
+  const [selectedLead,setSelectedLead] = useState<Lead|null>(null)
+  const [showCreator,setShowCreator] = useState(false)
+  const [showProjectWizard,setShowProjectWizard] = useState(false)
+  const [loading,setLoading] = useState(true)
+  const [connected,setConnected] = useState(false)
+  const [lastUpdate,setLastUpdate] = useState(new Date())
+  const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'>('overview')
+  const [toasts,setToasts] = useState<Toast[]>([])
+  const [leadsPage,setLeadsPage] = useState(1)
+  const [campaignsPage,setCampaignsPage] = useState(1)
+  const [projects,setProjects] = useState<Project[]>([])
+  const [activeProjectId,setActiveProjectId] = useState<string|null>(()=>{
+    if(typeof window!=='undefined') return localStorage.getItem('kanshi_active_project')
     return null
   })
 
-  const addToast = useCallback((type: Toast['type'], message: string) => {
-    const id = `${Date.now()}-${Math.random()}`
-    setToasts(p => [...p, { id, type, message }])
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4500)
-  }, [])
+  const addToast = useCallback((type:Toast['type'],message:string)=>{
+    const id=`${Date.now()}-${Math.random()}`
+    setToasts(p=>[...p,{id,type,message}])
+    setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),4500)
+  },[])
+  const removeToast = useCallback((id:string)=>setToasts(p=>p.filter(t=>t.id!==id)),[])
 
-  const removeToast = useCallback((id: string) => {
-    setToasts(p => p.filter(t => t.id !== id))
-  }, [])
+  useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeTab])
+  useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeProjectId])
+  useEffect(()=>{const s=localStorage.getItem(AUTH_KEY);setAuthenticated(s==='true')},[])
 
-  useEffect(() => {
-    setLeadsPage(1)
-    setCampaignsPage(1)
-  }, [activeTab])
-
-  // Reset paginación al cambiar de proyecto
-  useEffect(() => {
-    setLeadsPage(1)
-    setCampaignsPage(1)
-  }, [activeProjectId])
-
-  useEffect(() => {
-    const stored = localStorage.getItem(AUTH_KEY)
-    setAuthenticated(stored === 'true')
-  }, [])
-
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async ()=>{
     try {
-      // Queries base — se filtran por proyecto activo si hay uno seleccionado
-      let msgsQuery = supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200)
-      let campsQuery = supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200)
-      let leadsQuery = supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500)
-      let contactsCountQuery = supabase.from('wa_contacts').select('id',{count:'exact',head:true})
-
-      if (activeProjectId) {
-        msgsQuery = msgsQuery.eq('project_id', activeProjectId)
-        campsQuery = campsQuery.eq('project_id', activeProjectId)
-        leadsQuery = leadsQuery.eq('project_id', activeProjectId)
-        contactsCountQuery = contactsCountQuery.eq('project_id', activeProjectId)
+      let msgsQ = supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200)
+      let campsQ = supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200)
+      let leadsQ = supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500)
+      let cntQ   = supabase.from('wa_contacts').select('id',{count:'exact',head:true})
+      if(activeProjectId){
+        msgsQ=msgsQ.eq('project_id',activeProjectId)
+        campsQ=campsQ.eq('project_id',activeProjectId)
+        leadsQ=leadsQ.eq('project_id',activeProjectId)
+        cntQ=cntQ.eq('project_id',activeProjectId)
       }
-
-      const [msgsRes, convsRes, contactsCountRes, campsRes, leadsRes, tplsRes, projectsRes] = await Promise.all([
-        msgsQuery,
-        supabase.from('wa_conversations').select('status'),
-        contactsCountQuery,
-        campsQuery,
-        leadsQuery,
+      const [msgsR,convsR,cntR,campsR,leadsR,tplsR,projR] = await Promise.all([
+        msgsQ, supabase.from('wa_conversations').select('status'), cntQ, campsQ, leadsQ,
         supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
-        supabase.from('kanshi_projects').select('id, name, product_name, status, captation_start, cart_open').order('created_at',{ascending:false}),
+        supabase.from('kanshi_projects').select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji').order('created_at',{ascending:false}),
       ])
-      const msgs = msgsRes.data||[]
-      const leadsData: Lead[] = leadsRes.data||[]
-      const campData: Campaign[] = campsRes.data||[]
-      const tplData: Template[] = tplsRes.data||[]
-
+      const msgs=msgsR.data||[]; const leadsData:Lead[]=leadsR.data||[]
+      const campData:Campaign[]=campsR.data||[]; const tplData:Template[]=tplsR.data||[]
       setLeads(leadsData); setCampaigns(campData); setTemplates(tplData)
       setRecentMsgs((msgs as RecentMsg[]).slice(0,10))
-      if (projectsRes.data) setProjects(projectsRes.data)
+      if(projR.data) setProjects(projR.data)
 
-      const inbound = msgs.filter((m:any)=>m.direction==='inbound').length
-      const outbound = msgs.filter((m:any)=>m.direction==='outbound').length
-      const totalSent = campData.reduce((s,c)=>s+(c.sent_count||0),0)
-      const totalDelivered = campData.reduce((s,c)=>s+(c.delivered_count||0),0)
-      const totalRead = campData.reduce((s,c)=>s+(c.read_count||0),0)
-      const totalReplied = campData.reduce((s,c)=>s+(c.reply_count||0),0)
-      const scored = leadsData.filter(l=>l.engagement_score>0)
-      const avgEngagement = scored.length>0?Math.round(scored.reduce((s,l)=>s+l.engagement_score,0)/scored.length*10)/10:0
-      const profilingComplete = leadsData.filter(l=>['perfil_completo','calentando','lives','clases','VIP','comprador'].includes(l.agent_stage)).length
-
+      const inbound=msgs.filter((m:any)=>m.direction==='inbound').length
+      const outbound=msgs.filter((m:any)=>m.direction==='outbound').length
+      const totalSent=campData.reduce((s,c)=>s+(c.sent_count||0),0)
+      const totalDelivered=campData.reduce((s,c)=>s+(c.delivered_count||0),0)
+      const totalRead=campData.reduce((s,c)=>s+(c.read_count||0),0)
+      const totalReplied=campData.reduce((s,c)=>s+(c.reply_count||0),0)
+      const scored=leadsData.filter(l=>l.engagement_score>0)
+      const avgEngagement=scored.length>0?Math.round(scored.reduce((s,l)=>s+l.engagement_score,0)/scored.length*10)/10:0
+      const profilingComplete=leadsData.filter(l=>['perfil_completo','calentando','lives','clases','VIP','comprador'].includes(l.agent_stage)).length
       setKpi({
-        totalMessages:msgs.length, inbound, outbound,
-        uniqueContacts:contactsCountRes.count||0,
-        totalSent, totalDelivered, totalRead,
-        deliveryRate: totalSent>0?Math.round((totalDelivered/totalSent)*100):0,
-        readRate: totalDelivered>0?Math.round((totalRead/totalDelivered)*100):0,
-        replyRate: totalSent>0?Math.round((totalReplied/totalSent)*100):0,
-        avgEngagement, profilingComplete,
-        profilingRate: leadsData.length>0?Math.round((profilingComplete/leadsData.length)*100):0,
+        totalMessages:msgs.length,inbound,outbound,uniqueContacts:cntR.count||0,
+        totalSent,totalDelivered,totalRead,
+        deliveryRate:totalSent>0?Math.round((totalDelivered/totalSent)*100):0,
+        readRate:totalDelivered>0?Math.round((totalRead/totalDelivered)*100):0,
+        replyRate:totalSent>0?Math.round((totalReplied/totalSent)*100):0,
+        avgEngagement,profilingComplete,
+        profilingRate:leadsData.length>0?Math.round((profilingComplete/leadsData.length)*100):0,
       })
-
-      const hourly: Record<string,{inbound:number;outbound:number}> = {}
+      const hourly:Record<string,{inbound:number;outbound:number}>={}
       for(let i=23;i>=0;i--){const d=new Date();d.setHours(d.getHours()-i,0,0,0);hourly[format(d,'HH:00')]={inbound:0,outbound:0}}
       msgs.forEach((m:any)=>{const h=format(new Date(m.created_at),'HH:00');if(hourly[h]){if(m.direction==='inbound')hourly[h].inbound++;else hourly[h].outbound++}})
       setChartData(Object.entries(hourly).map(([hour,v])=>({hour,...v})))
       setLastUpdate(new Date()); setLoading(false)
     } catch(e){console.error(e);setLoading(false)}
-  }, [activeProjectId])
+  },[activeProjectId])
 
-  const handleCampaignAction = useCallback(async (camp: Campaign, action: 'paused' | 'cancelled') => {
-    const { error } = await supabase.from('wa_campaigns').update({ status: action }).eq('id', camp.id)
-    if (error) {
-      addToast('error', `Error: ${error.message}`)
-    } else {
-      addToast(action === 'paused' ? 'warning' : 'error', `"${camp.name}" ${action === 'paused' ? 'pausada' : 'cancelada'}`)
-      setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: action } : c))
+  const handleCampaignAction = useCallback(async(camp:Campaign,action:'paused'|'cancelled')=>{
+    const {error}=await supabase.from('wa_campaigns').update({status:action}).eq('id',camp.id)
+    if(error){addToast('error',`Error: ${error.message}`)}
+    else{
+      addToast(action==='paused'?'warning':'error',`"${camp.name}" ${action==='paused'?'pausada':'cancelada'}`)
+      setCampaigns(prev=>prev.map(c=>c.id===camp.id?{...c,status:action}:c))
     }
-  }, [addToast])
+  },[addToast])
 
-  const handleProjectChange = useCallback((projectId: string | null) => {
+  const handleProjectChange = useCallback((projectId:string|null)=>{
     setActiveProjectId(projectId)
-    if (projectId) localStorage.setItem('kanshi_active_project', projectId)
+    if(projectId) localStorage.setItem('kanshi_active_project',projectId)
     else localStorage.removeItem('kanshi_active_project')
-  }, [])
+  },[])
 
-  const handleProjectCreated = useCallback((newProject: Project) => {
-    setProjects(prev => [newProject, ...prev])
+  const handleProjectCreated = useCallback((newProject:Project)=>{
+    setProjects(prev=>[newProject,...prev])
     setActiveProjectId(newProject.id)
-    localStorage.setItem('kanshi_active_project', newProject.id)
+    localStorage.setItem('kanshi_active_project',newProject.id)
     setShowProjectWizard(false)
-    addToast('success', `Proyecto "${newProject.name}" creado — ahora está activo`)
-  }, [addToast])
+    addToast('success',`Proyecto "${newProject.name}" creado — ahora está activo`)
+  },[addToast])
 
   useEffect(()=>{
     if(!authenticated) return
     fetchData()
-    const ch = supabase.channel('dash-v2')
+    const ch=supabase.channel('dash-v2')
       .on('postgres_changes',{event:'*',schema:'public',table:'wa_messages'},fetchData)
       .on('postgres_changes',{event:'*',schema:'public',table:'wa_contacts'},fetchData)
-      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'wa_campaigns'},(payload) => {
-        setCampaigns(prev => prev.map(c => c.id === (payload.new as Campaign).id ? { ...c, ...(payload.new as Campaign) } : c))
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'wa_campaigns'},(payload)=>{
+        setCampaigns(prev=>prev.map(c=>c.id===(payload.new as Campaign).id?{...c,...(payload.new as Campaign)}:c))
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'wa_campaigns'},fetchData)
       .subscribe(s=>setConnected(s==='SUBSCRIBED'))
-    const iv = setInterval(fetchData,30000)
+    const iv=setInterval(fetchData,30000)
     return ()=>{supabase.removeChannel(ch);clearInterval(iv)}
-  },[fetchData, authenticated, activeProjectId])
+  },[fetchData,authenticated,activeProjectId])
 
-  const segDist = ['caliente','templado','frio'].map(s=>({name:s==='frio'?'Frío':s.charAt(0).toUpperCase()+s.slice(1),value:leads.filter(l=>l.segmento===s).length,color:segColor(s)})).filter(d=>d.value>0)
-  const urgDist = ['alta','media','baja'].map(u=>({name:u.charAt(0).toUpperCase()+u.slice(1),value:leads.filter(l=>l.urgencia_financiera===u).length,color:urgColor(u)})).filter(d=>d.value>0)
-  const comDist  = ['alto','medio','bajo'].map(c=>({name:c.charAt(0).toUpperCase()+c.slice(1),value:leads.filter(l=>l.nivel_compromiso===c).length,color:comColor(c)})).filter(d=>d.value>0)
+  const segDist=['caliente','templado','frio'].map(s=>({name:s==='frio'?'Frío':s.charAt(0).toUpperCase()+s.slice(1),value:leads.filter(l=>l.segmento===s).length,color:segColor(s)})).filter(d=>d.value>0)
+  const urgDist=['alta','media','baja'].map(u=>({name:u.charAt(0).toUpperCase()+u.slice(1),value:leads.filter(l=>l.urgencia_financiera===u).length,color:urgColor(u)})).filter(d=>d.value>0)
+  const comDist=['alto','medio','bajo'].map(c=>({name:c.charAt(0).toUpperCase()+c.slice(1),value:leads.filter(l=>l.nivel_compromiso===c).length,color:comColor(c)})).filter(d=>d.value>0)
+  const profiledLeads=useMemo(()=>leads.filter(l=>l.situacion_actual),[leads])
+  const paginatedLeads=useMemo(()=>profiledLeads.slice((leadsPage-1)*PAGE_SIZE,leadsPage*PAGE_SIZE),[profiledLeads,leadsPage])
+  const paginatedCampaigns=useMemo(()=>campaigns.slice((campaignsPage-1)*PAGE_SIZE,campaignsPage*PAGE_SIZE),[campaigns,campaignsPage])
 
-  const profiledLeads = useMemo(() => leads.filter(l => l.situacion_actual), [leads])
-  const paginatedLeads = useMemo(() => profiledLeads.slice((leadsPage-1)*PAGE_SIZE, leadsPage*PAGE_SIZE), [profiledLeads, leadsPage])
-  const paginatedCampaigns = useMemo(() => campaigns.slice((campaignsPage-1)*PAGE_SIZE, campaignsPage*PAGE_SIZE), [campaigns, campaignsPage])
-
-  if (authenticated === null) return (
+  if(authenticated===null) return(
     <div className="min-h-screen flex items-center justify-center" style={{background:'#090c4c'}}>
       <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:'#00b0f6',borderTopColor:'transparent'}}/>
     </div>
   )
-  if (!authenticated) return <LoginScreen onAuth={() => setAuthenticated(true)} />
+  if(!authenticated) return <LoginScreen onAuth={()=>setAuthenticated(true)}/>
   if(loading) return(
     <div className="min-h-screen flex items-center justify-center" style={{background:'#0A0A0F'}}>
       <div className="text-center">
@@ -976,20 +863,13 @@ export default function Dashboard() {
 
   return(
     <div className="min-h-screen" style={{background:'#0A0A0F'}}>
-      <style>{`
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(20px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
+      <style>{`@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* HEADER */}
       <header className="border-b border-[#1E1E2E] px-6 py-4 flex items-center justify-between sticky top-0 z-50"
         style={{background:'rgba(10,10,15,0.97)',backdropFilter:'blur(12px)'}}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5" style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
-            <KanshiLogo size={24}/>
-          </div>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5" style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}><KanshiLogo size={24}/></div>
           <div>
             <h1 className="font-bold text-white tracking-[0.18em] text-sm" style={{fontFamily:'monospace'}}>KANSHI</h1>
             <p className="mono text-[9px] tracking-widest" style={{color:'#00b0f6'}}>MONITORING SYSTEM · GPC</p>
@@ -1005,18 +885,8 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-
-          {/* ── SELECTOR DE PROYECTO ── */}
-          <ProjectSelector
-            projects={projects}
-            activeProjectId={activeProjectId}
-            onChange={handleProjectChange}
-            onNewProject={() => setShowProjectWizard(true)}
-          />
-
-          {/* ── BÚSQUEDA GLOBAL ── */}
-          <GlobalSearch leads={leads} onSelect={(lead) => setSelectedLead(lead)}/>
-
+          <ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)}/>
+          <GlobalSearch leads={leads} onSelect={lead=>setSelectedLead(lead)}/>
           <div className="flex items-center gap-3">
             {connected
               ?<><Wifi size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px]" style={{color:'#00b0f6'}}>LIVE</span><div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{background:'#00b0f6'}}/></>
@@ -1037,7 +907,10 @@ export default function Dashboard() {
       <main className="p-6 max-w-[1600px] mx-auto space-y-6">
 
         {/* ══ OVERVIEW ══ */}
-        {activeTab==='overview' && <>
+        {activeTab==='overview'&&<>
+          {activeProjectId&&projects.find(p=>p.id===activeProjectId)&&(
+            <ProjectTimeline project={projects.find(p=>p.id===activeProjectId)!}/>
+          )}
           <Sec label="MENSAJES"><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <KCard icon={<MessageSquare size={14}/>} label="TOTAL" value={kpi?.totalMessages??0} color="#00FF94"/>
             <KCard icon={<TrendingUp size={14}/>} label="ENTRANTES" value={kpi?.inbound??0} color="#00b0f6"/>
@@ -1082,9 +955,8 @@ export default function Dashboard() {
             <div className="rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
               <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">ACTIVIDAD RECIENTE</p>
               <div className="space-y-3">
-                {recentMsgs.length===0
-                  ?<p className="text-[#4A4A6A] text-xs text-center mt-6">Sin mensajes</p>
-                  :recentMsgs.map((m,i)=>(
+                {recentMsgs.length===0?<p className="text-[#4A4A6A] text-xs text-center mt-6">Sin mensajes</p>
+                :recentMsgs.map((m,i)=>(
                   <div key={i} className="flex items-start gap-2.5">
                     <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{background:m.direction==='inbound'?'#00FF94':'#00b0f6'}}/>
                     <div className="flex-1 min-w-0">
@@ -1102,11 +974,10 @@ export default function Dashboard() {
         </>}
 
         {/* ══ PIPELINE ══ */}
-        {activeTab==='pipeline' && (
+        {activeTab==='pipeline'&&(
           <div className="space-y-3">
             {STAGES.map(stage=>{
-              const stageLeads = leads.filter(l=>l.agent_stage===stage.key)
-              if(stageLeads.length===0) return null
+              const sl=leads.filter(l=>l.agent_stage===stage.key); if(sl.length===0) return null
               return(
                 <div key={stage.key} className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
                   <div className="px-5 py-3 border-b border-[#1E1E2E] flex items-center justify-between">
@@ -1114,10 +985,10 @@ export default function Dashboard() {
                       <div className="w-2 h-2 rounded-full" style={{background:stage.color}}/>
                       <span className="mono text-[11px] tracking-widest font-bold" style={{color:stage.color}}>{stage.label.toUpperCase()}</span>
                     </div>
-                    <span className="mono text-[10px] text-[#4A4A6A]">{stageLeads.length} leads</span>
+                    <span className="mono text-[10px] text-[#4A4A6A]">{sl.length} leads</span>
                   </div>
                   <div className="divide-y divide-[#1E1E2E]">
-                    {stageLeads.slice(0,5).map((lead,i)=>(
+                    {sl.slice(0,5).map((lead,i)=>(
                       <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -1132,11 +1003,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                     ))}
-                    {stageLeads.length>5&&(
-                      <div className="px-5 py-2 text-center">
-                        <span className="mono text-[9px] text-[#4A4A6A]">+{stageLeads.length-5} más en esta etapa</span>
-                      </div>
-                    )}
+                    {sl.length>5&&<div className="px-5 py-2 text-center"><span className="mono text-[9px] text-[#4A4A6A]">+{sl.length-5} más en esta etapa</span></div>}
                   </div>
                 </div>
               )
@@ -1145,7 +1012,7 @@ export default function Dashboard() {
         )}
 
         {/* ══ PSICOGRÁFICO ══ */}
-        {activeTab==='psico' && <>
+        {activeTab==='psico'&&<>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <MiniDist title="SEGMENTO" data={segDist} total={leads.length}/>
             <MiniDist title="URGENCIA FINANCIERA" data={urgDist} total={leads.length}/>
@@ -1193,15 +1060,13 @@ export default function Dashboard() {
                   </tbody>
                 </table>
               </div>
-              {profiledLeads.length > PAGE_SIZE && (
-                <Pagination total={profiledLeads.length} page={leadsPage} pageSize={PAGE_SIZE} onPage={setLeadsPage}/>
-              )}
+              {profiledLeads.length>PAGE_SIZE&&<Pagination total={profiledLeads.length} page={leadsPage} pageSize={PAGE_SIZE} onPage={setLeadsPage}/>}
             </div>
           </Sec>
         </>}
 
         {/* ══ CAMPAÑAS ══ */}
-        {activeTab==='campaigns' && <>
+        {activeTab==='campaigns'&&<>
           <div className="flex items-center justify-between">
             <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CAMPAÑAS — {campaigns.length} TOTAL</p>
             <button onClick={()=>setShowCreator(true)}
@@ -1233,15 +1098,15 @@ export default function Dashboard() {
                       <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[#E0E0F0]">{c.reply_count}</span>{c.sent_count>0&&<span className="mono text-[9px] text-[#00FF94]">{Math.round((c.reply_count/c.sent_count)*100)}%</span>}</div></td>
                       <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{c.scheduled_at?format(new Date(c.scheduled_at),'dd/MM HH:mm'):'—'}</td>
                       <td className="px-4 py-3">
-                        {(c.status === 'scheduled' || c.status === 'running') && (
+                        {(c.status==='scheduled'||c.status==='running')&&(
                           <div className="flex items-center gap-1">
-                            {c.status === 'running' && (
-                              <button onClick={() => handleCampaignAction(c, 'paused')} title="Pausar campaña"
+                            {c.status==='running'&&(
+                              <button onClick={()=>handleCampaignAction(c,'paused')} title="Pausar"
                                 className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FFB800] transition-colors group">
                                 <Pause size={10} className="text-[#4A4A6A] group-hover:text-[#FFB800]"/>
                               </button>
                             )}
-                            <button onClick={() => handleCampaignAction(c, 'cancelled')} title="Cancelar campaña"
+                            <button onClick={()=>handleCampaignAction(c,'cancelled')} title="Cancelar"
                               className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
                               <Square size={10} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
                             </button>
@@ -1253,34 +1118,21 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
-            {campaigns.length > PAGE_SIZE && (
-              <Pagination total={campaigns.length} page={campaignsPage} pageSize={PAGE_SIZE} onPage={setCampaignsPage}/>
-            )}
+            {campaigns.length>PAGE_SIZE&&<Pagination total={campaigns.length} page={campaignsPage} pageSize={PAGE_SIZE} onPage={setCampaignsPage}/>}
           </div>
         </>}
 
         {/* Footer */}
         <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-2">
-            <KanshiLogo size={14}/>
-            <p className="mono text-[10px] text-[#4A4A6A]">KANSHI v2.0 — SUPABASE REALTIME</p>
-          </div>
+          <div className="flex items-center gap-2"><KanshiLogo size={14}/><p className="mono text-[10px] text-[#4A4A6A]">KANSHI v2.0 — SUPABASE REALTIME</p></div>
           <p className="mono text-[10px] text-[#4A4A6A]">SANTIAGO JIMÉNEZ · GROWTH PARTNER © 2026</p>
         </div>
       </main>
 
       {selectedLead&&<LeadPanel lead={selectedLead} onClose={()=>setSelectedLead(null)}/>}
-      {showCreator&&<CampaignCreator
-        leads={leads} templates={templates}
-        onClose={()=>setShowCreator(false)}
-        onCreated={()=>{ setShowCreator(false); fetchData(); setActiveTab('campaigns'); addToast('success','Campaña creada — el scheduler la procesará en ~5 min') }}
-      />}
-      {showProjectWizard && (
-        <ProjectWizard
-          onClose={() => setShowProjectWizard(false)}
-          onCreated={handleProjectCreated}
-        />
-      )}
+      {showCreator&&<CampaignCreator leads={leads} templates={templates} onClose={()=>setShowCreator(false)}
+        onCreated={()=>{setShowCreator(false);fetchData();setActiveTab('campaigns');addToast('success','Campaña creada — el scheduler la procesará en ~5 min')}}/>}
+      {showProjectWizard&&<ProjectWizard onClose={()=>setShowProjectWizard(false)} onCreated={handleProjectCreated}/>}
       <ToastContainer toasts={toasts} onRemove={removeToast}/>
     </div>
   )
@@ -1288,77 +1140,66 @@ export default function Dashboard() {
 
 // ─── CAMPAIGN CREATOR ────────────────────────────────────────────────────────
 
-interface CreatorProps { leads: Lead[]; templates: Template[]; onClose: ()=>void; onCreated: ()=>void }
+interface CreatorProps { leads:Lead[]; templates:Template[]; onClose:()=>void; onCreated:()=>void }
 
-function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps) {
-  const [step, setStep] = useState(1)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [campaignName, setCampaignName] = useState('')
-  const [selectedTemplate, setSelectedTemplate] = useState<Template|null>(null)
-  const [templateVars, setTemplateVars] = useState<{index:number;type:'field'|'fixed';value:string;fallback:string}[]>([])
+function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
+  const [step,setStep] = useState(1)
+  const [saving,setSaving] = useState(false)
+  const [error,setError] = useState('')
+  const [campaignName,setCampaignName] = useState('')
+  const [selectedTemplate,setSelectedTemplate] = useState<Template|null>(null)
+  const [templateVars,setTemplateVars] = useState<{index:number;type:'field'|'fixed';value:string;fallback:string}[]>([])
+  const [filterSegmento,setFilterSegmento] = useState<string[]>([])
+  const [filterStage,setFilterStage] = useState<string[]>([])
+  const [filterUrgencia,setFilterUrgencia] = useState<string[]>([])
+  const [filterCompromiso,setFilterCompromiso] = useState<string[]>([])
+  const [minScore,setMinScore] = useState(0)
+  const [sendNow,setSendNow] = useState(true)
+  const [scheduledDate,setScheduledDate] = useState('')
+  const [scheduledTime,setScheduledTime] = useState('')
 
-  const detectVars = (tpl: Template) => {
-    const matches = (tpl.body_text||'').match(/\{\{\d+\}\}/g) || []
-    const count = new Set(matches).size
+  const detectVars = (tpl:Template) => {
+    const matches=(tpl.body_text||'').match(/\{\{\d+\}\}/g)||[]
+    const count=new Set(matches).size
     setTemplateVars(Array.from({length:count},(_,i)=>({index:i+1,type:'field' as const,value:'name',fallback:'Amigo'})))
   }
+  const FIELD_OPTIONS=[{value:'name',label:'Nombre del contacto'},{value:'contact_number',label:'Número de teléfono'}]
 
-  const FIELD_OPTIONS = [
-    {value:'name',label:'Nombre del contacto'},
-    {value:'contact_number',label:'Número de teléfono'},
-  ]
+  const filteredLeads = useMemo(()=>leads.filter(l=>{
+    if(filterSegmento.length>0&&!filterSegmento.includes(l.segmento)) return false
+    if(filterStage.length>0&&!filterStage.includes(l.agent_stage)) return false
+    if(filterUrgencia.length>0&&!filterUrgencia.includes(l.urgencia_financiera)) return false
+    if(filterCompromiso.length>0&&!filterCompromiso.includes(l.nivel_compromiso)) return false
+    if(minScore>0&&l.engagement_score<minScore) return false
+    return true
+  }),[leads,filterSegmento,filterStage,filterUrgencia,filterCompromiso,minScore])
 
-  const [filterSegmento, setFilterSegmento] = useState<string[]>([])
-  const [filterStage, setFilterStage] = useState<string[]>([])
-  const [filterUrgencia, setFilterUrgencia] = useState<string[]>([])
-  const [filterCompromiso, setFilterCompromiso] = useState<string[]>([])
-  const [minScore, setMinScore] = useState(0)
-  const [sendNow, setSendNow] = useState(true)
-  const [scheduledDate, setScheduledDate] = useState('')
-  const [scheduledTime, setScheduledTime] = useState('')
-
-  const filteredLeads = useMemo(()=>{
-    return leads.filter(l=>{
-      if(filterSegmento.length>0 && !filterSegmento.includes(l.segmento)) return false
-      if(filterStage.length>0 && !filterStage.includes(l.agent_stage)) return false
-      if(filterUrgencia.length>0 && !filterUrgencia.includes(l.urgencia_financiera)) return false
-      if(filterCompromiso.length>0 && !filterCompromiso.includes(l.nivel_compromiso)) return false
-      if(minScore>0 && l.engagement_score<minScore) return false
-      return true
-    })
-  }, [leads, filterSegmento, filterStage, filterUrgencia, filterCompromiso, minScore])
-
-  const toggleFilter = (arr: string[], setArr: (v:string[])=>void, val: string) =>
-    setArr(arr.includes(val) ? arr.filter(v=>v!==val) : [...arr, val])
+  const toggleFilter=(arr:string[],setArr:(v:string[])=>void,val:string)=>
+    setArr(arr.includes(val)?arr.filter(v=>v!==val):[...arr,val])
 
   const handleCreate = async () => {
     if(!campaignName.trim()||!selectedTemplate||filteredLeads.length===0) return
     setSaving(true); setError('')
     try {
-      const scheduled_at = sendNow
-        ? new Date().toISOString()
-        : new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
-      const { data: camp, error: campErr } = await supabase.from('wa_campaigns').insert({
-        name: campaignName.trim(), status: 'scheduled', scheduled_at,
-        template_name: selectedTemplate.name, language_code: selectedTemplate.language,
-        template_params: templateVars.map(v=>({type:v.type,value:v.value,fallback:v.fallback})),
-        total_contacts: filteredLeads.length,
-        sent_count: 0, delivered_count: 0, read_count: 0, reply_count: 0,
+      const scheduled_at=sendNow?new Date().toISOString():new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
+      const {data:camp,error:campErr}=await supabase.from('wa_campaigns').insert({
+        name:campaignName.trim(),status:'scheduled',scheduled_at,
+        template_name:selectedTemplate.name,language_code:selectedTemplate.language,
+        template_params:templateVars.map(v=>({type:v.type,value:v.value,fallback:v.fallback})),
+        total_contacts:filteredLeads.length,sent_count:0,delivered_count:0,read_count:0,reply_count:0,
       }).select().single()
       if(campErr) throw campErr
-      const contacts = filteredLeads.map(l=>({campaign_id:camp.id,contact_number:l.phone_number,contact_name:l.name||'',status:'pending'}))
-      const { error: contErr } = await supabase.from('wa_campaign_contacts').insert(contacts)
+      const contacts=filteredLeads.map(l=>({campaign_id:camp.id,contact_number:l.phone_number,contact_name:l.name||'',status:'pending'}))
+      const {error:contErr}=await supabase.from('wa_campaign_contacts').insert(contacts)
       if(contErr) throw contErr
       onCreated()
-    } catch(e: any) {
-      setError(e?.message||'Error al crear la campaña')
-    } finally { setSaving(false) }
+    } catch(e:any){setError(e?.message||'Error al crear la campaña')}
+    finally{setSaving(false)}
   }
 
-  const canNext1 = campaignName.trim().length>0 && selectedTemplate!==null
-  const canNext2 = filteredLeads.length>0
-  const canConfirm = canNext1 && canNext2 && (sendNow || (scheduledDate&&scheduledTime))
+  const canNext1=campaignName.trim().length>0&&selectedTemplate!==null
+  const canNext2=filteredLeads.length>0
+  const canConfirm=canNext1&&canNext2&&(sendNow||(scheduledDate&&scheduledTime))
 
   return(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -1376,12 +1217,13 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
         <div className="h-0.5 bg-[#1E1E2E]">
           <div className="h-full transition-all duration-500" style={{width:`${(step/3)*100}%`,background:'linear-gradient(90deg,#0014ad,#00a7e3)'}}/>
         </div>
+
         <div className="p-6 space-y-5">
-          {step===1 && <>
+          {/* PASO 1 */}
+          {step===1&&<>
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">NOMBRE DE LA CAMPAÑA</label>
-              <input value={campaignName} onChange={e=>setCampaignName(e.target.value)}
-                placeholder="ej. Live 1 — Leads Calientes"
+              <input value={campaignName} onChange={e=>setCampaignName(e.target.value)} placeholder="ej. Live 1 — Leads Calientes"
                 className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A]"/>
             </div>
             <div>
@@ -1389,30 +1231,30 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
               {templates.length===0
                 ?<div className="rounded-xl border border-dashed border-[#1E1E2E] p-6 text-center"><p className="text-[#4A4A6A] text-xs">No hay templates aprobados</p></div>
                 :<div className="space-y-2">
-                    {templates.map(t=>(
-                      <div key={t.id} onClick={()=>{setSelectedTemplate(t);detectVars(t)}}
-                        className="rounded-xl border p-4 cursor-pointer transition-all"
-                        style={{borderColor:selectedTemplate?.id===t.id?'#00b0f6':'#1E1E2E',background:selectedTemplate?.id===t.id?'rgba(0,176,246,0.05)':'#111118'}}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{background:selectedTemplate?.id===t.id?'#00b0f6':'#2A2A3A'}}/>
-                            <span className="font-medium text-sm text-[#E0E0F0]">{t.display_name||t.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">{t.language}</span>
-                            <span className="mono text-[9px] px-2 py-0.5 rounded-full border text-[#00b0f6]" style={{borderColor:'rgba(0,176,246,0.4)'}}>{t.category||'MARKETING'}</span>
-                          </div>
+                  {templates.map(t=>(
+                    <div key={t.id} onClick={()=>{setSelectedTemplate(t);detectVars(t)}}
+                      className="rounded-xl border p-4 cursor-pointer transition-all"
+                      style={{borderColor:selectedTemplate?.id===t.id?'#00b0f6':'#1E1E2E',background:selectedTemplate?.id===t.id?'rgba(0,176,246,0.05)':'#111118'}}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{background:selectedTemplate?.id===t.id?'#00b0f6':'#2A2A3A'}}/>
+                          <span className="font-medium text-sm text-[#E0E0F0]">{t.display_name||t.name}</span>
                         </div>
-                        <p className="mono text-[9px] text-[#4A4A6A]">{t.name}</p>
-                        {t.body_text&&<p className="text-[11px] text-[#6A6A8A] mt-2 leading-relaxed line-clamp-2">{t.body_text}</p>}
+                        <div className="flex items-center gap-2">
+                          <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">{t.language}</span>
+                          <span className="mono text-[9px] px-2 py-0.5 rounded-full border text-[#00b0f6]" style={{borderColor:'rgba(0,176,246,0.4)'}}>{t.category||'MARKETING'}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <p className="mono text-[9px] text-[#4A4A6A]">{t.name}</p>
+                      {t.body_text&&<p className="text-[11px] text-[#6A6A8A] mt-2 leading-relaxed line-clamp-2">{t.body_text}</p>}
+                    </div>
+                  ))}
+                </div>
               }
             </div>
-            {selectedTemplate && templateVars.length>0 && (
+            {selectedTemplate&&templateVars.length>0&&(
               <div>
-                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">VARIABLES DEL TEMPLATE — {templateVars.length} detectada{templateVars.length>1?'s':''}</label>
+                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">VARIABLES — {templateVars.length} detectada{templateVars.length>1?'s':''}</label>
                 <div className="space-y-2">
                   {templateVars.map((v,i)=>(
                     <div key={i} className="rounded-xl border border-[#1E1E2E] p-3 space-y-2" style={{background:'#111118'}}>
@@ -1441,8 +1283,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                                 {FIELD_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
                               </select>
                             :<input value={v.value} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],value:e.target.value};setTemplateVars(nv)}}
-                                placeholder="Texto fijo..."
-                                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
+                                placeholder="Texto fijo..." className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
                           }
                         </div>
                       </div>
@@ -1450,8 +1291,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                         <div>
                           <p className="mono text-[9px] text-[#4A4A6A] mb-1">FALLBACK (si el campo está vacío)</p>
                           <input value={v.fallback} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],fallback:e.target.value};setTemplateVars(nv)}}
-                            placeholder="ej. Amigo"
-                            className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
+                            placeholder="ej. Amigo" className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
                         </div>
                       )}
                     </div>
@@ -1459,7 +1299,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                 </div>
               </div>
             )}
-            {selectedTemplate && templateVars.length===0 && (
+            {selectedTemplate&&templateVars.length===0&&(
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
                 <div className="w-1.5 h-1.5 rounded-full" style={{background:'#00b0f6'}}/>
                 <span className="mono text-[10px] text-[#4A4A6A]">Template sin variables — se envía directo sin parámetros</span>
@@ -1467,7 +1307,8 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             )}
           </>}
 
-          {step===2 && <>
+          {/* PASO 2 */}
+          {step===2&&<>
             <div className="flex items-center justify-between p-3 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.4)',background:'rgba(0,176,246,0.05)'}}>
               <div className="flex items-center gap-2"><Filter size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px] tracking-widest" style={{color:'#00b0f6'}}>AUDIENCIA SELECCIONADA</span></div>
               <span className="mono text-lg font-bold" style={{color:'#00b0f6'}}>{filteredLeads.length} leads</span>
@@ -1512,7 +1353,8 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             )}
           </>}
 
-          {step===3 && <>
+          {/* PASO 3 */}
+          {step===3&&<>
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-3">CUÁNDO ENVIAR</label>
               <div className="grid grid-cols-2 gap-3">
@@ -1553,6 +1395,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
             {error&&<div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3"><p className="text-xs text-[#FF6B35]">{error}</p></div>}
           </>}
         </div>
+
         <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
           <button onClick={()=>step>1?setStep(step-1):onClose()}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
@@ -1576,6 +1419,8 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
   )
 }
 
+// ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
+
 function SummaryRow({label,value,highlight}:{label:string;value:string;highlight?:boolean}) {
   return(
     <div className="flex items-center justify-between">
@@ -1585,16 +1430,15 @@ function SummaryRow({label,value,highlight}:{label:string;value:string;highlight
   )
 }
 
-interface FGProps { label:string; options:string[]; selected:string[]; onToggle:(v:string)=>void; colors?:Record<string,string>; labels?:Record<string,string> }
+interface FGProps {label:string;options:string[];selected:string[];onToggle:(v:string)=>void;colors?:Record<string,string>;labels?:Record<string,string>}
 function FilterGroup({label,options,selected,onToggle,colors={},labels={}}:FGProps) {
   return(
     <div>
       <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map(o=>{
-          const active = selected.includes(o)
-          const color = colors[o]||'#4A4A6A'
-          const lbl = labels[o]||o.charAt(0).toUpperCase()+o.slice(1)
+          const active=selected.includes(o); const color=colors[o]||'#4A4A6A'
+          const lbl=labels[o]||o.charAt(0).toUpperCase()+o.slice(1)
           return(
             <button key={o} onClick={()=>onToggle(o)}
               className="px-3 py-1.5 rounded-full border mono text-[10px] transition-all"
@@ -1608,11 +1452,10 @@ function FilterGroup({label,options,selected,onToggle,colors={},labels={}}:FGPro
   )
 }
 
-// ─── SHARED COMPONENTS ───────────────────────────────────────────────────────
-
 function Sec({label,children}:{label:string;children:React.ReactNode}){
   return <div><p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-3">{label}</p>{children}</div>
 }
+
 function KCard({icon,label,value,color,isPercent}:{icon:React.ReactNode;label:string;value:number|string;color:string;isPercent?:boolean}){
   return(
     <div className="rounded-xl border border-[#1E1E2E] p-4 hover:border-[#2E2E4E] transition-all" style={{background:'#111118'}}>
@@ -1625,10 +1468,12 @@ function KCard({icon,label,value,color,isPercent}:{icon:React.ReactNode;label:st
     </div>
   )
 }
+
 function StagePill({stage}:{stage:string}){
   const s=STAGE_MAP[stage]||{label:stage,color:'#4A4A6A'}
   return <span className="mono text-[9px] tracking-widest px-2 py-0.5 rounded-full border" style={{color:s.color,borderColor:`${s.color}40`,background:`${s.color}10`}}>{s.label.toUpperCase()}</span>
 }
+
 function MiniDist({title,data,total}:{title:string;data:{name:string;value:number;color:string}[];total:number}){
   return(
     <div className="rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
@@ -1636,19 +1481,25 @@ function MiniDist({title,data,total}:{title:string;data:{name:string;value:numbe
       {data.length===0?<p className="text-[#4A4A6A] text-xs text-center mt-6">Sin datos</p>:<>
         <div className="flex items-center justify-center mb-4">
           <ResponsiveContainer width={120} height={120}>
-            <PieChart><Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3}>{data.map((d,i)=><Cell key={i} fill={d.color} fillOpacity={0.85}/>)}</Pie></PieChart>
+            <PieChart><Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3}>
+              {data.map((d,i)=><Cell key={i} fill={d.color} fillOpacity={0.85}/>)}
+            </Pie></PieChart>
           </ResponsiveContainer>
         </div>
         <div className="space-y-2">{data.map((d,i)=>(
           <div key={i} className="flex items-center justify-between">
             <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{background:d.color}}/><span className="mono text-[10px] text-[#E0E0F0]">{d.name}</span></div>
-            <div className="flex items-center gap-2"><span className="mono text-[10px]" style={{color:d.color}}>{d.value}</span><span className="mono text-[9px] text-[#4A4A6A]">{total>0?`${Math.round((d.value/total)*100)}%`:'0%'}</span></div>
+            <div className="flex items-center gap-2">
+              <span className="mono text-[10px]" style={{color:d.color}}>{d.value}</span>
+              <span className="mono text-[9px] text-[#4A4A6A]">{total>0?`${Math.round((d.value/total)*100)}%`:'0%'}</span>
+            </div>
           </div>
         ))}</div>
       </>}
     </div>
   )
 }
+
 function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
   const stage=STAGE_MAP[lead.agent_stage]||{label:lead.agent_stage,color:'#4A4A6A'}
   return(
@@ -1695,6 +1546,7 @@ function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
     </div>
   )
 }
+
 function PField({label,value,icon,color='#E0E0F0'}:{label:string;value:string;icon:React.ReactNode;color?:string}){
   if(!value) return null
   return(
@@ -1704,6 +1556,7 @@ function PField({label,value,icon,color='#E0E0F0'}:{label:string;value:string;ic
     </div>
   )
 }
+
 function MPin({label,value,color}:{label:string;value:string|undefined;color:string}){
   return(
     <div className="rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
@@ -1713,52 +1566,40 @@ function MPin({label,value,color}:{label:string;value:string|undefined;color:str
   )
 }
 
-// ─── PAGINATION COMPONENT ─────────────────────────────────────────────────────
+// ─── PAGINATION ───────────────────────────────────────────────────────────────
 
-function Pagination({ total, page, pageSize, onPage }: { total: number; page: number; pageSize: number; onPage: (p: number) => void }) {
-  const totalPages = Math.ceil(total / pageSize)
-  if (totalPages <= 1) return null
-
-  const from = (page - 1) * pageSize + 1
-  const to   = Math.min(page * pageSize, total)
-
-  const pages: (number | '…')[] = []
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i)
-  } else {
+function Pagination({total,page,pageSize,onPage}:{total:number;page:number;pageSize:number;onPage:(p:number)=>void}){
+  const totalPages=Math.ceil(total/pageSize)
+  if(totalPages<=1) return null
+  const from=(page-1)*pageSize+1; const to=Math.min(page*pageSize,total)
+  const pages:(number|'…')[]= []
+  if(totalPages<=7){for(let i=1;i<=totalPages;i++) pages.push(i)}
+  else{
     pages.push(1)
-    if (page > 4) pages.push('…')
-    const start = Math.max(2, page - 2)
-    const end   = Math.min(totalPages - 1, page + 2)
-    for (let i = start; i <= end; i++) pages.push(i)
-    if (page < totalPages - 3) pages.push('…')
+    if(page>4) pages.push('…')
+    const start=Math.max(2,page-2); const end=Math.min(totalPages-1,page+2)
+    for(let i=start;i<=end;i++) pages.push(i)
+    if(page<totalPages-3) pages.push('…')
     pages.push(totalPages)
   }
-
-  return (
+  return(
     <div className="flex items-center justify-between px-4 py-3 border-t border-[#1E1E2E]">
       <span className="mono text-[10px] text-[#4A4A6A]">{from}–{to} de {total}</span>
       <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPage(page - 1)} disabled={page === 1}
+        <button onClick={()=>onPage(page-1)} disabled={page===1}
           className="p-1.5 rounded-lg border border-[#1E1E2E] disabled:opacity-30 hover:border-[#00b0f6] transition-colors group disabled:cursor-not-allowed">
           <ChevronLeft size={11} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
         </button>
-        {pages.map((p, i) =>
-          p === '…'
-            ? <span key={`ellipsis-${i}`} className="mono text-[10px] text-[#4A4A6A] px-1">…</span>
-            : <button key={p} onClick={() => onPage(p as number)}
+        {pages.map((p,i)=>
+          p==='…'
+            ?<span key={`e-${i}`} className="mono text-[10px] text-[#4A4A6A] px-1">…</span>
+            :<button key={p} onClick={()=>onPage(p as number)}
                 className="min-w-[28px] h-7 rounded-lg border mono text-[10px] transition-all"
-                style={{
-                  borderColor: page === p ? '#00b0f6' : '#1E1E2E',
-                  background:  page === p ? 'rgba(0,176,246,0.12)' : 'transparent',
-                  color:       page === p ? '#00b0f6' : '#4A4A6A',
-                }}>
+                style={{borderColor:page===p?'#00b0f6':'#1E1E2E',background:page===p?'rgba(0,176,246,0.12)':'transparent',color:page===p?'#00b0f6':'#4A4A6A'}}>
                 {p}
               </button>
         )}
-        <button
-          onClick={() => onPage(page + 1)} disabled={page === totalPages}
+        <button onClick={()=>onPage(page+1)} disabled={page===totalPages}
           className="p-1.5 rounded-lg border border-[#1E1E2E] disabled:opacity-30 hover:border-[#00b0f6] transition-colors group disabled:cursor-not-allowed">
           <ChevronRight size={11} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
         </button>
@@ -1769,26 +1610,23 @@ function Pagination({ total, page, pageSize, onPage }: { total: number; page: nu
 
 // ─── TOAST SYSTEM ─────────────────────────────────────────────────────────────
 
-function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
-  const icons: Record<Toast['type'], React.ReactNode> = {
-    success: <CheckCircle size={13} style={{color:'#00FF94'}}/>,
-    error:   <AlertCircle size={13} style={{color:'#FF6B35'}}/>,
-    warning: <AlertCircle size={13} style={{color:'#FFB800'}}/>,
-    info:    <Info size={13} style={{color:'#00b0f6'}}/>,
+function ToastContainer({toasts,onRemove}:{toasts:Toast[];onRemove:(id:string)=>void}){
+  const icons:Record<Toast['type'],React.ReactNode>={
+    success:<CheckCircle size={13} style={{color:'#00FF94'}}/>,
+    error:<AlertCircle size={13} style={{color:'#FF6B35'}}/>,
+    warning:<AlertCircle size={13} style={{color:'#FFB800'}}/>,
+    info:<Info size={13} style={{color:'#00b0f6'}}/>,
   }
-  const borders: Record<Toast['type'], string> = {
-    success: '#00FF94', error: '#FF6B35', warning: '#FFB800', info: '#00b0f6',
-  }
-  if (toasts.length === 0) return null
-  return (
+  const borders:Record<Toast['type'],string>={success:'#00FF94',error:'#FF6B35',warning:'#FFB800',info:'#00b0f6'}
+  if(toasts.length===0) return null
+  return(
     <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
-      {toasts.map(t => (
-        <div key={t.id}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl border pointer-events-auto"
-          style={{ background: '#111118', borderColor: `${borders[t.type]}40`, boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`, minWidth: '260px', maxWidth: '380px', animation: 'slideInRight 0.25s ease' }}>
+      {toasts.map(t=>(
+        <div key={t.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border pointer-events-auto"
+          style={{background:'#111118',borderColor:`${borders[t.type]}40`,boxShadow:`0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`,minWidth:'260px',maxWidth:'380px',animation:'slideInRight 0.25s ease'}}>
           {icons[t.type]}
           <span className="text-xs text-[#E0E0F0] flex-1 leading-snug">{t.message}</span>
-          <button onClick={() => onRemove(t.id)} className="text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors flex-shrink-0 ml-1"><X size={11}/></button>
+          <button onClick={()=>onRemove(t.id)} className="text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors flex-shrink-0 ml-1"><X size={11}/></button>
         </div>
       ))}
     </div>
