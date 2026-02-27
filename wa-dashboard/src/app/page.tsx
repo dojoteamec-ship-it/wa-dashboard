@@ -421,6 +421,18 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
   // Step 1
   const [campaignName, setCampaignName] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState<Template|null>(null)
+  const [templateVars, setTemplateVars] = useState<{index:number;type:'field'|'fixed';value:string;fallback:string}[]>([])
+
+  const detectVars = (tpl: Template) => {
+    const matches = (tpl.body_text||'').match(/\{\{\d+\}\}/g) || []
+    const count = new Set(matches).size
+    setTemplateVars(Array.from({length:count},(_,i)=>({index:i+1,type:'field' as const,value:'name',fallback:'Amigo'})))
+  }
+
+  const FIELD_OPTIONS = [
+    {value:'name',label:'Nombre del contacto'},
+    {value:'contact_number',label:'Número de teléfono'},
+  ]
 
   // Step 2 — filters
   const [filterSegmento, setFilterSegmento] = useState<string[]>([])
@@ -466,6 +478,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
         scheduled_at,
         template_name: selectedTemplate.name,
         language_code: selectedTemplate.language,
+        template_params: templateVars.map(v=>({type:v.type,value:v.value,fallback:v.fallback})),
         total_contacts: filteredLeads.length,
         sent_count: 0,
         delivered_count: 0,
@@ -535,7 +548,7 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                   </div>
                 : <div className="space-y-2">
                     {templates.map(t=>(
-                      <div key={t.id} onClick={()=>setSelectedTemplate(t)}
+                      <div key={t.id} onClick={()=>{setSelectedTemplate(t);detectVars(t)}}
                         className={`rounded-xl border p-4 cursor-pointer transition-all ${selectedTemplate?.id===t.id?'border-[#00FF94] bg-[#00FF9408]':'border-[#1E1E2E] hover:border-[#2E2E4E]'}`}
                         style={{background: selectedTemplate?.id===t.id?'#0D1F17':'#111118'}}>
                         <div className="flex items-center justify-between mb-2">
@@ -555,6 +568,63 @@ function CampaignCreator({ leads, templates, onClose, onCreated }: CreatorProps)
                   </div>
               }
             </div>
+            {selectedTemplate && templateVars.length > 0 && (
+              <div>
+                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">
+                  VARIABLES DEL TEMPLATE — {templateVars.length} detectada{templateVars.length>1?'s':''}
+                </label>
+                <div className="space-y-2">
+                  {templateVars.map((v,i)=>(
+                    <div key={i} className="rounded-xl border border-[#1E1E2E] p-3 space-y-2" style={{background:'#111118'}}>
+                      <div className="flex items-center gap-2">
+                        <span className="mono text-[10px] px-2 py-0.5 rounded-full border border-[#00FF9440] text-[#00FF94]">{'{{'}{v.index}{'}}'}</span>
+                        <span className="mono text-[10px] text-[#4A4A6A]">Parámetro {v.index}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="mono text-[9px] text-[#4A4A6A] mb-1">TIPO</p>
+                          <div className="flex gap-2">
+                            {(['field','fixed'] as const).map(t=>(
+                              <button key={t} onClick={()=>{const nv=[...templateVars];nv[i]={...nv[i],type:t};setTemplateVars(nv)}}
+                                className="px-2 py-1 rounded-lg border mono text-[9px] transition-all"
+                                style={{borderColor:v.type===t?'#00FF94':'#1E1E2E',color:v.type===t?'#00FF94':'#4A4A6A',background:v.type===t?'#00FF9410':'transparent'}}>
+                                {t==='field'?'CAMPO':'FIJO'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="mono text-[9px] text-[#4A4A6A] mb-1">{v.type==='field'?'CAMPO DEL CONTACTO':'TEXTO FIJO'}</p>
+                          {v.type==='field'
+                            ? <select value={v.value} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],value:e.target.value};setTemplateVars(nv)}}
+                                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none focus:border-[#00FF94]">
+                                {FIELD_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+                              </select>
+                            : <input value={v.value} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],value:e.target.value};setTemplateVars(nv)}}
+                                placeholder="Texto fijo..."
+                                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none focus:border-[#00FF94] placeholder:text-[#4A4A6A]"/>
+                          }
+                        </div>
+                      </div>
+                      {v.type==='field' && (
+                        <div>
+                          <p className="mono text-[9px] text-[#4A4A6A] mb-1">FALLBACK (si el campo está vacío)</p>
+                          <input value={v.fallback} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],fallback:e.target.value};setTemplateVars(nv)}}
+                            placeholder="ej. Amigo"
+                            className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none focus:border-[#00FF94] placeholder:text-[#4A4A6A]"/>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedTemplate && templateVars.length === 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]"/>
+                <span className="mono text-[10px] text-[#4A4A6A]">Template sin variables — se envía directo sin parámetros</span>
+              </div>
+            )}
           </>}
 
           {/* ── STEP 2: Filters ── */}
