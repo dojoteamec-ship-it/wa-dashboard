@@ -44,6 +44,15 @@ interface ChartPoint { hour: string; inbound: number; outbound: number }
 interface RecentMsg { contact_name: string; body: string; created_at: string; direction: string }
 interface Toast { id: string; type: 'success'|'error'|'warning'|'info'; message: string }
 
+interface Project {
+  id: string
+  name: string
+  product_name: string | null
+  status: string
+  captation_start: string | null
+  cart_open: string | null
+}
+
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
 
 const STAGES = [
@@ -306,6 +315,150 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
   )
 }
 
+// ─── PROJECT SELECTOR ─────────────────────────────────────────────────────────
+
+function ProjectSelector({
+  projects,
+  activeProjectId,
+  onChange,
+}: {
+  projects: Project[]
+  activeProjectId: string | null
+  onChange: (id: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const activeProject = projects.find(p => p.id === activeProjectId) ?? null
+
+  const projectStatusColor = (s: string) =>
+    s === 'active' ? '#00FF94' : s === 'planning' ? '#FFB800' : '#4A4A6A'
+  const projectStatusLabel = (s: string) =>
+    ({ active: 'ACTIVO', planning: 'PLANIFICANDO', closed: 'CERRADO' }[s] || s.toUpperCase())
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:border-[#2E2E4E]"
+        style={{
+          background: '#111118',
+          borderColor: activeProject ? '#0014ad' : '#1E1E2E',
+          minWidth: '180px',
+        }}
+      >
+        <Rocket size={11} style={{ color: activeProject ? '#00b0f6' : '#4A4A6A', flexShrink: 0 }} />
+        <span className="mono text-[11px] flex-1 text-left truncate" style={{ color: activeProject ? '#E0E0F0' : '#4A4A6A' }}>
+          {activeProject ? activeProject.name : 'SIN PROYECTO'}
+        </span>
+        {activeProject && (
+          <span
+            className="mono text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+            style={{
+              color: projectStatusColor(activeProject.status),
+              background: `${projectStatusColor(activeProject.status)}15`,
+            }}
+          >
+            {projectStatusLabel(activeProject.status)}
+          </span>
+        )}
+        <ChevronRight
+          size={10}
+          className="text-[#4A4A6A] flex-shrink-0 transition-transform"
+          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-[calc(100%+8px)] left-0 w-[280px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
+          style={{ background: '#0D0D14', boxShadow: '0 16px 48px rgba(0,0,0,0.6)' }}
+        >
+          <div className="px-4 py-2 border-b border-[#1E1E2E]">
+            <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">PROYECTOS DISPONIBLES</span>
+          </div>
+
+          {projects.length === 0 ? (
+            <div className="px-4 py-5 text-center">
+              <Rocket size={16} className="text-[#2A2A3A] mx-auto mb-2" />
+              <p className="mono text-[10px] text-[#4A4A6A] mb-1">Sin proyectos creados</p>
+              <p className="mono text-[9px] text-[#2A2A3A]">Crea uno con el botón de abajo</p>
+            </div>
+          ) : (
+            <div className="py-1">
+              {/* Opción ver todo sin filtro */}
+              <button
+                onClick={() => { onChange(null); setOpen(false) }}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left"
+              >
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center border border-[#1E1E2E]">
+                  <Star size={10} className="text-[#4A4A6A]" />
+                </div>
+                <span className="mono text-[10px] text-[#4A4A6A] flex-1">TODOS LOS DATOS</span>
+                {activeProjectId === null && (
+                  <CheckCircle size={10} style={{ color: '#00b0f6' }} />
+                )}
+              </button>
+
+              {projects.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => { onChange(p.id); setOpen(false) }}
+                  className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left"
+                >
+                  <div
+                    className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${projectStatusColor(p.status)}20` }}
+                  >
+                    <Rocket size={10} style={{ color: projectStatusColor(p.status) }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="mono text-[11px] text-[#E0E0F0] truncate">{p.name}</p>
+                    {p.product_name && (
+                      <p className="mono text-[9px] text-[#4A4A6A] truncate">{p.product_name}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span
+                      className="mono text-[8px] px-1.5 py-0.5 rounded-full"
+                      style={{ color: projectStatusColor(p.status), background: `${projectStatusColor(p.status)}15` }}
+                    >
+                      {projectStatusLabel(p.status)}
+                    </span>
+                    {p.id === activeProjectId && (
+                      <CheckCircle size={9} style={{ color: '#00b0f6' }} />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Footer: crear nuevo proyecto */}
+          <div className="border-t border-[#1E1E2E] p-2">
+            <button
+              onClick={() => { setOpen(false) /* setShowProjectWizard(true) — se conecta en el próximo item */ }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}
+            >
+              <Plus size={11} className="text-white" />
+              <span className="mono text-[10px] text-white font-bold tracking-widest">NUEVO PROYECTO</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -325,6 +478,13 @@ export default function Dashboard() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [leadsPage, setLeadsPage] = useState(1)
   const [campaignsPage, setCampaignsPage] = useState(1)
+
+  // ── PROYECTOS ──
+  const [projects, setProjects] = useState<Project[]>([])
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('kanshi_active_project')
+    return null
+  })
 
   const addToast = useCallback((type: Toast['type'], message: string) => {
     const id = `${Date.now()}-${Math.random()}`
@@ -349,13 +509,14 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [msgsRes, convsRes, contactsCountRes, campsRes, leadsRes, tplsRes] = await Promise.all([
+      const [msgsRes, convsRes, contactsCountRes, campsRes, leadsRes, tplsRes, projectsRes] = await Promise.all([
         supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200),
         supabase.from('wa_conversations').select('status'),
         supabase.from('wa_contacts').select('id',{count:'exact',head:true}),
         supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200),
         supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500),
         supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
+        supabase.from('kanshi_projects').select('id, name, product_name, status, captation_start, cart_open').order('created_at',{ascending:false}),
       ])
       const msgs = msgsRes.data||[]
       const leadsData: Lead[] = leadsRes.data||[]
@@ -364,6 +525,7 @@ export default function Dashboard() {
 
       setLeads(leadsData); setCampaigns(campData); setTemplates(tplData)
       setRecentMsgs((msgs as RecentMsg[]).slice(0,10))
+      if (projectsRes.data) setProjects(projectsRes.data)
 
       const inbound = msgs.filter((m:any)=>m.direction==='inbound').length
       const outbound = msgs.filter((m:any)=>m.direction==='outbound').length
@@ -403,6 +565,12 @@ export default function Dashboard() {
       setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: action } : c))
     }
   }, [addToast])
+
+  const handleProjectChange = useCallback((projectId: string | null) => {
+    setActiveProjectId(projectId)
+    if (projectId) localStorage.setItem('kanshi_active_project', projectId)
+    else localStorage.removeItem('kanshi_active_project')
+  }, [])
 
   useEffect(()=>{
     if(!authenticated) return
@@ -476,6 +644,13 @@ export default function Dashboard() {
             ))}
           </nav>
 
+          {/* ── SELECTOR DE PROYECTO ── */}
+          <ProjectSelector
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onChange={handleProjectChange}
+          />
+
           {/* ── BÚSQUEDA GLOBAL ── */}
           <GlobalSearch leads={leads} onSelect={(lead) => setSelectedLead(lead)}/>
 
@@ -530,30 +705,31 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={chartData} margin={{top:5,right:0,left:-30,bottom:0}}>
                   <defs>
-                    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00FF94" stopOpacity={0.2}/><stop offset="95%" stopColor="#00FF94" stopOpacity={0}/></linearGradient>
-                    <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00b0f6" stopOpacity={0.2}/><stop offset="95%" stopColor="#00b0f6" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00FF94" stopOpacity={0.3}/><stop offset="95%" stopColor="#00FF94" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00b0f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#00b0f6" stopOpacity={0}/></linearGradient>
                   </defs>
                   <XAxis dataKey="hour" tick={{fill:'#4A4A6A',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false} interval={3}/>
                   <YAxis tick={{fill:'#4A4A6A',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
-                  <Tooltip contentStyle={{background:'#1E1E2E',border:'none',borderRadius:'8px',fontSize:'11px',color:'#E0E0F0'}}/>
-                  <Area type="monotone" dataKey="inbound" stroke="#00FF94" strokeWidth={1.5} fill="url(#g1)"/>
-                  <Area type="monotone" dataKey="outbound" stroke="#00b0f6" strokeWidth={1.5} fill="url(#g2)"/>
+                  <Tooltip contentStyle={{background:'#1E1E2E',border:'none',borderRadius:'8px',fontSize:'11px'}}/>
+                  <Area type="monotone" dataKey="inbound" stroke="#00FF94" strokeWidth={1.5} fill="url(#gIn)"/>
+                  <Area type="monotone" dataKey="outbound" stroke="#00b0f6" strokeWidth={1.5} fill="url(#gOut)"/>
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             <div className="rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">MENSAJES RECIENTES</p>
+              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">ACTIVIDAD RECIENTE</p>
               <div className="space-y-3">
-                {recentMsgs.length===0?<p className="text-[#4A4A6A] text-xs text-center mt-8">Sin mensajes</p>
+                {recentMsgs.length===0
+                  ?<p className="text-[#4A4A6A] text-xs text-center mt-6">Sin mensajes</p>
                   :recentMsgs.map((m,i)=>(
-                  <div key={i} className="flex gap-3 items-start">
+                  <div key={i} className="flex items-start gap-2.5">
                     <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{background:m.direction==='inbound'?'#00FF94':'#00b0f6'}}/>
-                    <div className="min-w-0 flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-[#E0E0F0] truncate">{m.contact_name||'Desconocido'}</span>
+                        <p className="text-xs font-medium text-[#E0E0F0] truncate">{m.contact_name||'Desconocido'}</p>
                         <span className="mono text-[9px] text-[#4A4A6A] flex-shrink-0">{format(new Date(m.created_at),'HH:mm')}</span>
                       </div>
-                      <p className="text-[11px] text-[#4A4A6A] truncate mt-0.5">{m.body}</p>
+                      <p className="text-[11px] text-[#4A4A6A] truncate">{m.body}</p>
                     </div>
                   </div>
                 ))}
@@ -564,47 +740,45 @@ export default function Dashboard() {
 
         {/* ══ PIPELINE ══ */}
         {activeTab==='pipeline' && (
-          <Sec label={`PIPELINE DE LEADS — ${leads.length} TOTAL`}>
-            <div className="overflow-x-auto pb-4">
-              <div className="flex gap-3 min-w-max">
-                {STAGES.map(stage=>{
-                  const sl = leads.filter(l=>l.agent_stage===stage.key)
-                  return(
-                    <div key={stage.key} className="w-60 flex-shrink-0">
-                      <div className="flex items-center justify-between mb-2 px-1">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{background:stage.color}}/>
-                          <span className="mono text-[10px] tracking-widest" style={{color:stage.color}}>{stage.label.toUpperCase()}</span>
-                        </div>
-                        <span className="mono text-[10px] text-[#4A4A6A] bg-[#1E1E2E] px-2 py-0.5 rounded-full">{sl.length}</span>
-                      </div>
-                      <div className="space-y-2 min-h-[100px]">
-                        {sl.length===0
-                          ?<div className="rounded-xl border border-dashed border-[#1E1E2E] h-16 flex items-center justify-center"><span className="mono text-[9px] text-[#2A2A3A]">VACÍO</span></div>
-                          :sl.map(lead=>(
-                          <div key={lead.id} onClick={()=>setSelectedLead(lead)}
-                            className="rounded-xl border border-[#1E1E2E] p-3 cursor-pointer hover:border-[#2E2E4E] transition-all group" style={{background:'#111118'}}>
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center" style={{background:`${stage.color}20`}}><User size={9} style={{color:stage.color}}/></div>
-                                <span className="text-xs font-medium text-[#E0E0F0] truncate">{lead.name||'Desconocido'}</span>
-                              </div>
-                              <ChevronRight size={9} className="text-[#4A4A6A] group-hover:text-[#E0E0F0] flex-shrink-0 mt-0.5 transition-colors"/>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">{segIcon(lead.segmento)}<span className="mono text-[9px]" style={{color:segColor(lead.segmento)}}>{lead.segmento||'n/a'}</span></div>
-                              {lead.engagement_score>0&&<span className="mono text-[10px] font-bold px-1.5 py-0.5 rounded" style={{color:scoreColor(lead.engagement_score),background:`${scoreColor(lead.engagement_score)}15`}}>{lead.engagement_score}</span>}
-                            </div>
-                            {lead.situacion_actual&&<p className="mono text-[9px] text-[#4A4A6A] mt-1.5 truncate">{lead.situacion_actual}</p>}
-                          </div>
-                        ))}
-                      </div>
+          <div className="space-y-3">
+            {STAGES.map(stage=>{
+              const stageLeads = leads.filter(l=>l.agent_stage===stage.key)
+              if(stageLeads.length===0) return null
+              return(
+                <div key={stage.key} className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
+                  <div className="px-5 py-3 border-b border-[#1E1E2E] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-2 h-2 rounded-full" style={{background:stage.color}}/>
+                      <span className="mono text-[11px] tracking-widest font-bold" style={{color:stage.color}}>{stage.label.toUpperCase()}</span>
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-          </Sec>
+                    <span className="mono text-[10px] text-[#4A4A6A]">{stageLeads.length} leads</span>
+                  </div>
+                  <div className="divide-y divide-[#1E1E2E]">
+                    {stageLeads.slice(0,5).map((lead,i)=>(
+                      <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-[#E0E0F0] font-medium truncate">{lead.name||lead.phone_number}</p>
+                            {lead.segmento&&<div className="flex items-center gap-1">{segIcon(lead.segmento)}</div>}
+                          </div>
+                          {lead.situacion_actual&&<p className="mono text-[10px] text-[#4A4A6A] truncate">{lead.situacion_actual}</p>}
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          {lead.engagement_score>0&&<span className="mono text-[11px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★{lead.engagement_score}</span>}
+                          <ChevronRight size={12} className="text-[#4A4A6A]"/>
+                        </div>
+                      </div>
+                    ))}
+                    {stageLeads.length>5&&(
+                      <div className="px-5 py-2 text-center">
+                        <span className="mono text-[9px] text-[#4A4A6A]">+{stageLeads.length-5} más en esta etapa</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
 
         {/* ══ PSICOGRÁFICO ══ */}
@@ -1189,7 +1363,6 @@ function Pagination({ total, page, pageSize, onPage }: { total: number; page: nu
   const from = (page - 1) * pageSize + 1
   const to   = Math.min(page * pageSize, total)
 
-  // Genera array de páginas con ellipsis
   const pages: (number | '…')[] = []
   if (totalPages <= 7) {
     for (let i = 1; i <= totalPages; i++) pages.push(i)
