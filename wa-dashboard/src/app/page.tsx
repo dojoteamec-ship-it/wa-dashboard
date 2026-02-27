@@ -838,6 +838,12 @@ export default function Dashboard() {
     setCampaignsPage(1)
   }, [activeTab])
 
+  // Reset paginación al cambiar de proyecto
+  useEffect(() => {
+    setLeadsPage(1)
+    setCampaignsPage(1)
+  }, [activeProjectId])
+
   useEffect(() => {
     const stored = localStorage.getItem(AUTH_KEY)
     setAuthenticated(stored === 'true')
@@ -845,12 +851,25 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     try {
+      // Queries base — se filtran por proyecto activo si hay uno seleccionado
+      let msgsQuery = supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200)
+      let campsQuery = supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200)
+      let leadsQuery = supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500)
+      let contactsCountQuery = supabase.from('wa_contacts').select('id',{count:'exact',head:true})
+
+      if (activeProjectId) {
+        msgsQuery = msgsQuery.eq('project_id', activeProjectId)
+        campsQuery = campsQuery.eq('project_id', activeProjectId)
+        leadsQuery = leadsQuery.eq('project_id', activeProjectId)
+        contactsCountQuery = contactsCountQuery.eq('project_id', activeProjectId)
+      }
+
       const [msgsRes, convsRes, contactsCountRes, campsRes, leadsRes, tplsRes, projectsRes] = await Promise.all([
-        supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200),
+        msgsQuery,
         supabase.from('wa_conversations').select('status'),
-        supabase.from('wa_contacts').select('id',{count:'exact',head:true}),
-        supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200),
-        supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500),
+        contactsCountQuery,
+        campsQuery,
+        leadsQuery,
         supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
         supabase.from('kanshi_projects').select('id, name, product_name, status, captation_start, cart_open').order('created_at',{ascending:false}),
       ])
@@ -890,7 +909,7 @@ export default function Dashboard() {
       setChartData(Object.entries(hourly).map(([hour,v])=>({hour,...v})))
       setLastUpdate(new Date()); setLoading(false)
     } catch(e){console.error(e);setLoading(false)}
-  }, [])
+  }, [activeProjectId])
 
   const handleCampaignAction = useCallback(async (camp: Campaign, action: 'paused' | 'cancelled') => {
     const { error } = await supabase.from('wa_campaigns').update({ status: action }).eq('id', camp.id)
@@ -929,7 +948,7 @@ export default function Dashboard() {
       .subscribe(s=>setConnected(s==='SUBSCRIBED'))
     const iv = setInterval(fetchData,30000)
     return ()=>{supabase.removeChannel(ch);clearInterval(iv)}
-  },[fetchData, authenticated])
+  },[fetchData, authenticated, activeProjectId])
 
   const segDist = ['caliente','templado','frio'].map(s=>({name:s==='frio'?'Frío':s.charAt(0).toUpperCase()+s.slice(1),value:leads.filter(l=>l.segmento===s).length,color:segColor(s)})).filter(d=>d.value>0)
   const urgDist = ['alta','media','baja'].map(u=>({name:u.charAt(0).toUpperCase()+u.slice(1),value:leads.filter(l=>l.urgencia_financiera===u).length,color:urgColor(u)})).filter(d=>d.value>0)
