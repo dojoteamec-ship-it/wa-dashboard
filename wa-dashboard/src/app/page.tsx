@@ -380,7 +380,7 @@ function ProjectTimeline({ project }: { project: Project }) {
             const p=pct(m.date); if(p<0) return null
             const isPast=m.date<=today; const daysTo=daysDiff(today,m.date)
             return (
-              <div key={i} className="absolute flex flex-col items-center -translate-x-1/2" style={{left:`${p}%`}}>
+             <div key={i} className="absolute flex flex-col items-center" style={{left:`${p}%`, transform: p > 85 ? 'translateX(-100%)' : p < 15 ? 'translateX(0%)' : 'translateX(-50%)'}}>
                 <span className="mono text-[9px] font-bold tracking-widest" style={{color:isPast?'#2A2A4A':m.color}}>{fmtDate(m.date)}</span>
                 <span className="mono text-[8px] mt-0.5" style={{color:'#4A4A6A'}}>
                   {isPast?`hace ${Math.abs(daysTo)}d`:daysTo===0?'HOY':`en ${daysTo}d`}
