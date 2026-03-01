@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
                        req.headers.get('user-agent') || null,
       registered_at:   new Date().toISOString(),
       matched_contact_id: null as string | null,
+      source_platform: body.source_platform || null,
       matched_at:      null as string | null,
     }
 
