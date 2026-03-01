@@ -1,6 +1,5 @@
 'use client'
 
-
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
@@ -16,9 +15,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 
-
 // ─── TYPES ───────────────────────────────────────────────────────────────────
-
 
 interface Lead {
   id: string; phone_number: string; name: string; agent_stage: string
@@ -47,7 +44,6 @@ interface ChartPoint { hour: string; inbound: number; outbound: number }
 interface RecentMsg { contact_name: string; body: string; created_at: string; direction: string }
 interface Toast { id: string; type: 'success'|'error'|'warning'|'info'; message: string }
 
-
 interface Project {
   id: string
   name: string
@@ -67,9 +63,7 @@ interface Project {
   emoji: string | null
 }
 
-
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
-
 
 const STAGES = [
   { key: 'nuevo',           label: 'Nuevo',           color: '#4A4A6A' },
@@ -86,7 +80,6 @@ const STAGES = [
 ]
 const STAGE_MAP = Object.fromEntries(STAGES.map(s => [s.key, s]))
 
-
 const segColor  = (s: string) => s==='caliente'?'#FF6B35':s==='templado'?'#FFB800':'#00b0f6'
 const urgColor  = (u: string) => u==='alta'?'#FF6B35':u==='media'?'#FFB800':'#4A4A6A'
 const comColor  = (c: string) => c==='alto'?'#00FF94':c==='medio'?'#FFB800':'#4A4A6A'
@@ -96,18 +89,14 @@ const segIcon   = (s: string) => s==='caliente'
   : s==='templado' ? <Thermometer size={10} className="text-[#FFB800]"/>
   : <Snowflake size={10} style={{color:'#00b0f6'}}/>
 
-
 const statusColor = (s: string) =>
   s==='completed'?'text-[#00FF94]':s==='running'?'text-[#00b0f6]':s==='scheduled'?'text-[#FFB800]':s==='paused'?'text-[#FFB800]':'text-[#4A4A6A]'
 const statusLabel = (s: string) =>
   ({completed:'COMPLETADA',running:'EN CURSO',scheduled:'PROGRAMADA',draft:'BORRADOR',paused:'PAUSADA',cancelled:'CANCELADA'}[s]||s.toUpperCase())
 
-
 const PAGE_SIZE = 50
 
-
 // ─── KANSHI LOGO ──────────────────────────────────────────────────────────────
-
 
 function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: string }) {
   return (
@@ -126,20 +115,16 @@ function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: 
   )
 }
 
-
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
-
 
 const KANSHI_PASSWORD = 'Kanshiteam2026*-*dojo'
 const AUTH_KEY = 'kanshi_auth'
-
 
 function LoginScreen({ onAuth }: { onAuth: () => void }) {
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState(false)
   const [shaking, setShaking] = useState(false)
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -151,7 +136,6 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
       setTimeout(() => setError(false), 2500)
     }
   }
-
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: '#090c4c' }}>
@@ -194,9 +178,7 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
   )
 }
 
-
 // ─── GLOBAL SEARCH ────────────────────────────────────────────────────────────
-
 
 function highlightMatch(text: string, query: string): React.ReactNode {
   if (!query || !text) return text
@@ -205,13 +187,11 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   return <>{text.slice(0, idx)}<span style={{color:'#00b0f6',fontWeight:'bold'}}>{text.slice(idx, idx+query.length)}</span>{text.slice(idx+query.length)}</>
 }
 
-
 function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead) => void }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-
 
   const results = useMemo(() => {
     if (!query.trim() || query.length < 2) return []
@@ -223,13 +203,11 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
     ).slice(0, 8)
   }, [query, leads])
 
-
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false) }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
-
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -239,7 +217,6 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [])
-
 
   return (
     <div ref={containerRef} className="relative">
@@ -280,22 +257,18 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
   )
 }
 
-
 // ─── PROJECT TIMELINE ─────────────────────────────────────────────────────────
-
 
 function ProjectTimeline({ project }: { project: Project }) {
   const today = new Date(); today.setHours(0,0,0,0)
   const parseDate = (d: string|null): Date|null => { if(!d) return null; const p=new Date(d); return isNaN(p.getTime())?null:p }
   const daysDiff = (a: Date, b: Date) => Math.round((b.getTime()-a.getTime())/86400000)
 
-
   const captStart = parseDate(project.captation_start)
   const captEnd   = parseDate(project.captation_end)
   const cartOpen  = parseDate(project.cart_open)
   const cartClose = parseDate(project.cart_close)
   const classDates: Date[] = (project.class_dates??[]).map((d:string)=>parseDate(d)).filter((d):d is Date=>d!==null).sort((a,b)=>a.getTime()-b.getTime())
-
 
   const allDates = [captStart,captEnd,...classDates,cartOpen,cartClose].filter((d):d is Date=>d!==null)
   if (allDates.length===0) return (
@@ -307,13 +280,11 @@ function ProjectTimeline({ project }: { project: Project }) {
     </div>
   )
 
-
   const minDate = new Date(Math.min(...allDates.map(d=>d.getTime())))
   const maxDate = new Date(Math.max(...allDates.map(d=>d.getTime())))
   const totalSpan = Math.max(daysDiff(minDate,maxDate),1)
   const pct = (d:Date|null) => d===null?-1:Math.min(100,Math.max(0,(daysDiff(minDate,d)/totalSpan)*100))
   const todayPct = Math.min(100,Math.max(0,(daysDiff(minDate,today)/totalSpan)*100))
-
 
   const getPhase = () => {
     if (cartClose&&today>cartClose) return {label:'LANZAMIENTO CERRADO',color:'#4A4A6A'}
@@ -324,7 +295,6 @@ function ProjectTimeline({ project }: { project: Project }) {
     return {label:'PRE-LANZAMIENTO',color:'#4A4A6A'}
   }
   const phase = getPhase()
-
 
   const nextMilestone = (() => {
     const up = [
@@ -337,9 +307,7 @@ function ProjectTimeline({ project }: { project: Project }) {
     return up.length?up.sort((a,b)=>a.date.getTime()-b.date.getTime())[0]:null
   })()
 
-
   const fmtDate = (d:Date) => d.toLocaleDateString('es-EC',{day:'2-digit',month:'short'}).toUpperCase()
-
 
   const milestones = [
     captStart ?{label:'INICIO CAPTACIÓN',date:captStart, color:'#00b0f6'}:null,
@@ -348,7 +316,6 @@ function ProjectTimeline({ project }: { project: Project }) {
     cartOpen  ?{label:'CARRITO ABRE',    date:cartOpen,  color:'#00FF94'}:null,
     cartClose ?{label:'CARRITO CIERRA',  date:cartClose, color:'#FF6B35'}:null,
   ].filter(Boolean) as {label:string;date:Date;color:string}[]
-
 
   return (
     <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
@@ -380,9 +347,7 @@ function ProjectTimeline({ project }: { project: Project }) {
         </div>
       </div>
 
-
       <div className="px-6 pt-5 pb-6">
-        {/* Barra */}
         <div className="relative h-1.5 rounded-full mb-8" style={{background:'#1E1E2E'}}>
           <div className="absolute h-full rounded-full" style={{width:`${todayPct}%`,background:'linear-gradient(90deg,#0014ad,#00b0f6)'}}/>
           {todayPct>=0&&todayPct<=100&&(
@@ -408,8 +373,6 @@ function ProjectTimeline({ project }: { project: Project }) {
           })}
         </div>
 
-
-        {/* Labels */}
         <div className="relative">
           {milestones.map((m,i)=>{
             const p=pct(m.date); if(p<0) return null
@@ -426,8 +389,6 @@ function ProjectTimeline({ project }: { project: Project }) {
         </div>
         <div className="h-8"/>
 
-
-        {/* Leyenda */}
         <div className="flex gap-4 flex-wrap mt-2">
           {captStart&&captEnd&&(
             <div className="flex items-center gap-1.5">
@@ -466,9 +427,7 @@ function ProjectTimeline({ project }: { project: Project }) {
   )
 }
 
-
 // ─── PROJECT SELECTOR ─────────────────────────────────────────────────────────
-
 
 function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, onActivate }: {
   projects: Project[]; activeProjectId: string|null
@@ -481,12 +440,10 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
   const psc = (s:string) => s==='active'?'#00FF94':s==='planning'?'#FFB800':'#4A4A6A'
   const psl = (s:string) => ({active:'ACTIVO',planning:'PLANIFICANDO',closed:'CERRADO'}[s]||s.toUpperCase())
 
-
   useEffect(() => {
     const h = (e:MouseEvent) => { if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
     document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
   }, [])
-
 
   return (
     <div ref={ref} className="relative">
@@ -505,7 +462,6 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
         )}
         <ChevronRight size={10} className="text-[#4A4A6A] flex-shrink-0 transition-transform" style={{transform:open?'rotate(90deg)':'rotate(0deg)'}}/>
       </button>
-
 
       {open&&(
         <div className="absolute top-[calc(100%+8px)] left-0 w-[280px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
@@ -565,9 +521,7 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
   )
 }
 
-
 // ─── PROJECT METRICS ─────────────────────────────────────────────────────────
-
 
 function MetricBar({ label, current, goal, color, prefix='', suffix='' }: {
   label: string; current: number; goal: number; color: string; prefix?: string; suffix?: string
@@ -598,7 +552,6 @@ function MetricBar({ label, current, goal, color, prefix='', suffix='' }: {
   )
 }
 
-
 function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount: number }) {
   const hasMetas = (project.leads_goal??0) > 0 || (project.sales_goal??0) > 0
   if (!hasMetas) return null
@@ -609,13 +562,12 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
   const price        = project.product_price ?? 0
   const adBudget     = project.ad_budget ?? 0
   const revenueGoal  = salesGoal * price
-  const currentSales = 0  // placeholder hasta tabla de ventas
+  const currentSales = 0
   const currentRevenue = currentSales * price
   const cpl = leadsCount > 0 && adBudget > 0
     ? (adBudget / leadsCount).toFixed(2)
     : null
 
-  // Días restantes de captación
   let diasRestantes: number | null = null
   let diasLabel = ''
   if (project.captation_end) {
@@ -633,10 +585,8 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
 
   return (
     <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
-      {/* accent bar */}
       <div className="h-0.5" style={{background:`linear-gradient(90deg,${projectColor},${projectColor}20)`}}/>
       <div className="p-5">
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
@@ -669,7 +619,6 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
           </div>
         </div>
 
-        {/* Barras */}
         <div className="space-y-4 mb-5">
           {leadsGoal > 0 && (
             <MetricBar label="LEADS CAPTADOS" current={leadsCount} goal={leadsGoal} color={projectColor}/>
@@ -682,7 +631,6 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
           )}
         </div>
 
-        {/* KPIs rápidos */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {leadsGoal > 0 && (
             <div className="rounded-xl border border-[#1E1E2E] px-4 py-3" style={{background:'#0A0A0F'}}>
@@ -720,9 +668,7 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
   )
 }
 
-
 // ─── PROJECT WIZARD ───────────────────────────────────────────────────────────
-
 
 function WInput({ label,value,onChange,placeholder,type='text' }: {
   label:string; value:string; onChange:(e:React.ChangeEvent<HTMLInputElement>)=>void; placeholder?:string; type?:string
@@ -736,7 +682,6 @@ function WInput({ label,value,onChange,placeholder,type='text' }: {
   )
 }
 
-
 interface WizardData {
   name:string; product_name:string; product_price:string; sales_goal:string; leads_goal:string
   ad_budget:string; captation_start:string; captation_end:string; cart_open:string; cart_close:string
@@ -745,7 +690,6 @@ interface WizardData {
 const WIZARD_STEPS = [
   {num:1,label:'Identidad'},{num:2,label:'Metas'},{num:3,label:'Fechas'},{num:4,label:'Contexto'},
 ]
-
 
 function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:Project)=>void }) {
   const [step,setStep] = useState(1)
@@ -758,7 +702,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
   })
   const set = (f:keyof WizardData) => (e:React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>) => setData(d=>({...d,[f]:e.target.value}))
   const canStep1 = data.name.trim().length>0
-
 
   const handleCreate = async () => {
     if(!data.name.trim()) return
@@ -783,7 +726,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
     } catch(e:any) { setError(e?.message||'Error al crear el proyecto') }
     finally { setSaving(false) }
   }
-
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
@@ -819,7 +761,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
           ))}
         </div>
 
-
         <div className="p-6 space-y-4">
           {step===1&&<>
             <WInput label="NOMBRE DEL PROYECTO *" value={data.name} onChange={set('name')} placeholder="ej. SamurAI Abril 2026"/>
@@ -830,7 +771,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
               <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">El nombre del proyecto aparecerá en el selector del header.</p>
             </div>
           </>}
-
 
           {step===2&&<>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
@@ -849,7 +789,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
               </div>
             )}
           </>}
-
 
           {step===3&&<>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
@@ -878,7 +817,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
             </div>
           </>}
 
-
           {step===4&&<>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
               <Brain size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
@@ -904,7 +842,6 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
           {error&&<div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3"><p className="text-xs text-[#FF6B35]">{error}</p></div>}
         </div>
 
-
         <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
           <button onClick={()=>step>1?setStep(step-1):onClose()}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
@@ -929,9 +866,7 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
   )
 }
 
-
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
-
 
 export default function Dashboard() {
   const [authenticated,setAuthenticated] = useState<boolean|null>(null)
@@ -957,7 +892,6 @@ export default function Dashboard() {
     return null
   })
 
-
   const addToast = useCallback((type:Toast['type'],message:string)=>{
     const id=`${Date.now()}-${Math.random()}`
     setToasts(p=>[...p,{id,type,message}])
@@ -965,11 +899,9 @@ export default function Dashboard() {
   },[])
   const removeToast = useCallback((id:string)=>setToasts(p=>p.filter(t=>t.id!==id)),[])
 
-
   useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeTab])
   useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeProjectId])
   useEffect(()=>{const s=localStorage.getItem(AUTH_KEY);setAuthenticated(s==='true')},[])
-
 
   const fetchData = useCallback(async ()=>{
     try {
@@ -993,7 +925,6 @@ export default function Dashboard() {
       setLeads(leadsData); setCampaigns(campData); setTemplates(tplData)
       setRecentMsgs((msgs as RecentMsg[]).slice(0,10))
       if(projR.data) setProjects(projR.data)
-
 
       const inbound=msgs.filter((m:any)=>m.direction==='inbound').length
       const outbound=msgs.filter((m:any)=>m.direction==='outbound').length
@@ -1021,7 +952,6 @@ export default function Dashboard() {
     } catch(e){console.error(e);setLoading(false)}
   },[activeProjectId])
 
-
   const handleCampaignAction = useCallback(async(camp:Campaign,action:'paused'|'cancelled')=>{
     const {error}=await supabase.from('wa_campaigns').update({status:action}).eq('id',camp.id)
     if(error){addToast('error',`Error: ${error.message}`)}
@@ -1031,7 +961,6 @@ export default function Dashboard() {
     }
   },[addToast])
 
-
   const handleProjectChange = useCallback((projectId:string|null)=>{
     setActiveProjectId(projectId)
     if(projectId) localStorage.setItem('kanshi_active_project',projectId)
@@ -1039,9 +968,7 @@ export default function Dashboard() {
   },[])
 
   const handleActivateProject = async (projectId: string) => {
-    // Desactiva cualquier proyecto activo primero
     await supabase.from('kanshi_projects').update({status:'planning'}).eq('status','active')
-    // Activa el seleccionado
     const {error} = await supabase.from('kanshi_projects').update({status:'active'}).eq('id',projectId)
     if(!error){
       setProjects(prev=>prev.map(p=>({...p,status:p.id===projectId?'active':p.status==='active'?'planning':p.status})))
@@ -1059,7 +986,6 @@ export default function Dashboard() {
     addToast('success',`Proyecto "${newProject.name}" creado — ahora está activo`)
   },[addToast])
 
-
   useEffect(()=>{
     if(!authenticated) return
     fetchData()
@@ -1075,14 +1001,12 @@ export default function Dashboard() {
     return ()=>{supabase.removeChannel(ch);clearInterval(iv)}
   },[fetchData,authenticated,activeProjectId])
 
-
   const segDist=['caliente','templado','frio'].map(s=>({name:s==='frio'?'Frío':s.charAt(0).toUpperCase()+s.slice(1),value:leads.filter(l=>l.segmento===s).length,color:segColor(s)})).filter(d=>d.value>0)
   const urgDist=['alta','media','baja'].map(u=>({name:u.charAt(0).toUpperCase()+u.slice(1),value:leads.filter(l=>l.urgencia_financiera===u).length,color:urgColor(u)})).filter(d=>d.value>0)
   const comDist=['alto','medio','bajo'].map(c=>({name:c.charAt(0).toUpperCase()+c.slice(1),value:leads.filter(l=>l.nivel_compromiso===c).length,color:comColor(c)})).filter(d=>d.value>0)
   const profiledLeads=useMemo(()=>leads.filter(l=>l.situacion_actual),[leads])
   const paginatedLeads=useMemo(()=>profiledLeads.slice((leadsPage-1)*PAGE_SIZE,leadsPage*PAGE_SIZE),[profiledLeads,leadsPage])
   const paginatedCampaigns=useMemo(()=>campaigns.slice((campaignsPage-1)*PAGE_SIZE,campaignsPage*PAGE_SIZE),[campaigns,campaignsPage])
-
 
   if(authenticated===null) return(
     <div className="min-h-screen flex items-center justify-center" style={{background:'#090c4c'}}>
@@ -1100,11 +1024,9 @@ export default function Dashboard() {
     </div>
   )
 
-
   return(
     <div className="min-h-screen" style={{background:'#0A0A0F'}}>
       <style>{`@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}`}</style>
-
 
       {/* HEADER */}
       <header className="border-b border-[#1E1E2E] px-6 py-4 flex items-center justify-between sticky top-0 z-50"
@@ -1126,8 +1048,7 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-          
-<ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)} onActivate={handleActivateProject}/>
+          <ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)} onActivate={handleActivateProject}/>
           <GlobalSearch leads={leads} onSelect={lead=>setSelectedLead(lead)}/>
           <div className="flex items-center gap-3">
             {connected
@@ -1146,9 +1067,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-
       <main className="p-6 max-w-[1600px] mx-auto space-y-6">
-
 
         {/* ══ OVERVIEW ══ */}
         {activeTab==='overview'&&<>
@@ -1222,7 +1141,6 @@ export default function Dashboard() {
           </div>
         </>}
 
-
         {/* ══ PIPELINE ══ */}
         {activeTab==='pipeline'&&(
           <div className="space-y-3">
@@ -1260,7 +1178,6 @@ export default function Dashboard() {
             })}
           </div>
         )}
-
 
         {/* ══ PSICOGRÁFICO ══ */}
         {activeTab==='psico'&&<>
@@ -1315,7 +1232,6 @@ export default function Dashboard() {
             </div>
           </Sec>
         </>}
-
 
         {/* ══ CAMPAÑAS ══ */}
         {activeTab==='campaigns'&&<>
@@ -1374,7 +1290,6 @@ export default function Dashboard() {
           </div>
         </>}
 
-        
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
           <CredentialsVault
@@ -1391,7 +1306,6 @@ export default function Dashboard() {
         </div>
       </main>
 
-
       {selectedLead&&<LeadPanel lead={selectedLead} onClose={()=>setSelectedLead(null)}/>}
       {showCreator&&<CampaignCreator leads={leads} templates={templates} onClose={()=>setShowCreator(false)}
         onCreated={()=>{setShowCreator(false);fetchData();setActiveTab('campaigns');addToast('success','Campaña creada — el scheduler la procesará en ~5 min')}}/>}
@@ -1404,9 +1318,7 @@ export default function Dashboard() {
 
 // ─── CAMPAIGN CREATOR ────────────────────────────────────────────────────────
 
-
 interface CreatorProps { leads:Lead[]; templates:Template[]; onClose:()=>void; onCreated:()=>void }
-
 
 function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
   const [step,setStep] = useState(1)
@@ -1424,14 +1336,12 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
   const [scheduledDate,setScheduledDate] = useState('')
   const [scheduledTime,setScheduledTime] = useState('')
 
-
   const detectVars = (tpl:Template) => {
     const matches=(tpl.body_text||'').match(/\{\{\d+\}\}/g)||[]
     const count=new Set(matches).size
     setTemplateVars(Array.from({length:count},(_,i)=>({index:i+1,type:'field' as const,value:'name',fallback:'Amigo'})))
   }
   const FIELD_OPTIONS=[{value:'name',label:'Nombre del contacto'},{value:'contact_number',label:'Número de teléfono'}]
-
 
   const filteredLeads = useMemo(()=>leads.filter(l=>{
     if(filterSegmento.length>0&&!filterSegmento.includes(l.segmento)) return false
@@ -1442,10 +1352,8 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
     return true
   }),[leads,filterSegmento,filterStage,filterUrgencia,filterCompromiso,minScore])
 
-
   const toggleFilter=(arr:string[],setArr:(v:string[])=>void,val:string)=>
     setArr(arr.includes(val)?arr.filter(v=>v!==val):[...arr,val])
-
 
   const handleCreate = async () => {
     if(!campaignName.trim()||!selectedTemplate||filteredLeads.length===0) return
@@ -1467,11 +1375,9 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
     finally{setSaving(false)}
   }
 
-
   const canNext1=campaignName.trim().length>0&&selectedTemplate!==null
   const canNext2=filteredLeads.length>0
   const canConfirm=canNext1&&canNext2&&(sendNow||(scheduledDate&&scheduledTime))
-
 
   return(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -1490,9 +1396,7 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
           <div className="h-full transition-all duration-500" style={{width:`${(step/3)*100}%`,background:'linear-gradient(90deg,#0014ad,#00a7e3)'}}/>
         </div>
 
-
         <div className="p-6 space-y-5">
-          {/* PASO 1 */}
           {step===1&&<>
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">NOMBRE DE LA CAMPAÑA</label>
@@ -1580,8 +1484,6 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
             )}
           </>}
 
-
-          {/* PASO 2 */}
           {step===2&&<>
             <div className="flex items-center justify-between p-3 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.4)',background:'rgba(0,176,246,0.05)'}}>
               <div className="flex items-center gap-2"><Filter size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px] tracking-widest" style={{color:'#00b0f6'}}>AUDIENCIA SELECCIONADA</span></div>
@@ -1627,8 +1529,6 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
             )}
           </>}
 
-
-          {/* PASO 3 */}
           {step===3&&<>
             <div>
               <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-3">CUÁNDO ENVIAR</label>
@@ -1671,7 +1571,6 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
           </>}
         </div>
 
-
         <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
           <button onClick={()=>step>1?setStep(step-1):onClose()}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
@@ -1695,9 +1594,7 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
   )
 }
 
-
 // ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
-
 
 function SummaryRow({label,value,highlight}:{label:string;value:string;highlight?:boolean}) {
   return(
@@ -1707,7 +1604,6 @@ function SummaryRow({label,value,highlight}:{label:string;value:string;highlight
     </div>
   )
 }
-
 
 interface FGProps {label:string;options:string[];selected:string[];onToggle:(v:string)=>void;colors?:Record<string,string>;labels?:Record<string,string>}
 function FilterGroup({label,options,selected,onToggle,colors={},labels={}}:FGProps) {
@@ -1731,11 +1627,9 @@ function FilterGroup({label,options,selected,onToggle,colors={},labels={}}:FGPro
   )
 }
 
-
 function Sec({label,children}:{label:string;children:React.ReactNode}){
   return <div><p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-3">{label}</p>{children}</div>
 }
-
 
 function KCard({icon,label,value,color,isPercent}:{icon:React.ReactNode;label:string;value:number|string;color:string;isPercent?:boolean}){
   return(
@@ -1750,12 +1644,10 @@ function KCard({icon,label,value,color,isPercent}:{icon:React.ReactNode;label:st
   )
 }
 
-
 function StagePill({stage}:{stage:string}){
   const s=STAGE_MAP[stage]||{label:stage,color:'#4A4A6A'}
   return <span className="mono text-[9px] tracking-widest px-2 py-0.5 rounded-full border" style={{color:s.color,borderColor:`${s.color}40`,background:`${s.color}10`}}>{s.label.toUpperCase()}</span>
 }
-
 
 function MiniDist({title,data,total}:{title:string;data:{name:string;value:number;color:string}[];total:number}){
   return(
@@ -1782,7 +1674,6 @@ function MiniDist({title,data,total}:{title:string;data:{name:string;value:numbe
     </div>
   )
 }
-
 
 function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
   const stage=STAGE_MAP[lead.agent_stage]||{label:lead.agent_stage,color:'#4A4A6A'}
@@ -1831,7 +1722,6 @@ function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
   )
 }
 
-
 function PField({label,value,icon,color='#E0E0F0'}:{label:string;value:string;icon:React.ReactNode;color?:string}){
   if(!value) return null
   return(
@@ -1842,7 +1732,6 @@ function PField({label,value,icon,color='#E0E0F0'}:{label:string;value:string;ic
   )
 }
 
-
 function MPin({label,value,color}:{label:string;value:string|undefined;color:string}){
   return(
     <div className="rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
@@ -1852,9 +1741,7 @@ function MPin({label,value,color}:{label:string;value:string|undefined;color:str
   )
 }
 
-
 // ─── PAGINATION ───────────────────────────────────────────────────────────────
-
 
 function Pagination({total,page,pageSize,onPage}:{total:number;page:number;pageSize:number;onPage:(p:number)=>void}){
   const totalPages=Math.ceil(total/pageSize)
@@ -1896,9 +1783,7 @@ function Pagination({total,page,pageSize,onPage}:{total:number;page:number;pageS
   )
 }
 
-
 // ─── TOAST SYSTEM ─────────────────────────────────────────────────────────────
-
 
 function ToastContainer({toasts,onRemove}:{toasts:Toast[];onRemove:(id:string)=>void}){
   const icons:Record<Toast['type'],React.ReactNode>={
@@ -1925,7 +1810,6 @@ function ToastContainer({toasts,onRemove}:{toasts:Toast[];onRemove:(id:string)=>
 
 // ─── CREDENTIALS VAULT ────────────────────────────────────────────────────────
 
-
 interface Credential {
   id: string
   name: string
@@ -1943,6 +1827,98 @@ interface Credential {
   created_at: string
 }
 
+// ─── CREDENTIAL CARD (con botón VERIFICAR) ────────────────────────────────────
+
+function CredentialCard({ cred, onToast, onRefresh, qrColor, tierLabel }: {
+  cred: Credential
+  onToast: (type: Toast['type'], msg: string) => void
+  onRefresh: () => void
+  qrColor: (r?: string) => string
+  tierLabel: (t?: string) => string
+}) {
+  const [verifying, setVerifying] = useState(false)
+
+  const handleVerify = async () => {
+    setVerifying(true)
+    try {
+      const res = await fetch('/api/validate-wa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone_number_id: cred.credentials.phone_number_id,
+          access_token: cred.credentials.access_token,
+        })
+      })
+      const result = await res.json()
+      if (result.error) {
+        onToast('error', `Error: ${result.error}`)
+      } else {
+        const updated = {
+          ...cred.credentials,
+          display_phone_number: result.display_phone_number,
+          quality_rating: result.quality_rating,
+          messaging_limit_tier: result.messaging_limit_tier,
+          last_verified: new Date().toISOString(),
+        }
+        await supabase.from('kanshi_credentials').update({ credentials: updated }).eq('id', cred.id)
+        onToast('success', `✓ ${result.display_phone_number} — ${result.quality_rating}`)
+        onRefresh()
+      }
+    } catch {
+      onToast('error', 'Error de conexión')
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+      <div className="px-5 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
+            <MessageSquare size={14} style={{ color: '#00b0f6' }}/>
+          </div>
+          <div>
+            <p className="font-semibold text-[#E0E0F0] text-sm">{cred.name}</p>
+            <p className="mono text-[10px] text-[#4A4A6A]">
+              {cred.credentials.display_phone_number || `ID: ${cred.credentials.phone_number_id?.slice(0,8)}...`}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {cred.credentials.quality_rating && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={{ background: `${qrColor(cred.credentials.quality_rating)}15`, border: `1px solid ${qrColor(cred.credentials.quality_rating)}40` }}>
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: qrColor(cred.credentials.quality_rating) }}/>
+              <span className="mono text-[10px] font-bold tracking-widest" style={{ color: qrColor(cred.credentials.quality_rating) }}>
+                {cred.credentials.quality_rating}
+              </span>
+            </div>
+          )}
+          {cred.credentials.messaging_limit_tier && (
+            <span className="mono text-[10px] text-[#4A4A6A] px-2 py-1 rounded-lg border border-[#1E1E2E]">
+              {tierLabel(cred.credentials.messaging_limit_tier)}
+            </span>
+          )}
+          {cred.credentials.last_verified && (
+            <span className="mono text-[9px] text-[#2E2E4E]">
+              verificado {format(new Date(cred.credentials.last_verified), 'dd/MM HH:mm')}
+            </span>
+          )}
+          <button
+            onClick={handleVerify}
+            disabled={verifying}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:border-[#00b0f6] hover:text-[#00b0f6] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            {verifying
+              ? <><div className="w-3 h-3 border border-[#00b0f6] border-t-transparent rounded-full animate-spin"/> VERIFICANDO</>
+              : <><Activity size={11}/> VERIFICAR</>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function CredentialsVault({
   activeProjectId, projects, onToast
@@ -1955,7 +1931,6 @@ function CredentialsVault({
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
-
   const fetchCredentials = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -1967,19 +1942,15 @@ function CredentialsVault({
     setLoading(false)
   }, [])
 
-
   useEffect(() => { fetchCredentials() }, [fetchCredentials])
-
 
   const qrColor = (r?: string) =>
     r === 'GREEN' ? '#00FF94' : r === 'YELLOW' ? '#FFB800' : r === 'RED' ? '#FF6B35' : '#4A4A6A'
   const tierLabel = (t?: string) =>
     ({ TIER_50:'50/día', TIER_250:'250/día', TIER_1K:'1K/día', TIER_10K:'10K/día', TIER_100K:'100K/día' }[t||''] || t || '—')
 
-
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CREDENCIALES — WHATSAPP BUSINESS</p>
@@ -1993,8 +1964,6 @@ function CredentialsVault({
         </button>
       </div>
 
-
-      {/* Lista de credenciales */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
@@ -2010,51 +1979,18 @@ function CredentialsVault({
       ) : (
         <div className="space-y-3">
           {credentials.map(cred => (
-            <div key={cred.id} className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
-              <div className="px-5 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
-                    <MessageSquare size={14} style={{ color: '#00b0f6' }}/>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#E0E0F0] text-sm">{cred.name}</p>
-                    <p className="mono text-[10px] text-[#4A4A6A]">
-                      {cred.credentials.display_phone_number || `ID: ${cred.credentials.phone_number_id?.slice(0,8)}...`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* Quality Rating badge */}
-                  {cred.credentials.quality_rating && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                      style={{ background: `${qrColor(cred.credentials.quality_rating)}15`, border: `1px solid ${qrColor(cred.credentials.quality_rating)}40` }}>
-                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: qrColor(cred.credentials.quality_rating) }}/>
-                      <span className="mono text-[10px] font-bold tracking-widest" style={{ color: qrColor(cred.credentials.quality_rating) }}>
-                        {cred.credentials.quality_rating}
-                      </span>
-                    </div>
-                  )}
-                  {/* Tier */}
-                  {cred.credentials.messaging_limit_tier && (
-                    <span className="mono text-[10px] text-[#4A4A6A] px-2 py-1 rounded-lg border border-[#1E1E2E]">
-                      {tierLabel(cred.credentials.messaging_limit_tier)}
-                    </span>
-                  )}
-                  {/* Last verified */}
-                  {cred.credentials.last_verified && (
-                    <span className="mono text-[9px] text-[#2E2E4E]">
-                      verificado {format(new Date(cred.credentials.last_verified), 'dd/MM HH:mm')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+            <CredentialCard
+              key={cred.id}
+              cred={cred}
+              onToast={onToast}
+              onRefresh={fetchCredentials}
+              qrColor={qrColor}
+              tierLabel={tierLabel}
+            />
           ))}
         </div>
       )}
 
-
-      {/* Modal Agregar Credencial */}
       {showForm && (
         <AddCredentialModal
           onClose={() => setShowForm(false)}
@@ -2066,9 +2002,7 @@ function CredentialsVault({
   )
 }
 
-
 // ─── ADD CREDENTIAL MODAL ─────────────────────────────────────────────────────
-
 
 function CInput({ label, value, onChange, placeholder, type='text', masked=false }: {
   label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -2096,7 +2030,6 @@ function CInput({ label, value, onChange, placeholder, type='text', masked=false
   )
 }
 
-
 function AddCredentialModal({
   onClose, onCreated, onToast
 }: {
@@ -2111,9 +2044,7 @@ function AddCredentialModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-
   const canSave = name.trim() && phoneId.trim() && token.trim()
-
 
   const handleSave = async () => {
     if (!canSave) return
@@ -2138,13 +2069,11 @@ function AddCredentialModal({
     }
   }
 
-
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
       <div className="relative w-full max-w-md rounded-2xl border border-[#1E1E2E] overflow-hidden"
         style={{ background: '#0D0D14', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
-        {/* Header */}
         <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between">
           <div>
             <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVO NÚMERO WHATSAPP</p>
@@ -2154,9 +2083,6 @@ function AddCredentialModal({
             <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
           </button>
         </div>
-
-
-        {/* Campos */}
         <div className="p-6 space-y-4">
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
             style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
@@ -2175,9 +2101,6 @@ function AddCredentialModal({
             </div>
           )}
         </div>
-
-
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between"
           style={{ background: 'rgba(13,13,20,0.98)' }}>
           <button onClick={onClose}
@@ -2197,4 +2120,3 @@ function AddCredentialModal({
     </div>
   )
 }
-
