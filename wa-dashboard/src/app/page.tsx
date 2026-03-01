@@ -61,6 +61,7 @@ interface Project {
   agent_context: string | null
   color: string | null
   emoji: string | null
+  credential_id: string | null
 }
 
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
@@ -230,199 +231,25 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
         <div className="absolute top-[calc(100%+8px)] left-0 w-[320px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
           style={{background:'#0D0D14',boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
           <div className="px-4 py-2 border-b border-[#1E1E2E]">
-            <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{results.length} RESULTADO{results.length!==1?'S':''}</span>
+            <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{results.length} RESULTADO{results.length>1?'S':''}</span>
           </div>
-          {results.map((lead,i) => {
-            const stage = STAGE_MAP[lead.agent_stage]||{label:lead.agent_stage,color:'#4A4A6A'}
-            return (
+          <div className="divide-y divide-[#1E1E2E]">
+            {results.map((lead,i) => (
               <button key={i} onClick={()=>{onSelect(lead);setOpen(false);setQuery('')}}
-                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left border-b border-[#0D0D14] last:border-0">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{background:`${stage.color}20`}}>
-                  <User size={11} style={{color:stage.color}}/>
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:`${segColor(lead.segmento)}20`}}>
+                  <User size={11} style={{color:segColor(lead.segmento)}}/>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-[#E0E0F0] truncate">{highlightMatch(lead.name||lead.phone_number,query)}</p>
                   <p className="mono text-[9px] text-[#4A4A6A] truncate">{lead.phone_number}</p>
                 </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{color:stage.color,background:`${stage.color}10`}}>{stage.label.toUpperCase()}</span>
-                  {lead.engagement_score>0 && <span className="mono text-[9px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★ {lead.engagement_score}</span>}
-                </div>
+                <div className="flex-shrink-0"><StagePill stage={lead.agent_stage}/></div>
               </button>
-            )
-          })}
+            ))}
+          </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// ─── PROJECT TIMELINE ─────────────────────────────────────────────────────────
-
-function ProjectTimeline({ project }: { project: Project }) {
-  const today = new Date(); today.setHours(0,0,0,0)
-  const parseDate = (d: string|null): Date|null => { if(!d) return null; const p=new Date(d); return isNaN(p.getTime())?null:p }
-  const daysDiff = (a: Date, b: Date) => Math.round((b.getTime()-a.getTime())/86400000)
-
-  const captStart = parseDate(project.captation_start)
-  const captEnd   = parseDate(project.captation_end)
-  const cartOpen  = parseDate(project.cart_open)
-  const cartClose = parseDate(project.cart_close)
-  const classDates: Date[] = (project.class_dates??[]).map((d:string)=>parseDate(d)).filter((d):d is Date=>d!==null).sort((a,b)=>a.getTime()-b.getTime())
-
-  const allDates = [captStart,captEnd,...classDates,cartOpen,cartClose].filter((d):d is Date=>d!==null)
-  if (allDates.length===0) return (
-    <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
-      <div className="flex items-center gap-3">
-        <Calendar size={14} style={{color:'#4A4A6A'}}/>
-        <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">{project.name} — Sin fechas configuradas. Edita el proyecto para agregar el calendario.</p>
-      </div>
-    </div>
-  )
-
-  const minDate = new Date(Math.min(...allDates.map(d=>d.getTime())))
-  const maxDate = new Date(Math.max(...allDates.map(d=>d.getTime())))
-  const totalSpan = Math.max(daysDiff(minDate,maxDate),1)
-  const pct = (d:Date|null) => d===null?-1:Math.min(100,Math.max(0,(daysDiff(minDate,d)/totalSpan)*100))
-  const todayPct = Math.min(100,Math.max(0,(daysDiff(minDate,today)/totalSpan)*100))
-
-  const getPhase = () => {
-    if (cartClose&&today>cartClose) return {label:'LANZAMIENTO CERRADO',color:'#4A4A6A'}
-    if (cartOpen&&today>=cartOpen)  return {label:'CARRITO ABIERTO',color:'#00FF94'}
-    if (classDates.length>0&&today>=classDates[0]) return {label:'EN LIVES/CLASES',color:'#FFB800'}
-    if (captEnd&&today>captEnd)    return {label:'CAPTACIÓN TERMINADA',color:'#FF6B35'}
-    if (captStart&&today>=captStart) return {label:'EN CAPTACIÓN',color:'#00b0f6'}
-    return {label:'PRE-LANZAMIENTO',color:'#4A4A6A'}
-  }
-  const phase = getPhase()
-
-  const nextMilestone = (() => {
-    const up = [
-      captStart&&today<captStart?{label:'Inicio captación',date:captStart}:null,
-      captEnd&&today<captEnd?{label:'Fin captación',date:captEnd}:null,
-      classDates[0]&&today<classDates[0]?{label:'Primer live',date:classDates[0]}:null,
-      cartOpen&&today<cartOpen?{label:'Carrito abre',date:cartOpen}:null,
-      cartClose&&today<cartClose?{label:'Carrito cierra',date:cartClose}:null,
-    ].filter(Boolean) as {label:string;date:Date}[]
-    return up.length?up.sort((a,b)=>a.date.getTime()-b.date.getTime())[0]:null
-  })()
-
-  const fmtDate = (d:Date) => d.toLocaleDateString('es-EC',{day:'2-digit',month:'short'}).toUpperCase()
-
-  const milestones = [
-    captStart ?{label:'INICIO CAPTACIÓN',date:captStart, color:'#00b0f6'}:null,
-    captEnd   ?{label:'FIN CAPTACIÓN',   date:captEnd,   color:'#FFB800'}:null,
-    ...classDates.map((d,i)=>({label:i===0?'PRIMER LIVE':`LIVE ${i+1}`,date:d,color:'#C084FC'})),
-    cartOpen  ?{label:'CARRITO ABRE',    date:cartOpen,  color:'#00FF94'}:null,
-    cartClose ?{label:'CARRITO CIERRA',  date:cartClose, color:'#FF6B35'}:null,
-  ].filter(Boolean) as {label:string;date:Date;color:string}[]
-
-  return (
-    <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
-      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-            style={{background:`${project.color||'#00b0f6'}20`,border:`1px solid ${project.color||'#00b0f6'}30`}}>
-            {project.emoji||'🚀'}
-          </div>
-          <div>
-            <p className="font-semibold text-[#E0E0F0] text-sm">{project.name}</p>
-            {project.product_name && (
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">
-                {project.product_name}{project.product_price?` · $${project.product_price.toLocaleString()}`:''}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="mono text-[10px] px-3 py-1.5 rounded-full font-bold tracking-widest"
-            style={{color:phase.color,background:`${phase.color}18`,border:`1px solid ${phase.color}30`}}>
-            {phase.label}
-          </span>
-          {nextMilestone && (
-            <span className="mono text-[10px] text-[#4A4A6A] tracking-widest">
-              <span style={{color:'#00b0f6'}}>{daysDiff(today,nextMilestone.date)}</span> días para {nextMilestone.label.toLowerCase()}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="px-6 pt-5 pb-6">
-        <div className="relative h-1.5 rounded-full mb-8" style={{background:'#1E1E2E'}}>
-          <div className="absolute h-full rounded-full" style={{width:`${todayPct}%`,background:'linear-gradient(90deg,#0014ad,#00b0f6)'}}/>
-          {todayPct>=0&&todayPct<=100&&(
-            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center" style={{left:`${todayPct}%`}}>
-              <div className="w-3 h-3 rounded-full border-2 border-[#00b0f6] z-10" style={{background:'#0A0A0F',boxShadow:'0 0 8px #00b0f6'}}/>
-              <span className="mono text-[8px] text-[#00b0f6] mt-6 whitespace-nowrap tracking-widest">HOY</span>
-            </div>
-          )}
-          {milestones.map((m,i)=>{
-            const p=pct(m.date); if(p<0) return null
-            const isPast=m.date<=today
-            return (
-              <div key={i} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center group" style={{left:`${p}%`}}>
-                <div className="w-3 h-3 rounded-full border-2 z-10 transition-all"
-                  style={{borderColor:isPast?'#2A2A4A':m.color,background:isPast?'#1E1E2E':m.color,boxShadow:isPast?'none':`0 0 6px ${m.color}80`}}/>
-                <div className="absolute bottom-6 bg-[#0D0D14] border border-[#1E1E2E] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap"
-                  style={{boxShadow:'0 4px 16px rgba(0,0,0,0.6)'}}>
-                  <p className="mono text-[9px] font-bold tracking-widest" style={{color:m.color}}>{m.label}</p>
-                  <p className="mono text-[9px] text-[#4A4A6A]">{fmtDate(m.date)}</p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="relative">
-          {milestones.map((m,i)=>{
-            const p=pct(m.date); if(p<0) return null
-            const isPast=m.date<=today; const daysTo=daysDiff(today,m.date)
-            return (
-             <div key={i} className="absolute flex flex-col items-center" style={{left:`${p}%`, transform: p > 85 ? 'translateX(-100%)' : p < 15 ? 'translateX(0%)' : 'translateX(-50%)'}}>
-                <span className="mono text-[9px] font-bold tracking-widest" style={{color:isPast?'#2A2A4A':m.color}}>{fmtDate(m.date)}</span>
-                <span className="mono text-[8px] mt-0.5" style={{color:'#4A4A6A'}}>
-                  {isPast?`hace ${Math.abs(daysTo)}d`:daysTo===0?'HOY':`en ${daysTo}d`}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-        <div className="h-8"/>
-
-        <div className="flex gap-4 flex-wrap mt-2">
-          {captStart&&captEnd&&(
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{background:'#00b0f6'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
-                CAPTACIÓN · {fmtDate(captStart)} → {fmtDate(captEnd)}<span style={{color:'#00b0f6'}}> ({daysDiff(captStart,captEnd)}d)</span>
-              </span>
-            </div>
-          )}
-          {classDates.length>0&&(
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{background:'#C084FC'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">LIVES · {classDates.length} clase{classDates.length>1?'s':''}</span>
-            </div>
-          )}
-          {cartOpen&&cartClose&&(
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{background:'#00FF94'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
-                CARRITO · {fmtDate(cartOpen)} → {fmtDate(cartClose)}<span style={{color:'#00FF94'}}> ({daysDiff(cartOpen,cartClose)}d)</span>
-              </span>
-            </div>
-          )}
-          {project.sales_goal&&(
-            <div className="flex items-center gap-1.5">
-              <DollarSign size={9} style={{color:'#FFB800'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
-                META · <span style={{color:'#FFB800'}}>{project.sales_goal} ventas</span>
-                {project.product_price?` · $${(project.sales_goal*project.product_price).toLocaleString()}`:''}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
@@ -431,26 +258,26 @@ function ProjectTimeline({ project }: { project: Project }) {
 
 function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, onActivate }: {
   projects: Project[]; activeProjectId: string|null
-  onChange: (id: string|null) => void; onNewProject: () => void
-  onActivate: (id: string) => void
+  onChange: (id: string|null) => void; onNewProject: () => void; onActivate: (id: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const activeProject = projects.find(p=>p.id===activeProjectId)??null
-  const psc = (s:string) => s==='active'?'#00FF94':s==='planning'?'#FFB800':'#4A4A6A'
-  const psl = (s:string) => ({active:'ACTIVO',planning:'PLANIFICANDO',closed:'CERRADO'}[s]||s.toUpperCase())
+  const activeProject = projects.find(p => p.id === activeProjectId)
+  const psc = (s: string) => s==='active'?'#00FF94':s==='planning'?'#FFB800':'#4A4A6A'
+  const psl = (s: string) => s==='active'?'ACTIVO':s==='planning'?'PLANIF.':'CERRADO'
 
   useEffect(() => {
-    const h = (e:MouseEvent) => { if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [])
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={()=>setOpen(o=>!o)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:border-[#2E2E4E]"
-        style={{background:'#111118',borderColor:activeProject?'#0014ad':'#1E1E2E',minWidth:'180px'}}>
-        <Rocket size={11} style={{color:activeProject?'#00b0f6':'#4A4A6A',flexShrink:0}}/>
+      <button onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors"
+        style={{background:'#111118',minWidth:'180px',maxWidth:'220px'}}>
+        <Rocket size={11} style={{color: activeProject ? psc(activeProject.status) : '#4A4A6A', flexShrink:0}}/>
         <span className="mono text-[11px] flex-1 text-left truncate" style={{color:activeProject?'#E0E0F0':'#4A4A6A'}}>
           {activeProject?activeProject.name:'SIN PROYECTO'}
         </span>
@@ -668,6 +495,7 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
   )
 }
 
+
 // ─── PROJECT WIZARD ───────────────────────────────────────────────────────────
 
 function WInput({ label,value,onChange,placeholder,type='text' }: {
@@ -720,7 +548,7 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
       }
       if(data.class_dates.trim()) payload.class_dates=data.class_dates.trim().split('\n').filter(Boolean).map(d=>d.trim())
       const {data:np,error:err} = await supabase.from('kanshi_projects').insert(payload)
-        .select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji').single()
+        .select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji,credential_id').single()
       if(err) throw err
       onCreated(np as Project)
     } catch(e:any) { setError(e?.message||'Error al crear el proyecto') }
@@ -918,7 +746,7 @@ export default function Dashboard() {
       const [msgsR,convsR,cntR,campsR,leadsR,tplsR,projR] = await Promise.all([
         msgsQ, supabase.from('wa_conversations').select('status'), cntQ, campsQ, leadsQ,
         supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
-        supabase.from('kanshi_projects').select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji').order('created_at',{ascending:false}),
+        supabase.from('kanshi_projects').select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji,credential_id').order('created_at',{ascending:false}),
       ])
       const msgs=msgsR.data||[]; const leadsData:Lead[]=leadsR.data||[]
       const campData:Campaign[]=campsR.data||[]; const tplData:Template[]=tplsR.data||[]
@@ -1296,6 +1124,7 @@ export default function Dashboard() {
             activeProjectId={activeProjectId}
             projects={projects}
             onToast={addToast}
+            onProjectsUpdate={setProjects}
           />
         )}
 
@@ -1808,6 +1637,7 @@ function ToastContainer({toasts,onRemove}:{toasts:Toast[];onRemove:(id:string)=>
   )
 }
 
+
 // ─── CREDENTIALS VAULT ────────────────────────────────────────────────────────
 
 interface Credential {
@@ -1827,7 +1657,7 @@ interface Credential {
   created_at: string
 }
 
-// ─── CREDENTIAL CARD (con botón VERIFICAR) ────────────────────────────────────
+// ─── CREDENTIAL CARD ──────────────────────────────────────────────────────────
 
 function CredentialCard({ cred, onToast, onRefresh, qrColor, tierLabel }: {
   cred: Credential
@@ -1920,12 +1750,70 @@ function CredentialCard({ cred, onToast, onRefresh, qrColor, tierLabel }: {
   )
 }
 
+// ─── PROJECT CREDENTIAL ROW (F5) ─────────────────────────────────────────────
+
+function ProjectCredentialRow({ project, credentials, onToast, onUpdate }: {
+  project: Project
+  credentials: Credential[]
+  onToast: (type: Toast['type'], msg: string) => void
+  onUpdate: (projectId: string, credentialId: string | null) => void
+}) {
+  const [value, setValue] = useState<string>(project.credential_id || '')
+  const [saving, setSaving] = useState(false)
+
+  const handleChange = async (newId: string) => {
+    setValue(newId)
+    setSaving(true)
+    const { error } = await supabase
+      .from('kanshi_projects')
+      .update({ credential_id: newId || null })
+      .eq('id', project.id)
+    setSaving(false)
+    if (error) {
+      onToast('error', 'Error al asignar credencial')
+    } else {
+      onUpdate(project.id, newId || null)
+      onToast('success', `Credencial asignada a ${project.name}`)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg" style={{ background: '#0A0A0F' }}>
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-base">{project.emoji || '🚀'}</span>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-[#E0E0F0] truncate">{project.name}</p>
+          <p className="mono text-[10px] text-[#4A4A6A]">{project.status.toUpperCase()}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {saving && <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>}
+        <select
+          value={value}
+          onChange={e => handleChange(e.target.value)}
+          className="mono text-[10px] rounded-lg px-2 py-1.5 border outline-none text-[#E0E0F0]"
+          style={{ background: '#111118', borderColor: '#1E1E2E', minWidth: '180px' }}>
+          <option value="">— Sin asignar —</option>
+          {credentials.map(c => (
+            <option key={c.id} value={c.id}>
+              {c.credentials.display_phone_number || c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  )
+}
+
+// ─── CREDENTIALS VAULT ────────────────────────────────────────────────────────
+
 function CredentialsVault({
-  activeProjectId, projects, onToast
+  activeProjectId, projects, onToast, onProjectsUpdate
 }: {
   activeProjectId: string|null
   projects: Project[]
   onToast: (type: Toast['type'], msg: string) => void
+  onProjectsUpdate: (projects: Project[]) => void
 }) {
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [loading, setLoading] = useState(true)
@@ -1948,6 +1836,10 @@ function CredentialsVault({
     r === 'GREEN' ? '#00FF94' : r === 'YELLOW' ? '#FFB800' : r === 'RED' ? '#FF6B35' : '#4A4A6A'
   const tierLabel = (t?: string) =>
     ({ TIER_50:'50/día', TIER_250:'250/día', TIER_1K:'1K/día', TIER_10K:'10K/día', TIER_100K:'100K/día' }[t||''] || t || '—')
+
+  const handleProjectUpdate = (projectId: string, credentialId: string | null) => {
+    onProjectsUpdate(projects.map(p => p.id === projectId ? { ...p, credential_id: credentialId } : p))
+  }
 
   return (
     <div className="space-y-5">
@@ -1988,6 +1880,27 @@ function CredentialsVault({
               tierLabel={tierLabel}
             />
           ))}
+        </div>
+      )}
+
+      {/* ── F5: ASIGNAR NÚMERO A PROYECTO ── */}
+      {projects.length > 0 && credentials.length > 0 && (
+        <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#111118' }}>
+          <div className="flex items-center gap-2">
+            <Rocket size={12} style={{ color: '#00b0f6' }}/>
+            <p className="mono text-[10px] tracking-widest text-[#4A4A6A]">ASIGNAR NÚMERO A PROYECTO</p>
+          </div>
+          <div className="space-y-2">
+            {projects.map(proj => (
+              <ProjectCredentialRow
+                key={proj.id}
+                project={proj}
+                credentials={credentials}
+                onToast={onToast}
+                onUpdate={handleProjectUpdate}
+              />
+            ))}
+          </div>
         </div>
       )}
 
