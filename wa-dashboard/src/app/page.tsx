@@ -470,9 +470,10 @@ function ProjectTimeline({ project }: { project: Project }) {
 // ─── PROJECT SELECTOR ─────────────────────────────────────────────────────────
 
 
-function ProjectSelector({ projects, activeProjectId, onChange, onNewProject }: {
+function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, onActivate }: {
   projects: Project[]; activeProjectId: string|null
   onChange: (id: string|null) => void; onNewProject: () => void
+  onActivate: (id: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -538,6 +539,13 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject }: 
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{color:psc(p.status),background:`${psc(p.status)}15`}}>{psl(p.status)}</span>
                     {p.id===activeProjectId&&<CheckCircle size={9} style={{color:'#00b0f6'}}/>}
+                    {p.status==='planning'&&(
+                      <button onClick={e=>{e.stopPropagation();onActivate(p.id);setOpen(false)}}
+                        className="mono text-[8px] px-2 py-0.5 rounded-full font-bold hover:opacity-80 transition-opacity"
+                        style={{background:'#00FF9420',color:'#00FF94',border:'1px solid #00FF9440'}}>
+                        ACTIVAR
+                      </button>
+                    )}
                   </div>
                 </button>
               ))}
@@ -1030,6 +1038,18 @@ export default function Dashboard() {
     else localStorage.removeItem('kanshi_active_project')
   },[])
 
+  const handleActivateProject = async (projectId: string) => {
+    // Desactiva cualquier proyecto activo primero
+    await supabase.from('kanshi_projects').update({status:'planning'}).eq('status','active')
+    // Activa el seleccionado
+    const {error} = await supabase.from('kanshi_projects').update({status:'active'}).eq('id',projectId)
+    if(!error){
+      setProjects(prev=>prev.map(p=>({...p,status:p.id===projectId?'active':p.status==='active'?'planning':p.status})))
+      showToast('success',`Proyecto activado — SAM usará este contexto`)
+    } else {
+      showToast('error','Error al activar el proyecto')
+    }
+  }
 
   const handleProjectCreated = useCallback((newProject:Project)=>{
     setProjects(prev=>[newProject,...prev])
@@ -1106,7 +1126,8 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-          <ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)}/>
+          // DESPUÉS
+<ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)} onActivate={handleActivateProject}/>
           <GlobalSearch leads={leads} onSelect={lead=>setSelectedLead(lead)}/>
           <div className="flex items-center gap-3">
             {connected
