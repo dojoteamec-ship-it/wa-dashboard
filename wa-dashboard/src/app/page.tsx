@@ -254,6 +254,177 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
   )
 }
 
+// ─── PROJECT TIMELINE ─────────────────────────────────────────────────────────
+
+function ProjectTimeline({ project }: { project: Project }) {
+  const today = new Date(); today.setHours(0,0,0,0)
+  const parseDate = (d: string|null): Date|null => { if(!d) return null; const p=new Date(d); return isNaN(p.getTime())?null:p }
+  const daysDiff = (a: Date, b: Date) => Math.round((b.getTime()-a.getTime())/86400000)
+
+  const captStart = parseDate(project.captation_start)
+  const captEnd   = parseDate(project.captation_end)
+  const cartOpen  = parseDate(project.cart_open)
+  const cartClose = parseDate(project.cart_close)
+  const classDates: Date[] = (project.class_dates??[]).map((d:string)=>parseDate(d)).filter((d):d is Date=>d!==null).sort((a,b)=>a.getTime()-b.getTime())
+
+  const allDates = [captStart,captEnd,...classDates,cartOpen,cartClose].filter((d):d is Date=>d!==null)
+  if (allDates.length===0) return (
+    <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
+      <div className="flex items-center gap-3">
+        <Calendar size={14} style={{color:'#4A4A6A'}}/>
+        <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">{project.name} — Sin fechas configuradas. Edita el proyecto para agregar el calendario.</p>
+      </div>
+    </div>
+  )
+
+  const minDate = new Date(Math.min(...allDates.map(d=>d.getTime())))
+  const maxDate = new Date(Math.max(...allDates.map(d=>d.getTime())))
+  const totalSpan = Math.max(daysDiff(minDate,maxDate),1)
+  const pct = (d:Date|null) => d===null?-1:Math.min(100,Math.max(0,(daysDiff(minDate,d)/totalSpan)*100))
+  const todayPct = Math.min(100,Math.max(0,(daysDiff(minDate,today)/totalSpan)*100))
+
+  const getPhase = () => {
+    if (cartClose&&today>cartClose) return {label:'LANZAMIENTO CERRADO',color:'#4A4A6A'}
+    if (cartOpen&&today>=cartOpen)  return {label:'CARRITO ABIERTO',color:'#00FF94'}
+    if (classDates.length>0&&today>=classDates[0]) return {label:'EN LIVES/CLASES',color:'#FFB800'}
+    if (captEnd&&today>captEnd)    return {label:'CAPTACIÓN TERMINADA',color:'#FF6B35'}
+    if (captStart&&today>=captStart) return {label:'EN CAPTACIÓN',color:'#00b0f6'}
+    return {label:'PRE-LANZAMIENTO',color:'#4A4A6A'}
+  }
+  const phase = getPhase()
+
+  const nextMilestone = (() => {
+    const up = [
+      captStart&&today<captStart?{label:'Inicio captación',date:captStart}:null,
+      captEnd&&today<captEnd?{label:'Fin captación',date:captEnd}:null,
+      classDates[0]&&today<classDates[0]?{label:'Primer live',date:classDates[0]}:null,
+      cartOpen&&today<cartOpen?{label:'Carrito abre',date:cartOpen}:null,
+      cartClose&&today<cartClose?{label:'Carrito cierra',date:cartClose}:null,
+    ].filter(Boolean) as {label:string;date:Date}[]
+    return up.length?up.sort((a,b)=>a.date.getTime()-b.date.getTime())[0]:null
+  })()
+
+  const fmtDate = (d:Date) => d.toLocaleDateString('es-EC',{day:'2-digit',month:'short'}).toUpperCase()
+
+  const milestones = [
+    captStart ?{label:'INICIO CAPTACIÓN',date:captStart, color:'#00b0f6'}:null,
+    captEnd   ?{label:'FIN CAPTACIÓN',   date:captEnd,   color:'#FFB800'}:null,
+    ...classDates.map((d,i)=>({label:i===0?'PRIMER LIVE':`LIVE ${i+1}`,date:d,color:'#C084FC'})),
+    cartOpen  ?{label:'CARRITO ABRE',    date:cartOpen,  color:'#00FF94'}:null,
+    cartClose ?{label:'CARRITO CIERRA',  date:cartClose, color:'#FF6B35'}:null,
+  ].filter(Boolean) as {label:string;date:Date;color:string}[]
+
+  return (
+    <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
+      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
+            style={{background:`${project.color||'#00b0f6'}20`,border:`1px solid ${project.color||'#00b0f6'}30`}}>
+            {project.emoji||'🚀'}
+          </div>
+          <div>
+            <p className="font-semibold text-[#E0E0F0] text-sm">{project.name}</p>
+            {project.product_name && (
+              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+                {project.product_name}{project.product_price?` · $${project.product_price.toLocaleString()}`:''}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] px-3 py-1.5 rounded-full font-bold tracking-widest"
+            style={{color:phase.color,background:`${phase.color}18`,border:`1px solid ${phase.color}30`}}>
+            {phase.label}
+          </span>
+          {nextMilestone && (
+            <span className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+              <span style={{color:'#00b0f6'}}>{daysDiff(today,nextMilestone.date)}</span> días para {nextMilestone.label.toLowerCase()}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="px-6 pt-5 pb-6">
+        <div className="relative h-1.5 rounded-full mb-8" style={{background:'#1E1E2E'}}>
+          <div className="absolute h-full rounded-full" style={{width:`${todayPct}%`,background:'linear-gradient(90deg,#0014ad,#00b0f6)'}}/>
+          {todayPct>=0&&todayPct<=100&&(
+            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center" style={{left:`${todayPct}%`}}>
+              <div className="w-3 h-3 rounded-full border-2 border-[#00b0f6] z-10" style={{background:'#0A0A0F',boxShadow:'0 0 8px #00b0f6'}}/>
+              <span className="mono text-[8px] text-[#00b0f6] mt-6 whitespace-nowrap tracking-widest">HOY</span>
+            </div>
+          )}
+          {milestones.map((m,i)=>{
+            const p=pct(m.date); if(p<0) return null
+            const isPast=m.date<=today
+            return (
+              <div key={i} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center group" style={{left:`${p}%`}}>
+                <div className="w-3 h-3 rounded-full border-2 z-10 transition-all"
+                  style={{borderColor:isPast?'#2A2A4A':m.color,background:isPast?'#1E1E2E':m.color,boxShadow:isPast?'none':`0 0 6px ${m.color}80`}}/>
+                <div className="absolute bottom-6 bg-[#0D0D14] border border-[#1E1E2E] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap"
+                  style={{boxShadow:'0 4px 16px rgba(0,0,0,0.6)'}}>
+                  <p className="mono text-[9px] font-bold tracking-widest" style={{color:m.color}}>{m.label}</p>
+                  <p className="mono text-[9px] text-[#4A4A6A]">{fmtDate(m.date)}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="relative">
+          {milestones.map((m,i)=>{
+            const p=pct(m.date); if(p<0) return null
+            const isPast=m.date<=today; const daysTo=daysDiff(today,m.date)
+            return (
+              <div key={i} className="absolute flex flex-col items-center" style={{left:`${p}%`, transform: p > 85 ? 'translateX(-100%)' : p < 15 ? 'translateX(0%)' : 'translateX(-50%)'}}>
+                <span className="mono text-[9px] font-bold tracking-widest" style={{color:isPast?'#2A2A4A':m.color}}>{fmtDate(m.date)}</span>
+                <span className="mono text-[8px] mt-0.5" style={{color:'#4A4A6A'}}>
+                  {isPast?`hace ${Math.abs(daysTo)}d`:daysTo===0?'HOY':`en ${daysTo}d`}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+        <div className="h-8"/>
+
+        <div className="flex gap-4 flex-wrap mt-2">
+          {captStart&&captEnd&&(
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{background:'#00b0f6'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                CAPTACIÓN · {fmtDate(captStart)} → {fmtDate(captEnd)}<span style={{color:'#00b0f6'}}> ({daysDiff(captStart,captEnd)}d)</span>
+              </span>
+            </div>
+          )}
+          {classDates.length>0&&(
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{background:'#C084FC'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">LIVES · {classDates.length} clase{classDates.length>1?'s':''}</span>
+            </div>
+          )}
+          {cartOpen&&cartClose&&(
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{background:'#00FF94'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                CARRITO · {fmtDate(cartOpen)} → {fmtDate(cartClose)}<span style={{color:'#00FF94'}}> ({daysDiff(cartOpen,cartClose)}d)</span>
+              </span>
+            </div>
+          )}
+          {project.sales_goal&&(
+            <div className="flex items-center gap-1.5">
+              <DollarSign size={9} style={{color:'#FFB800'}}/>
+              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                META · <span style={{color:'#FFB800'}}>{project.sales_goal} ventas</span>
+                {project.product_price?` · $${(project.sales_goal*project.product_price).toLocaleString()}`:''}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // ─── PROJECT SELECTOR ─────────────────────────────────────────────────────────
 
 function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, onActivate }: {
