@@ -947,7 +947,7 @@ export default function Dashboard() {
   const [loading,setLoading] = useState(true)
   const [connected,setConnected] = useState(false)
   const [lastUpdate,setLastUpdate] = useState(new Date())
-  const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'>('overview')
+  const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'|'config'>('overview')
   const [toasts,setToasts] = useState<Toast[]>([])
   const [leadsPage,setLeadsPage] = useState(1)
   const [campaignsPage,setCampaignsPage] = useState(1)
@@ -1118,11 +1118,11 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-4">
           <nav className="flex items-center gap-1">
-            {(['overview','pipeline','psico','campaigns'] as const).map(k=>(
+            {(['overview','pipeline','psico','campaigns','config'] as const).map(k=>(
               <button key={k} onClick={()=>setActiveTab(k)}
                 className={`mono text-[10px] tracking-widest px-3 py-1.5 rounded-lg transition-all ${activeTab===k?'font-bold text-white':'text-[#4A4A6A] hover:text-[#E0E0F0]'}`}
                 style={activeTab===k?{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}:{}}>
-                {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':'CAMPAÑAS'}
+                {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':k==='campaigns'?'CAMPAÑAS':'CONFIG'}
               </button>
             ))}
           </nav>
@@ -1374,6 +1374,15 @@ export default function Dashboard() {
           </div>
         </>}
 
+        
+        {/* ══ CONFIG ══ */}
+        {activeTab==='config'&&(
+          <CredentialsVault
+            activeProjectId={activeProjectId}
+            projects={projects}
+            onToast={addToast}
+          />
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between py-2">
@@ -1913,3 +1922,279 @@ function ToastContainer({toasts,onRemove}:{toasts:Toast[];onRemove:(id:string)=>
     </div>
   )
 }
+
+// ─── CREDENTIALS VAULT ────────────────────────────────────────────────────────
+
+
+interface Credential {
+  id: string
+  name: string
+  type: string
+  credentials: {
+    phone_number_id?: string
+    waba_id?: string
+    access_token?: string
+    display_phone_number?: string
+    quality_rating?: string
+    messaging_limit_tier?: string
+    last_verified?: string
+  }
+  is_active: boolean
+  created_at: string
+}
+
+
+function CredentialsVault({
+  activeProjectId, projects, onToast
+}: {
+  activeProjectId: string|null
+  projects: Project[]
+  onToast: (type: Toast['type'], msg: string) => void
+}) {
+  const [credentials, setCredentials] = useState<Credential[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+
+
+  const fetchCredentials = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('kanshi_credentials')
+      .select('*')
+      .eq('type', 'whatsapp')
+      .order('created_at', { ascending: false })
+    if (!error && data) setCredentials(data as Credential[])
+    setLoading(false)
+  }, [])
+
+
+  useEffect(() => { fetchCredentials() }, [fetchCredentials])
+
+
+  const qrColor = (r?: string) =>
+    r === 'GREEN' ? '#00FF94' : r === 'YELLOW' ? '#FFB800' : r === 'RED' ? '#FF6B35' : '#4A4A6A'
+  const tierLabel = (t?: string) =>
+    ({ TIER_50:'50/día', TIER_250:'250/día', TIER_1K:'1K/día', TIER_10K:'10K/día', TIER_100K:'100K/día' }[t||''] || t || '—')
+
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CREDENCIALES — WHATSAPP BUSINESS</p>
+          <p className="text-xs text-[#4A4A6A] mt-0.5">{credentials.length} número{credentials.length!==1?'s':''} registrado{credentials.length!==1?'s':''}</p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold mono text-[11px] tracking-widest transition-all hover:scale-105"
+          style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+          <Plus size={13}/> AGREGAR NÚMERO
+        </button>
+      </div>
+
+
+      {/* Lista de credenciales */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
+        </div>
+      ) : credentials.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[#1E1E2E] p-12 text-center">
+          <div className="w-12 h-12 rounded-xl border border-[#1E1E2E] flex items-center justify-center mx-auto mb-4">
+            <MessageSquare size={20} className="text-[#4A4A6A]"/>
+          </div>
+          <p className="text-sm text-[#4A4A6A] mb-1">Sin números registrados</p>
+          <p className="mono text-[10px] text-[#2E2E4E] tracking-widest">Agrega tu Phone ID, Token y WABA ID de Meta</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {credentials.map(cred => (
+            <div key={cred.id} className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+              <div className="px-5 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
+                    <MessageSquare size={14} style={{ color: '#00b0f6' }}/>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#E0E0F0] text-sm">{cred.name}</p>
+                    <p className="mono text-[10px] text-[#4A4A6A]">
+                      {cred.credentials.display_phone_number || `ID: ${cred.credentials.phone_number_id?.slice(0,8)}...`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Quality Rating badge */}
+                  {cred.credentials.quality_rating && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                      style={{ background: `${qrColor(cred.credentials.quality_rating)}15`, border: `1px solid ${qrColor(cred.credentials.quality_rating)}40` }}>
+                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: qrColor(cred.credentials.quality_rating) }}/>
+                      <span className="mono text-[10px] font-bold tracking-widest" style={{ color: qrColor(cred.credentials.quality_rating) }}>
+                        {cred.credentials.quality_rating}
+                      </span>
+                    </div>
+                  )}
+                  {/* Tier */}
+                  {cred.credentials.messaging_limit_tier && (
+                    <span className="mono text-[10px] text-[#4A4A6A] px-2 py-1 rounded-lg border border-[#1E1E2E]">
+                      {tierLabel(cred.credentials.messaging_limit_tier)}
+                    </span>
+                  )}
+                  {/* Last verified */}
+                  {cred.credentials.last_verified && (
+                    <span className="mono text-[9px] text-[#2E2E4E]">
+                      verificado {format(new Date(cred.credentials.last_verified), 'dd/MM HH:mm')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+
+      {/* Modal Agregar Credencial */}
+      {showForm && (
+        <AddCredentialModal
+          onClose={() => setShowForm(false)}
+          onCreated={() => { setShowForm(false); fetchCredentials(); onToast('success', 'Credencial guardada') }}
+          onToast={onToast}
+        />
+      )}
+    </div>
+  )
+}
+
+
+// ─── ADD CREDENTIAL MODAL ─────────────────────────────────────────────────────
+
+
+function CInput({ label, value, onChange, placeholder, type='text', masked=false }: {
+  label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string; type?: string; masked?: boolean
+}) {
+  const [show, setShow] = useState(false)
+  return (
+    <div>
+      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
+      <div className="relative">
+        <input
+          type={masked ? (show ? 'text' : 'password') : type}
+          value={value} onChange={onChange} placeholder={placeholder}
+          className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
+          style={{ paddingRight: masked ? '40px' : undefined }}
+        />
+        {masked && (
+          <button type="button" onClick={() => setShow(s => !s)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors">
+            {show ? <EyeOff size={13}/> : <Eye size={13}/>}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+function AddCredentialModal({
+  onClose, onCreated, onToast
+}: {
+  onClose: () => void
+  onCreated: () => void
+  onToast: (type: Toast['type'], msg: string) => void
+}) {
+  const [name, setName] = useState('')
+  const [phoneId, setPhoneId] = useState('')
+  const [wabaId, setWabaId] = useState('')
+  const [token, setToken] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+
+  const canSave = name.trim() && phoneId.trim() && token.trim()
+
+
+  const handleSave = async () => {
+    if (!canSave) return
+    setSaving(true); setError('')
+    try {
+      const { error: err } = await supabase.from('kanshi_credentials').insert({
+        name: name.trim(),
+        type: 'whatsapp',
+        is_active: true,
+        credentials: {
+          phone_number_id: phoneId.trim(),
+          waba_id: wabaId.trim() || null,
+          access_token: token.trim(),
+        }
+      })
+      if (err) throw err
+      onCreated()
+    } catch (e: any) {
+      setError(e?.message || 'Error al guardar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
+      <div className="relative w-full max-w-md rounded-2xl border border-[#1E1E2E] overflow-hidden"
+        style={{ background: '#0D0D14', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between">
+          <div>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVO NÚMERO WHATSAPP</p>
+            <p className="font-semibold text-[#E0E0F0] text-sm mt-0.5">Credenciales de Meta Business</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
+            <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+          </button>
+        </div>
+
+
+        {/* Campos */}
+        <div className="p-6 space-y-4">
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
+            style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
+            <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+            <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+              Encontrarás estos datos en Meta Business Manager → WhatsApp → Configuración del número
+            </p>
+          </div>
+          <CInput label="NOMBRE / ALIAS *" value={name} onChange={e=>setName(e.target.value)} placeholder="ej. SamurAI Principal"/>
+          <CInput label="PHONE NUMBER ID *" value={phoneId} onChange={e=>setPhoneId(e.target.value)} placeholder="ej. 123456789012345"/>
+          <CInput label="WABA ID (WhatsApp Business Account)" value={wabaId} onChange={e=>setWabaId(e.target.value)} placeholder="ej. 987654321098765"/>
+          <CInput label="ACCESS TOKEN *" value={token} onChange={e=>setToken(e.target.value)} placeholder="EAAxxxxxxx..." masked/>
+          {error && (
+            <div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] px-4 py-3">
+              <p className="text-xs text-[#FF6B35]">{error}</p>
+            </div>
+          )}
+        </div>
+
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between"
+          style={{ background: 'rgba(13,13,20,0.98)' }}>
+          <button onClick={onClose}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            <X size={12}/> CANCELAR
+          </button>
+          <button onClick={handleSave} disabled={!canSave || saving}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+            {saving
+              ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> GUARDANDO...</>
+              : <><CheckCircle size={12}/> GUARDAR CREDENCIAL</>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
