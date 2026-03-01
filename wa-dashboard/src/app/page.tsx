@@ -1045,9 +1045,9 @@ export default function Dashboard() {
     const {error} = await supabase.from('kanshi_projects').update({status:'active'}).eq('id',projectId)
     if(!error){
       setProjects(prev=>prev.map(p=>({...p,status:p.id===projectId?'active':p.status==='active'?'planning':p.status})))
-      showToast('success',`Proyecto activado — SAM usará este contexto`)
+      addToast('success',`Proyecto activado — SAM usará este contexto`)
     } else {
-      showToast('error','Error al activar el proyecto')
+      addToast('error','Error al activar el proyecto')
     }
   }
 
@@ -1126,7 +1126,7 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-          // DESPUÉS
+          
 <ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)} onActivate={handleActivateProject}/>
           <GlobalSearch leads={leads} onSelect={lead=>setSelectedLead(lead)}/>
           <div className="flex items-center gap-3">
