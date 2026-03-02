@@ -1,43 +1,31 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-
-// Cliente con service role — necesitamos escribir sin RLS
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabase } from '@/lib/supabase'
+import { parsePhoneNumber } from 'libphonenumber-js'
 
 // ─── Normalizar teléfono a E.164 ─────────────────────────────────────────────
-// Misma lógica que /api/utm
-// Ecuador: 09XXXXXXXX → +593XXXXXXXXX
-// Ya con código: 593XXXXXXXXX → +593XXXXXXXXX
-// Internacional: +1XXXXXXXXXX → ya está bien
+// n8n (Q3) siempre manda el teléfono con + y código de país
+// Esta función valida y normaliza usando libphonenumber-js (230+ países)
 function normalizePhone(raw: string): string | null {
   if (!raw) return null
 
-  // Eliminar todo excepto dígitos y el + inicial
-  let phone = raw.replace(/[^\d+]/g, '')
+  // Limpiar espacios, guiones, paréntesis
+  let phone = raw.replace(/[\s\-().]/g, '')
 
-  // Si ya empieza con +, asumimos que está bien formado
-  if (phone.startsWith('+')) return phone
+  // 00XX → +XX (formato europeo/LATAM común)
+  if (phone.startsWith('00')) phone = '+' + phone.slice(2)
 
-  // Si empieza con 00, convertir a +
-  if (phone.startsWith('00')) return '+' + phone.slice(2)
-
-  // Ecuador: número local empieza con 0 (09XXXXXXXX = 10 dígitos)
-  if (phone.startsWith('0') && phone.length === 10) {
-    return '+593' + phone.slice(1)
+  // Debe tener + en este punto (n8n lo garantiza)
+  if (!phone.startsWith('+')) {
+    console.warn('[KANSHI /api/quiz] Teléfono sin código de país:', raw)
+    return null
   }
 
-  // Ecuador: sin el 0 inicial (9XXXXXXXX = 9 dígitos)
-  if (phone.startsWith('9') && phone.length === 9) {
-    return '+593' + phone
+  try {
+    const parsed = parsePhoneNumber(phone)
+    return parsed?.isValid() ? parsed.format('E.164') : null
+  } catch {
+    return null
   }
-
-  // Ya tiene código de país sin +
-  if (phone.length >= 10) return '+' + phone
-
-  return null
 }
 
 // ─── POST /api/quiz ───────────────────────────────────────────────────────────
@@ -54,21 +42,19 @@ export async function POST(req: NextRequest) {
       source = 'ghl_quiz',
     } = body
 
-    // ── Validaciones mínimas ──────────────────────────────────────────────────
+    // ── Validaciones ──────────────────────────────────────────────────────────
     if (!phone_number) {
       return NextResponse.json(
         { error: 'phone_number es requerido' },
         { status: 400 }
       )
     }
-
     if (!quiz_type) {
       return NextResponse.json(
         { error: 'quiz_type es requerido' },
         { status: 400 }
       )
     }
-
     if (!responses || typeof responses !== 'object') {
       return NextResponse.json(
         { error: 'responses debe ser un objeto JSON' },
@@ -87,8 +73,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Match con wa_contacts ─────────────────────────────────────────────────
-    // Buscamos por phone_number normalizado
-    // Si no hay match, el registro igual se guarda (matched_contact_id queda null)
     let matched_contact_id: string | null = null
 
     const { data: contact } = await supabase
@@ -110,8 +94,8 @@ export async function POST(req: NextRequest) {
         matched_contact_id,
         quiz_type,
         quiz_name: quiz_name || null,
-        responses,          // JSONB normalizado
-        raw_responses: body, // payload completo sin tocar
+        responses,
+        raw_responses: body,
         source,
         answered_at: new Date().toISOString(),
       })
@@ -119,15 +103,14 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('[KANSHI] Error insertando quiz response:', insertError)
+      console.error('[KANSHI /api/quiz] Error insertando:', insertError)
       return NextResponse.json(
         { error: 'Error al guardar respuesta de quiz', detail: insertError.message },
         { status: 500 }
       )
     }
 
-    // ── Hook: recálculo de KANSHI Score ───────────────────────────────────────
-    // TODO Día 9: descomentar cuando exista /api/score
+    // ── Hook KANSHI Score — Día 9 ─────────────────────────────────────────────
     // if (matched_contact_id) {
     //   await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/score`, {
     //     method: 'POST',
@@ -141,7 +124,6 @@ export async function POST(req: NextRequest) {
     //   })
     // }
 
-    // ── Respuesta ─────────────────────────────────────────────────────────────
     return NextResponse.json({
       success: true,
       quiz_id: quizRecord.id,
@@ -151,7 +133,7 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (err) {
-    console.error('[KANSHI] Error inesperado en /api/quiz:', err)
+    console.error('[KANSHI /api/quiz] Error inesperado:', err)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
