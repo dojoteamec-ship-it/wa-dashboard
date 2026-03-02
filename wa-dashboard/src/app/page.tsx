@@ -24,6 +24,7 @@ interface Lead {
   nivel_compromiso: string; urgencia_financiera: string; estilo_decision: string
   objecion_probable: string; resumen_perfil: string; preguntas_respondidas: number
   created_at: string; updated_at: string
+  kanshi_score: number; kanshi_segment: string
 }
 interface Template {
   id: string; name: string; display_name: string; language: string
@@ -1090,6 +1091,7 @@ export default function Dashboard() {
             <KCard icon={<Star size={14}/>} label="ENGAGEMENT PROM." value={kpi?.avgEngagement??0} color="#00FF94"/>
             <KCard icon={<Flame size={14}/>} label="LEADS CALIENTES" value={leads.filter(l=>l.segmento==='caliente').length} color="#FF6B35"/>
           </div></Sec>
+          <KanshiScoreWidget leads={leads}/>
           <Sec label="CAMPAÑAS"><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <KCard icon={<Zap size={14}/>} label="ENVIADOS" value={kpi?.totalSent??0} color="#00FF94"/>
             <KCard icon={<CheckCheck size={14}/>} label="TASA ENTREGA" value={`${kpi?.deliveryRate??0}%`} color="#00b0f6" isPercent/>
@@ -1597,6 +1599,111 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
                 {saving?<><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> CREANDO...</>:<><Rocket size={12}/> CREAR CAMPAÑA</>}
               </button>
           }
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── KANSHI SCORE WIDGET ──────────────────────────────────────────────────────
+
+const KANSHI_SEGMENTS = [
+  { key: 'frio',     label: 'Frío',     color: '#00b0f6', range: '0–25'  },
+  { key: 'templado', label: 'Templado', color: '#FFB800', range: '26–50' },
+  { key: 'caliente', label: 'Caliente', color: '#FF6B35', range: '51–75' },
+  { key: 'listo',    label: 'Listo',    color: '#00FF94', range: '76–100'},
+]
+
+function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
+  const scored = leads.filter(l => l.kanshi_score > 0)
+
+  const avgScore = scored.length > 0
+    ? Math.round(scored.reduce((s, l) => s + (l.kanshi_score || 0), 0) / scored.length)
+    : 0
+
+  const segCounts = KANSHI_SEGMENTS.map(seg => ({
+    ...seg,
+    count: leads.filter(l => (l.kanshi_segment || 'frio') === seg.key).length,
+  }))
+
+  const total = leads.length
+  const donutData = segCounts.map(s => ({ name: s.label, value: s.count, color: s.color }))
+
+  const gaugeColor = avgScore >= 76 ? '#00FF94'
+    : avgScore >= 51 ? '#FF6B35'
+    : avgScore >= 26 ? '#FFB800'
+    : '#00b0f6'
+
+  const listos = leads.filter(l => (l.kanshi_segment || 'frio') === 'listo').length
+
+  return (
+    <div className="rounded-xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">KANSHI SCORE</p>
+          <p className="text-sm font-medium text-[#E0E0F0] mt-0.5">Calificación de leads 0–100</p>
+        </div>
+        {listos > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#00FF9440] bg-[#00FF9410]">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-[#00FF94]"/>
+            <span className="mono text-[10px] font-bold text-[#00FF94]">{listos} LISTOS</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-6">
+        {/* Gauge numérico */}
+        <div className="flex flex-col items-center flex-shrink-0">
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#1E1E2E" strokeWidth="10"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke={gaugeColor} strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 38}`}
+                strokeDashoffset={`${2 * Math.PI * 38 * (1 - avgScore / 100)}`}
+                style={{ transition: 'stroke-dashoffset 0.8s ease' }}/>
+            </svg>
+            <div className="text-center z-10">
+              <p className="mono text-2xl font-bold leading-none" style={{ color: gaugeColor }}>{avgScore}</p>
+              <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mt-0.5">PROM</p>
+            </div>
+          </div>
+          <p className="mono text-[9px] text-[#4A4A6A] mt-2">{scored.length} evaluados</p>
+        </div>
+
+        {/* Donut + leyenda */}
+        <div className="flex-1 flex items-center gap-4">
+          {total > 0 ? (
+            <ResponsiveContainer width={100} height={100}>
+              <PieChart>
+                <Pie data={donutData} dataKey="value" cx="50%" cy="50%" innerRadius={28} outerRadius={46} paddingAngle={2}>
+                  {donutData.map((d, i) => <Cell key={i} fill={d.color} fillOpacity={d.value === 0 ? 0.15 : 0.85}/>)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-[100px] h-[100px] flex items-center justify-center">
+              <div className="w-[72px] h-[72px] rounded-full border-[10px] border-[#1E1E2E]"/>
+            </div>
+          )}
+
+          <div className="flex-1 space-y-2">
+            {segCounts.map(seg => (
+              <div key={seg.key} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color }}/>
+                  <span className="mono text-[10px] text-[#E0E0F0]">{seg.label}</span>
+                  <span className="mono text-[9px] text-[#4A4A6A]">{seg.range}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mono text-[11px] font-bold" style={{ color: seg.color }}>{seg.count}</span>
+                  <span className="mono text-[9px] text-[#4A4A6A] w-8 text-right">
+                    {total > 0 ? `${Math.round((seg.count / total) * 100)}%` : '0%'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
