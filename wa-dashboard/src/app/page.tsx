@@ -1168,6 +1168,16 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
                           {lead.engagement_score>0&&<span className="mono text-[11px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★{lead.engagement_score}</span>}
+                          {(lead.kanshi_score||0)>0&&(
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 font-bold mono text-[10px] flex-shrink-0"
+                              style={{
+                                borderColor: lead.kanshi_segment==='listo'?'#00FF94':lead.kanshi_segment==='caliente'?'#FF6B35':lead.kanshi_segment==='templado'?'#FFB800':'#00b0f6',
+                                color:       lead.kanshi_segment==='listo'?'#00FF94':lead.kanshi_segment==='caliente'?'#FF6B35':lead.kanshi_segment==='templado'?'#FFB800':'#00b0f6',
+                                background:  lead.kanshi_segment==='listo'?'#00FF9415':lead.kanshi_segment==='caliente'?'#FF6B3515':lead.kanshi_segment==='templado'?'#FFB80015':'#00b0f615',
+                              }}>
+                              {lead.kanshi_score}
+                            </div>
+                          )}
                           <ChevronRight size={12} className="text-[#4A4A6A]"/>
                         </div>
                       </div>
