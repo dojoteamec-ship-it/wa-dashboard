@@ -2506,7 +2506,7 @@ function CampaignLeadPanel({
                   ) : (
                     <span className="mono text-[9px] text-[#2A2A4A]">sin match</span>
                   )}
-                  {lead?.engagement_score > 0 && (
+                {(lead?.engagement_score ?? 0) > 0 && (
                     <span className="mono text-[9px] font-bold" style={{ color: scoreColor(lead.engagement_score) }}>★{lead.engagement_score}</span>
                   )}
                 </div>
