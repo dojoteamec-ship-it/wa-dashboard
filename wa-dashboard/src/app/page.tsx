@@ -2390,6 +2390,23 @@ function FuentesTab({
   const [loading, setLoading] = useState(true)
   const [selectedGroup, setSelectedGroup] = useState<CampaignGroup|null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [quizResponses, setQuizResponses] = useState<Array<{
+    phone_number: string
+    responses: Record<string, string>
+  }>>([])
+
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      let q = supabase
+        .from('lead_quiz_responses')
+        .select('phone_number, responses')
+        .eq('quiz_type', 'registro')
+      if (activeProjectId) q = q.eq('project_id', activeProjectId)
+      const { data } = await q
+      setQuizResponses(data || [])
+    }
+    fetchQuizData()
+  }, [activeProjectId])
 
   const toggleExpand = (key: string) => {
     setExpandedGroups(prev => {
@@ -2478,6 +2495,42 @@ function FuentesTab({
   const sourcePlatformColor = (p: string|null) =>
     p === 'facebook' || p === 'ghl' ? '#00b0f6' : p === 'instagram' ? '#C084FC' : '#4A4A6A'
 
+// Construye distribución de respuestas de quiz para un grupo de campaña
+  const buildQuizDistribution = (group: CampaignGroup) => {
+    const phones = new Set(group.rows.map(r => r.phone_number))
+    const relevant = quizResponses.filter(q => phones.has(q.phone_number))
+    if (relevant.length === 0) return []
+
+    // Agrupa por pregunta → cuenta respuestas
+    const questionMap: Record<string, Record<string, number>> = {}
+    for (const q of relevant) {
+      const responses = q.responses as Record<string, string>
+      for (const [key, val] of Object.entries(responses)) {
+        if (!val || typeof val !== 'string') continue
+        if (!questionMap[key]) questionMap[key] = {}
+        const v = val.trim().toLowerCase().slice(0, 60)
+        questionMap[key][v] = (questionMap[key][v] || 0) + 1
+      }
+    }
+
+    // Convertir a formato para Recharts — máx 4 preguntas más relevantes
+    return Object.entries(questionMap)
+      .filter(([, answers]) => Object.keys(answers).length > 1) // solo preguntas con variedad
+      .slice(0, 4)
+      .map(([question, answers]) => ({
+        question: question.replace(/_/g, ' ').toUpperCase().slice(0, 40),
+        data: Object.entries(answers)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, value]) => ({
+            name: name.slice(0, 35),
+            value,
+            pct: Math.round((value / relevant.length) * 100),
+          })),
+        total: relevant.length,
+      }))
+  }
+  
   if (loading) return (
     <div className="flex items-center justify-center py-20">
       <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
@@ -2626,39 +2679,81 @@ function FuentesTab({
                         </td>
                       </tr>
 
-                      {/* ── Mini-funnel expandible ── */}
+                      {/* ── Panel expandible ── */}
                       {isExpanded && (
                         <tr key={`funnel-${i}`} className="border-b border-[#1E1E2E]">
                           <td colSpan={10} className="px-6 py-5" style={{ background: '#0D0D14' }}>
-                            <div className="flex items-start gap-8">
+                            <div className="space-y-5">
 
-                              {/* Funnel de conversión */}
-                              <div className="flex-1 space-y-2.5">
-                                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">EMBUDO DE CONVERSIÓN</p>
-                                <FunnelBar label="REGISTRADOS"  value={total}        color="#00b0f6"/>
-                                <FunnelBar label="SAM ACTIVOS"  value={samActivos}   color="#0014ad"/>
-                                <FunnelBar label="CALIFICADOS"  value={calificados}  color="#FFB800"/>
-                                <FunnelBar label="SCORE ≥ 70"   value={scoreAlto}    color="#FF6B35"/>
-                                <FunnelBar label="COMPRADORES"  value={g.compradores} color="#00FF94"/>
+                              {/* Funnel + métricas */}
+                              <div className="flex items-start gap-8">
+                                <div className="flex-1 space-y-2.5">
+                                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">EMBUDO DE CONVERSIÓN</p>
+                                  <FunnelBar label="REGISTRADOS"  value={total}         color="#00b0f6"/>
+                                  <FunnelBar label="SAM ACTIVOS"  value={samActivos}    color="#0014ad"/>
+                                  <FunnelBar label="CALIFICADOS"  value={calificados}   color="#FFB800"/>
+                                  <FunnelBar label="SCORE ≥ 70"   value={scoreAlto}     color="#FF6B35"/>
+                                  <FunnelBar label="COMPRADORES"  value={g.compradores} color="#00FF94"/>
+                                </div>
+                                <div className="w-48 space-y-2 flex-shrink-0">
+                                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">MÉTRICAS</p>
+                                  {[
+                                    { label: 'ACTIVACIÓN SAM', value: total>0?`${Math.round((samActivos/total)*100)}%`:'—', color: '#00b0f6' },
+                                    { label: 'TASA CALIDAD',   value: total>0?`${Math.round((calificados/total)*100)}%`:'—', color: '#FFB800' },
+                                    { label: 'CPL EST.',       value: cpl(g), color: '#E0E0F0' },
+                                    { label: 'CPV EST.',       value: cpv(g), color: g.compradores>0?'#00FF94':'#4A4A6A' },
+                                    { label: 'SCORE PROM.',    value: g.avgKanshiScore>0?`${g.avgKanshiScore}`:'—',
+                                      color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' },
+                                  ].map(m => (
+                                    <div key={m.label} className="flex items-center justify-between py-1.5 border-b border-[#1E1E2E]">
+                                      <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{m.label}</span>
+                                      <span className="mono text-[11px] font-bold" style={{ color: m.color }}>{m.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
 
-                              {/* Métricas de eficiencia */}
-                              <div className="w-48 space-y-2 flex-shrink-0">
-                                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">MÉTRICAS</p>
-                                {[
-                                  { label: 'ACTIVACIÓN SAM', value: total > 0 ? `${Math.round((samActivos/total)*100)}%` : '—', color: '#00b0f6' },
-                                  { label: 'TASA CALIDAD',   value: total > 0 ? `${Math.round((calificados/total)*100)}%` : '—', color: '#FFB800' },
-                                  { label: 'CPL EST.',       value: cpl(g), color: '#E0E0F0' },
-                                  { label: 'CPV EST.',       value: cpv(g), color: g.compradores > 0 ? '#00FF94' : '#4A4A6A' },
-                                  { label: 'SCORE PROM.',    value: g.avgKanshiScore > 0 ? `${g.avgKanshiScore}` : '—',
-                                    color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' },
-                                ].map(m => (
-                                  <div key={m.label} className="flex items-center justify-between py-1.5 border-b border-[#1E1E2E]">
-                                    <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{m.label}</span>
-                                    <span className="mono text-[11px] font-bold" style={{ color: m.color }}>{m.value}</span>
+                              {/* F4c — Distribución quiz de registro */}
+                              {(() => {
+                                const dist = buildQuizDistribution(g)
+                                if (dist.length === 0) return (
+                                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+                                    <BookOpen size={11} style={{ color: '#4A4A6A' }}/>
+                                    <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                                      SIN DATOS DE QUIZ — los gráficos aparecen cuando lleguen respuestas del quiz de registro
+                                    </span>
                                   </div>
-                                ))}
-                              </div>
+                                )
+                                return (
+                                  <div>
+                                    <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">
+                                      DISTRIBUCIÓN QUIZ DE REGISTRO — {dist[0]?.total} respuestas
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      {dist.map((q, qi) => (
+                                        <div key={qi} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
+                                          <p className="mono text-[9px] text-[#00b0f6] tracking-widest mb-3 truncate">{q.question}</p>
+                                          <div className="space-y-2">
+                                            {q.data.map((d, di) => (
+                                              <div key={di} className="flex items-center gap-2">
+                                                <span className="mono text-[9px] text-[#4A4A6A] w-32 truncate flex-shrink-0">{d.name}</span>
+                                                <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1E1E2E' }}>
+                                                  <div className="h-full rounded-full transition-all duration-700"
+                                                    style={{ width:`${d.pct}%`, background: di===0?'#00b0f6':di===1?'#FFB800':di===2?'#FF6B35':'#4A4A6A' }}/>
+                                                </div>
+                                                <span className="mono text-[9px] font-bold w-7 text-right"
+                                                  style={{ color: di===0?'#00b0f6':di===1?'#FFB800':di===2?'#FF6B35':'#4A4A6A' }}>
+                                                  {d.pct}%
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )
+                              })()}
 
                             </div>
                           </td>
