@@ -2210,6 +2210,10 @@ function CredentialsVault({
         </div>
       )}
 
+
+      {/* Meta Ads CAPI */}
+      <MetaAdsCard onToast={onToast} />
+      
       {/* ── F5: ASIGNAR NÚMERO A PROYECTO ── */}
       {projects.length > 0 && credentials.length > 0 && (
         <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#111118' }}>
@@ -2357,6 +2361,125 @@ function AddCredentialModal({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── META ADS CREDENTIAL CARD ─────────────────────────────────────────────────
+
+function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) => void }) {
+  const [cred, setCred] = useState<{ id: string; credentials: any } | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [pixelId, setPixelId] = useState('')
+  const [capiToken, setCapiToken] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const fetchMeta = useCallback(async () => {
+    const { data } = await supabase
+      .from('kanshi_credentials')
+      .select('id, credentials')
+      .eq('type', 'meta_ads')
+      .limit(1)
+      .maybeSingle()
+    if (data) {
+      setCred(data)
+      setPixelId(data.credentials.pixel_id || '')
+      setCapiToken(data.credentials.capi_token || '')
+    }
+  }, [])
+
+  useEffect(() => { fetchMeta() }, [fetchMeta])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const payload = {
+        name: 'Meta Ads CAPI',
+        type: 'meta_ads',
+        is_active: true,
+        credentials: { pixel_id: pixelId.trim(), capi_token: capiToken.trim() }
+      }
+      if (cred) {
+        await supabase.from('kanshi_credentials').update({ credentials: payload.credentials }).eq('id', cred.id)
+      } else {
+        await supabase.from('kanshi_credentials').insert(payload)
+      }
+      await fetchMeta()
+      setEditing(false)
+      onToast('success', 'Meta Ads CAPI actualizado')
+    } catch (e: any) {
+      onToast('error', e?.message || 'Error al guardar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const isConfigured = cred && cred.credentials.pixel_id && cred.credentials.capi_token
+
+  return (
+    <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+      {/* Header */}
+      <div className="px-5 py-4 flex items-center justify-between border-b border-[#1E1E2E]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
+            style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
+            📡
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads CAPI</p>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mt-0.5">
+              {isConfigured ? `Pixel: ${cred.credentials.pixel_id}` : 'SIN CONFIGURAR'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isConfigured && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+              style={{ background: 'rgba(0,255,148,0.08)', border: '1px solid rgba(0,255,148,0.2)' }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse"/>
+              <span className="mono text-[9px] text-[#00FF94] tracking-widest">ACTIVO</span>
+            </div>
+          )}
+          <button onClick={() => setEditing(e => !e)}
+            className="px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            {editing ? 'CANCELAR' : isConfigured ? 'EDITAR' : 'CONFIGURAR'}
+          </button>
+        </div>
+      </div>
+
+      {/* Form */}
+      {editing && (
+        <div className="p-5 space-y-4">
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
+            style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
+            <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+            <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+              Events Manager → Andreti Page's Pixel → Configuración → API de conversiones → Generar token
+            </p>
+          </div>
+          <CInput
+            label="PIXEL ID"
+            value={pixelId}
+            onChange={e => setPixelId(e.target.value)}
+            placeholder="ej. 120057833094582"
+          />
+          <CInput
+            label="CAPI ACCESS TOKEN"
+            value={capiToken}
+            onChange={e => setCapiToken(e.target.value)}
+            placeholder="EAAxxxxx..."
+            masked
+          />
+          <button onClick={handleSave} disabled={!pixelId.trim() || !capiToken.trim() || saving}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30"
+            style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+            {saving
+              ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> GUARDANDO...</>
+              : <><CheckCircle size={12}/> GUARDAR</>
+            }
+          </button>
+        </div>
+      )}
     </div>
   )
 }
