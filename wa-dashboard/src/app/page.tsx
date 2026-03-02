@@ -882,7 +882,7 @@ export default function Dashboard() {
   const [loading,setLoading] = useState(true)
   const [connected,setConnected] = useState(false)
   const [lastUpdate,setLastUpdate] = useState(new Date())
- const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'|'fuentes'|'config'>('overview')
+ const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'|'fuentes'|'ventas'|'config'>('overview')
   const [toasts,setToasts] = useState<Toast[]>([])
   const [leadsPage,setLeadsPage] = useState(1)
   const [campaignsPage,setCampaignsPage] = useState(1)
@@ -1040,11 +1040,11 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-4">
           <nav className="flex items-center gap-1">
-          {(['overview','pipeline','psico','campaigns','fuentes','config'] as const).map(k=>(
+          {(['overview','pipeline','psico','campaigns','fuentes','ventas','config'] as const).map(k=>(
             <button key={k} onClick={()=>setActiveTab(k)}
               className={`mono text-[10px] tracking-widest px-3 py-1.5 rounded-lg transition-all ${activeTab===k?'font-bold text-white':'text-[#4A4A6A] hover:text-[#E0E0F0]'}`}
               style={activeTab===k?{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}:{}}>
-              {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':k==='campaigns'?'CAMPAÑAS':k==='fuentes'?'FUENTES':'CONFIG'}
+              {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':k==='campaigns'?'CAMPAÑAS':k==='fuentes'?'FUENTES':k==='ventas'?'VENTAS':'CONFIG'}
           </button>
         ))}
           </nav>
@@ -1309,6 +1309,16 @@ export default function Dashboard() {
             projects={projects}
           />
         )}
+
+         {/* ══ VENTAS ══ */}
+        {activeTab==='ventas'&&(
+          <VentasTab
+            activeProjectId={activeProjectId}
+            projects={projects}
+            onToast={addToast}
+          />
+        )}
+
         
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
@@ -2988,4 +2998,271 @@ function CampaignLeadPanel({
       </div>
     </div>
   )
+
+// ─── VENTAS TAB ───────────────────────────────────────────────────────────────
+
+interface Sale {
+  id: string
+  phone_number: string
+  amount: number
+  currency: string
+  product_name: string | null
+  sale_source: string
+  transaction_id: string | null
+  utm_campaign: string | null
+  utm_source: string | null
+  sale_date: string
+  capi_purchase_sent_at: string | null
+  wa_contacts: { id: string; name: string; kanshi_score: number; kanshi_segment: string } | null
+}
+
+interface SalesMetrics {
+  total_revenue: number
+  total_sales: number
+  avg_ticket: number
+  by_source: Record<string, number>
+  by_campaign: Record<string, { sales: number; revenue: number }>
+}
+
+function VentasTab({
+  activeProjectId, projects, onToast
+}: {
+  activeProjectId: string | null
+  projects: Project[]
+  onToast: (type: Toast['type'], msg: string) => void
+}) {
+  const [sales, setSales] = useState<Sale[]>([])
+  const [metrics, setMetrics] = useState<SalesMetrics | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [formPhone, setFormPhone] = useState('')
+  const [formAmount, setFormAmount] = useState('')
+  const [formProduct, setFormProduct] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const project = projects.find(p => p.id === activeProjectId)
+
+  const fetchSales = useCallback(async () => {
+    if (!activeProjectId) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/sales?project_id=${activeProjectId}`)
+      const data = await res.json()
+      if (data.sales) { setSales(data.sales); setMetrics(data.metrics) }
+    } finally {
+      setLoading(false)
+    }
+  }, [activeProjectId])
+
+  useEffect(() => { fetchSales() }, [fetchSales])
+
+  const handleRegisterSale = async () => {
+    if (!formPhone.trim() || !formAmount.trim() || !activeProjectId) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: activeProjectId,
+          phone_number: formPhone.trim(),
+          amount: Number(formAmount),
+          product_name: formProduct.trim() || project?.product_name || 'Producto',
+          sale_source: 'manual',
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        onToast('success', `Venta de $${formAmount} registrada ✅`)
+        setShowForm(false); setFormPhone(''); setFormAmount(''); setFormProduct('')
+        fetchSales()
+        // Disparar Purchase CAPI
+        fetch('/api/meta-capi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_type: 'Purchase',
+            phone_number: formPhone.trim(),
+            value: Number(formAmount),
+            sale_id: data.sale.id,
+          }),
+        }).then(() => onToast('info', 'Purchase enviado a Meta CAPI 📡')).catch(() => {})
+      } else {
+        onToast('error', data.error || 'Error al registrar venta')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const salesGoal = project?.sales_goal ?? 0
+  const progressPct = salesGoal > 0 ? Math.min(100, ((metrics?.total_sales ?? 0) / salesGoal) * 100) : 0
+  const revenuePct = salesGoal > 0 && project?.product_price
+    ? Math.min(100, ((metrics?.total_revenue ?? 0) / (salesGoal * project.product_price)) * 100) : 0
+
+  const segmentColor = (seg: string) => seg === 'fuego' ? '#FF6B35' : seg === 'caliente' ? '#FFB800' : seg === 'tibio' ? '#00b0f6' : '#4A4A6A'
+
+  if (!activeProjectId) return (
+    <div className="flex items-center justify-center h-64">
+      <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para ver ventas</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">MÓDULO DE VENTAS</p>
+          <p className="text-lg font-bold text-[#E0E0F0]">{project?.product_name || 'Ventas'}</p>
+        </div>
+        <button onClick={() => setShowForm(s => !s)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all"
+          style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+          <Plus size={12}/> REGISTRAR VENTA
+        </button>
+      </div>
+
+      {/* Form */}
+      {showForm && (
+        <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVA VENTA MANUAL</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">TELÉFONO (E.164)</label>
+              <input value={formPhone} onChange={e => setFormPhone(e.target.value)}
+                placeholder="+593999999999"
+                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A]"/>
+            </div>
+            <div>
+              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">MONTO (USD)</label>
+              <input value={formAmount} onChange={e => setFormAmount(e.target.value)}
+                placeholder="997" type="number"
+                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A]"/>
+            </div>
+            <div>
+              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">PRODUCTO</label>
+              <input value={formProduct} onChange={e => setFormProduct(e.target.value)}
+                placeholder={project?.product_name || 'Nombre producto'}
+                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A]"/>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowForm(false)}
+              className="px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] transition-all">
+              CANCELAR
+            </button>
+            <button onClick={handleRegisterSale} disabled={!formPhone.trim() || !formAmount.trim() || saving}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold text-white disabled:opacity-30 transition-all"
+              style={{ background: 'linear-gradient(135deg,#00FF94,#00b0f6)', color: '#0A0A0F' }}>
+              {saving ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/> : <CheckCircle size={12}/>}
+              {saving ? 'GUARDANDO...' : 'CONFIRMAR VENTA'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* KPIs */}
+      {metrics && (
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: 'INGRESOS TOTALES', value: `$${metrics.total_revenue.toLocaleString()}`, color: '#00FF94', icon: '💰' },
+            { label: 'VENTAS', value: `${metrics.total_sales}${salesGoal > 0 ? ` / ${salesGoal}` : ''}`, color: '#00b0f6', icon: '🎯' },
+            { label: 'TICKET PROMEDIO', value: `$${Math.round(metrics.avg_ticket).toLocaleString()}`, color: '#FFB800', icon: '🎫' },
+            { label: 'META INGRESOS', value: `${Math.round(revenuePct)}%`, color: revenuePct >= 100 ? '#00FF94' : '#0014ad', icon: '📈' },
+          ].map(kpi => (
+            <div key={kpi.label} className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">{kpi.label}</p>
+                <span className="text-base">{kpi.icon}</span>
+              </div>
+              <p className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
+              {kpi.label === 'VENTAS' && salesGoal > 0 && (
+                <div className="mt-2 h-1 rounded-full bg-[#1E1E2E]">
+                  <div className="h-1 rounded-full transition-all" style={{ width: `${progressPct}%`, background: '#00b0f6' }}/>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tabla */}
+      <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+        <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between">
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">REGISTRO DE VENTAS</p>
+          <button onClick={fetchSales} className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors">
+            <RefreshCw size={11} className={`text-[#4A4A6A] ${loading ? 'animate-spin' : ''}`}/>
+          </button>
+        </div>
+        {sales.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <span className="text-3xl">💰</span>
+            <p className="mono text-[11px] text-[#4A4A6A]">Sin ventas registradas aún</p>
+            <button onClick={() => setShowForm(true)}
+              className="mono text-[10px] text-[#0014ad] hover:text-[#00b0f6] transition-colors">
+              + Registrar primera venta
+            </button>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#1E1E2E]">
+                {['FECHA','CONTACTO','MONTO','FUENTE','CAMPAÑA','KANSHI','CAPI'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sales.map(sale => (
+                <tr key={sale.id} className="border-b border-[#1E1E2E] hover:bg-[#0A0A0F] transition-colors">
+                  <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                    {format(new Date(sale.sale_date), 'dd/MM HH:mm')}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-xs text-[#E0E0F0]">{sale.wa_contacts?.name || '—'}</p>
+                    <p className="mono text-[9px] text-[#4A4A6A]">{sale.phone_number}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-bold" style={{ color: '#00FF94' }}>${sale.amount.toLocaleString()}</p>
+                    <p className="mono text-[9px] text-[#4A4A6A]">{sale.currency}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">
+                      {sale.sale_source}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                    {sale.utm_campaign || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {sale.wa_contacts?.kanshi_score ? (
+                      <span className="mono text-[10px] font-bold" style={{ color: segmentColor(sale.wa_contacts.kanshi_segment) }}>
+                        {sale.wa_contacts.kanshi_score}
+                      </span>
+                    ) : <span className="text-[#4A4A6A]">—</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    {sale.capi_purchase_sent_at ? (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]"/>
+                        <span className="mono text-[9px] text-[#00FF94]">ENVIADO</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#4A4A6A]"/>
+                        <span className="mono text-[9px] text-[#4A4A6A]">PENDIENTE</span>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+  
 }
