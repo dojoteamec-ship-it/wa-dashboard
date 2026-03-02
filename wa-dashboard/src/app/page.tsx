@@ -2998,6 +2998,7 @@ function CampaignLeadPanel({
       </div>
     </div>
   )
+}
 
 // ─── VENTAS TAB ───────────────────────────────────────────────────────────────
 
@@ -3263,6 +3264,4 @@ function VentasTab({
       </div>
     </div>
   )
-}
-  
 }
