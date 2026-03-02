@@ -2,15 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { calculateKanshiScore, recalculateAllScores } from '@/lib/kanshi-score'
 
 // ─── POST /api/score ──────────────────────────────────────────────────────────
-// Recalcula el KANSHI Score de un contacto individual.
-// Llamado desde:
-//   - /api/quiz (hook automático al completar un quiz)
-//   - n8n SAM (después de cada conversación)
-//   - Dashboard (manual desde perfil del lead)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { contact_id, project_id } = body
+    const { contact_id, project_id, phone_number } = body
 
     if (!contact_id) {
       return NextResponse.json(
@@ -28,6 +23,43 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // ── QualifiedLead Signal → Meta CAPI ──────────────────────────────────────
+    // Dispara solo cuando el score CRUZA un umbral por primera vez
+    // thresholds_crossed viene de calculateKanshiScore comparando score previo vs nuevo
+    if (result.thresholds_crossed?.length > 0 && phone_number) {
+      const thresholdEventMap: Record<string, string> = {
+        warm:   'WarmLead',
+        hot:    'HotLead',
+        ready:  'ReadyLead',
+        buyer:  'BuyerProfile',
+      }
+
+      // Fire-and-forget — no bloquea la respuesta al lead
+      Promise.all(
+        result.thresholds_crossed.map((threshold: string) => {
+          const event_type = thresholdEventMap[threshold]
+          if (!event_type) return Promise.resolve()
+
+          return fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://wa-dashboard-five.vercel.app'}/api/meta-capi`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_type,
+              contact_id,
+              phone_number,
+              value: result.score_total,
+              currency: 'USD',
+            }),
+          }).then(r => r.json()).then(res => {
+            console.log(`[score→capi] ${event_type} para ${phone_number}:`, res.success ? '✅' : '❌')
+          }).catch(e => {
+            console.error(`[score→capi] Error ${event_type}:`, e.message)
+          })
+        })
+      )
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     return NextResponse.json({
       success: true,
       contact_id,
@@ -40,6 +72,7 @@ export async function POST(req: NextRequest) {
         fuente:     result.score_fuente,
       },
       thresholds_crossed: result.thresholds_crossed,
+      capi_signals_fired: result.thresholds_crossed?.length ?? 0,
     })
 
   } catch (err) {
