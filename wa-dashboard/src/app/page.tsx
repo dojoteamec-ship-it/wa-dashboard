@@ -2389,6 +2389,15 @@ function FuentesTab({
   const [utmData, setUtmData] = useState<UtmRow[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedGroup, setSelectedGroup] = useState<CampaignGroup|null>(null)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+
+  const toggleExpand = (key: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
 
   const activeProject = projects.find(p => p.id === activeProjectId)
   const adBudget = activeProject?.ad_budget || null
@@ -2520,63 +2529,144 @@ function FuentesTab({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#1E1E2E]">
-                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','SCORE PROM','CPL','CPV',''].map(h=>(
+                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','SCORE PROM','CPL EST.','CPV EST.',''].map(h => (
                     <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {groups.map((g, i) => (
-                  <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors cursor-pointer"
-                    onClick={() => setSelectedGroup(g)}>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-[#E0E0F0]">{g.campaign}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="mono text-[10px] px-2 py-0.5 rounded-full"
-                        style={{ color: sourcePlatformColor(g.source), background: `${sourcePlatformColor(g.source)}15` }}>
-                        {g.source || '—'}
+                {groups.map((g, i) => {
+                  const key = `${g.campaign}||${g.source}||${g.content}`
+                  const isExpanded = expandedGroups.has(key)
+                  const samActivos = g.rows.filter(r => r.matched_contact_id).length
+                  const calificados = g.rows.filter(r => {
+                    const lead = r.matched_contact_id ? leadMap[r.matched_contact_id] : null
+                    return lead && (lead.kanshi_score || 0) >= 50
+                  }).length
+                  const scoreAlto = g.rows.filter(r => {
+                    const lead = r.matched_contact_id ? leadMap[r.matched_contact_id] : null
+                    return lead && (lead.kanshi_score || 0) >= 70
+                  }).length
+                  const total = g.totalLeads
+
+                  const FunnelBar = ({ label, value, color }: { label: string; value: number; color: string }) => (
+                    <div className="flex items-center gap-3">
+                      <span className="mono text-[9px] text-[#4A4A6A] w-28 flex-shrink-0 tracking-widest">{label}</span>
+                      <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1E1E2E' }}>
+                        <div className="h-full rounded-full transition-all duration-700"
+                          style={{ width: total > 0 ? `${Math.round((value / total) * 100)}%` : '0%', background: color }}/>
+                      </div>
+                      <span className="mono text-[10px] font-bold w-6 text-right" style={{ color }}>{value}</span>
+                      <span className="mono text-[9px] text-[#4A4A6A] w-8 text-right">
+                        {total > 0 ? `${Math.round((value / total) * 100)}%` : '0%'}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="mono text-[10px] text-[#4A4A6A]">{g.content || '—'}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="mono text-sm font-bold text-[#E0E0F0]">{g.totalLeads}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="mono text-sm text-[#E0E0F0]">{g.calientes}</span>
-                        <span className="mono text-[10px]" style={{ color: g.calPct >= 40 ? '#00FF94' : g.calPct >= 20 ? '#FFB800' : '#FF6B35' }}>
-                          {g.calPct}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="mono text-sm text-[#E0E0F0]">{g.compradores}</span>
-                        {g.compradores > 0 && (
-                          <span className="mono text-[10px]" style={{ color: '#00FF94' }}>{g.convPct}%</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {g.avgKanshiScore > 0 ? (
-                        <span className="mono text-sm font-bold"
-                          style={{ color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' }}>
-                          {g.avgKanshiScore}
-                        </span>
-                      ) : (
-                        <span className="mono text-[10px] text-[#2E2E4E]">—</span>
+                    </div>
+                  )
+
+                  return (
+                    <>
+                      {/* ── Fila principal ── */}
+                      <tr key={`row-${i}`}
+                        className="border-b border-[#1E1E2E] hover:bg-[#16161F] transition-colors cursor-pointer"
+                        onClick={() => toggleExpand(key)}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded flex items-center justify-center transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                              style={{ background: '#1E1E2E' }}>
+                              <ChevronRight size={9} className="text-[#4A4A6A]"/>
+                            </div>
+                            <p className="text-sm font-medium text-[#E0E0F0]">{g.campaign}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="mono text-[10px] px-2 py-0.5 rounded-full"
+                            style={{ color: sourcePlatformColor(g.source), background: `${sourcePlatformColor(g.source)}15` }}>
+                            {g.source || '—'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="mono text-[10px] text-[#4A4A6A]">{g.content || '—'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="mono text-sm font-bold text-[#E0E0F0]">{g.totalLeads}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="mono text-sm text-[#E0E0F0]">{g.calientes}</span>
+                            <span className="mono text-[10px]" style={{ color: g.calPct >= 40 ? '#00FF94' : g.calPct >= 20 ? '#FFB800' : '#FF6B35' }}>
+                              {g.calPct}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="mono text-sm text-[#E0E0F0]">{g.compradores}</span>
+                            {g.compradores > 0 && (
+                              <span className="mono text-[10px]" style={{ color: '#00FF94' }}>{g.convPct}%</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {g.avgKanshiScore > 0 ? (
+                            <span className="mono text-sm font-bold"
+                              style={{ color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' }}>
+                              {g.avgKanshiScore}
+                            </span>
+                          ) : <span className="mono text-[10px] text-[#2E2E4E]">—</span>}
+                        </td>
+                        <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? '#E0E0F0' : '#4A4A6A' }}>{cpl(g)}</td>
+                        <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? '#00FF94' : '#4A4A6A' }}>{cpv(g)}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={e => { e.stopPropagation(); setSelectedGroup(g) }}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[#1E1E2E] hover:border-[#00b0f6] transition-colors group">
+                            <Eye size={10} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
+                            <span className="mono text-[9px] text-[#4A4A6A] group-hover:text-[#00b0f6]">leads</span>
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* ── Mini-funnel expandible ── */}
+                      {isExpanded && (
+                        <tr key={`funnel-${i}`} className="border-b border-[#1E1E2E]">
+                          <td colSpan={10} className="px-6 py-5" style={{ background: '#0D0D14' }}>
+                            <div className="flex items-start gap-8">
+
+                              {/* Funnel de conversión */}
+                              <div className="flex-1 space-y-2.5">
+                                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">EMBUDO DE CONVERSIÓN</p>
+                                <FunnelBar label="REGISTRADOS"  value={total}        color="#00b0f6"/>
+                                <FunnelBar label="SAM ACTIVOS"  value={samActivos}   color="#0014ad"/>
+                                <FunnelBar label="CALIFICADOS"  value={calificados}  color="#FFB800"/>
+                                <FunnelBar label="SCORE ≥ 70"   value={scoreAlto}    color="#FF6B35"/>
+                                <FunnelBar label="COMPRADORES"  value={g.compradores} color="#00FF94"/>
+                              </div>
+
+                              {/* Métricas de eficiencia */}
+                              <div className="w-48 space-y-2 flex-shrink-0">
+                                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">MÉTRICAS</p>
+                                {[
+                                  { label: 'ACTIVACIÓN SAM', value: total > 0 ? `${Math.round((samActivos/total)*100)}%` : '—', color: '#00b0f6' },
+                                  { label: 'TASA CALIDAD',   value: total > 0 ? `${Math.round((calificados/total)*100)}%` : '—', color: '#FFB800' },
+                                  { label: 'CPL EST.',       value: cpl(g), color: '#E0E0F0' },
+                                  { label: 'CPV EST.',       value: cpv(g), color: g.compradores > 0 ? '#00FF94' : '#4A4A6A' },
+                                  { label: 'SCORE PROM.',    value: g.avgKanshiScore > 0 ? `${g.avgKanshiScore}` : '—',
+                                    color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' },
+                                ].map(m => (
+                                  <div key={m.label} className="flex items-center justify-between py-1.5 border-b border-[#1E1E2E]">
+                                    <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{m.label}</span>
+                                    <span className="mono text-[11px] font-bold" style={{ color: m.color }}>{m.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? '#E0E0F0' : '#4A4A6A' }}>{cpl(g)}</td>
-                    <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? '#00FF94' : '#4A4A6A' }}>{cpv(g)}</td>
-                    <td className="px-4 py-3">
-                      <ChevronRight size={12} className="text-[#4A4A6A]"/>
-                    </td>
-                  </tr>
-                ))}
+                    </>
+                  )
+                })}
               </tbody>
             </table>
           </div>
