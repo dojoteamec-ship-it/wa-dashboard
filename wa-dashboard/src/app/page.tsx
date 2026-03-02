@@ -881,7 +881,7 @@ export default function Dashboard() {
   const [loading,setLoading] = useState(true)
   const [connected,setConnected] = useState(false)
   const [lastUpdate,setLastUpdate] = useState(new Date())
-  const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'|'config'>('overview')
+ const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'|'fuentes'|'config'>('overview')
   const [toasts,setToasts] = useState<Toast[]>([])
   const [leadsPage,setLeadsPage] = useState(1)
   const [campaignsPage,setCampaignsPage] = useState(1)
@@ -1039,13 +1039,13 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-4">
           <nav className="flex items-center gap-1">
-            {(['overview','pipeline','psico','campaigns','config'] as const).map(k=>(
-              <button key={k} onClick={()=>setActiveTab(k)}
-                className={`mono text-[10px] tracking-widest px-3 py-1.5 rounded-lg transition-all ${activeTab===k?'font-bold text-white':'text-[#4A4A6A] hover:text-[#E0E0F0]'}`}
-                style={activeTab===k?{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}:{}}>
-                {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':k==='campaigns'?'CAMPAÑAS':'CONFIG'}
-              </button>
-            ))}
+          {(['overview','pipeline','psico','campaigns','fuentes','config'] as const).map(k=>(
+            <button key={k} onClick={()=>setActiveTab(k)}
+              className={`mono text-[10px] tracking-widest px-3 py-1.5 rounded-lg transition-all ${activeTab===k?'font-bold text-white':'text-[#4A4A6A] hover:text-[#E0E0F0]'}`}
+              style={activeTab===k?{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}:{}}>
+              {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':k==='campaigns'?'CAMPAÑAS':k==='fuentes'?'FUENTES':'CONFIG'}
+          </button>
+        ))}
           </nav>
           <ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)} onActivate={handleActivateProject}/>
           <GlobalSearch leads={leads} onSelect={lead=>setSelectedLead(lead)}/>
@@ -1289,6 +1289,15 @@ export default function Dashboard() {
           </div>
         </>}
 
+         {/* ══ FUENTES ══ */}
+        {activeTab==='fuentes'&&(
+          <FuentesTab
+            activeProjectId={activeProjectId}
+            leads={leads}
+            projects={projects}
+          />
+        )}
+        
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
           <CredentialsVault
@@ -2199,6 +2208,311 @@ function AddCredentialModal({
               : <><CheckCircle size={12}/> GUARDAR CREDENCIAL</>
             }
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+// ─── FUENTES TAB ─────────────────────────────────────────────────────────────
+
+interface UtmRow {
+  id: string; project_id: string|null; phone_number: string
+  utm_source: string|null; utm_medium: string|null; utm_campaign: string|null
+  utm_content: string|null; utm_term: string|null; landing_url: string|null
+  registered_at: string; matched_contact_id: string|null
+  first_name: string|null; last_name: string|null; source_platform: string|null
+  matched_at: string|null
+}
+
+interface CampaignGroup {
+  campaign: string; source: string; content: string
+  rows: UtmRow[]; totalLeads: number
+  calientes: number; calPct: number
+  compradores: number; convPct: number
+}
+
+function FuentesTab({
+  activeProjectId, leads, projects
+}: {
+  activeProjectId: string|null; leads: Lead[]; projects: Project[]
+}) {
+  const [utmData, setUtmData] = useState<UtmRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedGroup, setSelectedGroup] = useState<CampaignGroup|null>(null)
+
+  const activeProject = projects.find(p => p.id === activeProjectId)
+  const adBudget = activeProject?.ad_budget || null
+
+  const leadMap = useMemo(() => {
+    const m: Record<string, Lead> = {}
+    for (const l of leads) m[l.id] = l
+    return m
+  }, [leads])
+
+  const fetchUtmData = useCallback(async () => {
+    setLoading(true)
+    try {
+      let q = supabase.from('utm_tracking').select('*').order('registered_at', { ascending: false })
+      if (activeProjectId) q = q.eq('project_id', activeProjectId)
+      const { data } = await q
+      setUtmData(data || [])
+    } finally {
+      setLoading(false)
+    }
+  }, [activeProjectId])
+
+  useEffect(() => { fetchUtmData() }, [fetchUtmData])
+
+  const groups = useMemo<CampaignGroup[]>(() => {
+    // Group by campaign → then by source+content within each campaign
+    const map: Record<string, UtmRow[]> = {}
+    for (const row of utmData) {
+      const key = [
+        row.utm_campaign || '(sin campaña)',
+        row.utm_source || '',
+        row.utm_content || ''
+      ].join('||')
+      if (!map[key]) map[key] = []
+      map[key].push(row)
+    }
+    return Object.entries(map).map(([key, rows]) => {
+      const [campaign, source, content] = key.split('||')
+      const matchedLeads = rows
+        .filter(r => r.matched_contact_id)
+        .map(r => leadMap[r.matched_contact_id!])
+        .filter(Boolean) as Lead[]
+      const calientes = matchedLeads.filter(l => l.segmento === 'caliente').length
+      const compradores = matchedLeads.filter(l => l.agent_stage === 'comprador').length
+      const totalLeads = rows.length
+      return {
+        campaign, source, content, rows, totalLeads,
+        calientes, calPct: totalLeads > 0 ? Math.round((calientes / totalLeads) * 100) : 0,
+        compradores, convPct: totalLeads > 0 ? Math.round((compradores / totalLeads) * 100) : 0,
+      }
+    }).sort((a, b) => b.totalLeads - a.totalLeads)
+  }, [utmData, leadMap])
+
+  const totals = useMemo(() => ({
+    leads: groups.reduce((s, g) => s + g.totalLeads, 0),
+    calientes: groups.reduce((s, g) => s + g.calientes, 0),
+    compradores: groups.reduce((s, g) => s + g.compradores, 0),
+  }), [groups])
+
+  const cpl = (group: CampaignGroup) => {
+    if (!adBudget || groups.length === 0 || group.totalLeads === 0) return '—'
+    // Distribuir budget proporcionalmente por leads (estimado hasta Meta Ads API)
+    const share = (group.totalLeads / Math.max(totals.leads, 1)) * adBudget
+    return `$${(share / group.totalLeads).toFixed(1)}`
+  }
+
+  const cpv = (group: CampaignGroup) => {
+    if (!adBudget || groups.length === 0 || group.compradores === 0) return '—'
+    const share = (group.totalLeads / Math.max(totals.leads, 1)) * adBudget
+    return `$${(share / group.compradores).toFixed(0)}`
+  }
+
+  const sourcePlatformColor = (p: string|null) =>
+    p === 'facebook' || p === 'ghl' ? '#00b0f6' : p === 'instagram' ? '#C084FC' : '#4A4A6A'
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      {/* Header stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: 'TOTAL LEADS', value: totals.leads, color: '#00b0f6' },
+          { label: 'LEADS CALIENTES', value: totals.calientes, sub: totals.leads > 0 ? `${Math.round((totals.calientes/totals.leads)*100)}%` : '0%', color: '#FF6B35' },
+          { label: 'COMPRADORES', value: totals.compradores, sub: totals.leads > 0 ? `${Math.round((totals.compradores/totals.leads)*100)}% conv.` : '—', color: '#00FF94' },
+          { label: 'FUENTES ACTIVAS', value: groups.length, color: '#FFB800' },
+        ].map(m => (
+          <div key={m.label} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
+            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-1">{m.label}</p>
+            <div className="flex items-end gap-2">
+              <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+              {m.sub && <p className="mono text-[10px] text-[#4A4A6A] mb-1">{m.sub}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+        <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between">
+          <div>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">FUENTES DE TRÁFICO</p>
+            {activeProject && <p className="text-sm font-medium text-[#E0E0F0] mt-0.5">{activeProject.name}</p>}
+          </div>
+          {!adBudget && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#FFB80030] bg-[#FFB80008]">
+              <AlertCircle size={10} style={{ color: '#FFB800' }}/>
+              <span className="mono text-[9px] text-[#4A4A6A]">CPL/CPV disponible con presupuesto de ads configurado</span>
+            </div>
+          )}
+        </div>
+        {groups.length === 0 ? (
+          <div className="px-5 py-16 text-center">
+            <TrendingUp size={24} className="text-[#2A2A3A] mx-auto mb-3"/>
+            <p className="text-[#4A4A6A] text-sm">Sin datos UTM registrados aún</p>
+            <p className="mono text-[10px] text-[#2A2A4A] mt-1">Los UTMs se capturan cuando un lead llega desde una landing con parámetros</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#1E1E2E]">
+                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','CPL EST.','CPV EST.',''].map(h => (
+                    <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map((g, i) => (
+                  <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors cursor-pointer"
+                    onClick={() => setSelectedGroup(g)}>
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-[#E0E0F0]">{g.campaign}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="mono text-[10px] px-2 py-0.5 rounded-full"
+                        style={{ color: sourcePlatformColor(g.source), background: `${sourcePlatformColor(g.source)}15` }}>
+                        {g.source || '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="mono text-[10px] text-[#4A4A6A]">{g.content || '—'}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="mono text-sm font-bold text-[#E0E0F0]">{g.totalLeads}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="mono text-sm text-[#E0E0F0]">{g.calientes}</span>
+                        <span className="mono text-[10px]" style={{ color: g.calPct >= 40 ? '#00FF94' : g.calPct >= 20 ? '#FFB800' : '#FF6B35' }}>
+                          {g.calPct}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="mono text-sm text-[#E0E0F0]">{g.compradores}</span>
+                        {g.compradores > 0 && (
+                          <span className="mono text-[10px]" style={{ color: '#00FF94' }}>{g.convPct}%</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? '#E0E0F0' : '#4A4A6A' }}>{cpl(g)}</td>
+                    <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? '#00FF94' : '#4A4A6A' }}>{cpv(g)}</td>
+                    <td className="px-4 py-3">
+                      <ChevronRight size={12} className="text-[#4A4A6A]"/>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Lead panel for selected campaign */}
+      {selectedGroup && (
+        <CampaignLeadPanel group={selectedGroup} leadMap={leadMap} onClose={() => setSelectedGroup(null)}/>
+      )}
+    </div>
+  )
+}
+
+// ─── CAMPAIGN LEAD PANEL ──────────────────────────────────────────────────────
+
+function CampaignLeadPanel({
+  group, leadMap, onClose
+}: {
+  group: CampaignGroup
+  leadMap: Record<string, Lead>
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-[200] flex justify-end" onClick={onClose}>
+      <div className="w-full max-w-lg h-full border-l border-[#1E1E2E] overflow-y-auto"
+        style={{ background: '#0D0D14', boxShadow: '-24px 0 80px rgba(0,0,0,0.7)', animation: 'slideInRight 0.2s ease' }}
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-[#1E1E2E] sticky top-0 z-10" style={{ background: 'rgba(13,13,20,0.97)' }}>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">LEADS DE CAMPAÑA</p>
+              <p className="font-bold text-[#E0E0F0] text-base mt-0.5 truncate">{group.campaign}</p>
+              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                {group.source && (
+                  <span className="mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: '#00b0f6', background: '#00b0f620' }}>{group.source}</span>
+                )}
+                {group.content && (
+                  <span className="mono text-[9px] text-[#4A4A6A]">{group.content}</span>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group ml-3 flex-shrink-0">
+              <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+            </button>
+          </div>
+          {/* Mini stats */}
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {[
+              { label: 'LEADS', value: group.totalLeads, color: '#00b0f6' },
+              { label: 'CALIENTES', value: `${group.calientes} (${group.calPct}%)`, color: '#FF6B35' },
+              { label: 'COMPRADORES', value: group.compradores, color: '#00FF94' },
+            ].map(s => (
+              <div key={s.label} className="rounded-lg border border-[#1E1E2E] p-2.5" style={{ background: '#111118' }}>
+                <p className="mono text-[8px] text-[#4A4A6A] tracking-widest">{s.label}</p>
+                <p className="mono text-sm font-bold mt-0.5" style={{ color: s.color }}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Lead list */}
+        <div className="divide-y divide-[#1E1E2E]">
+          {group.rows.map((row, i) => {
+            const lead = row.matched_contact_id ? leadMap[row.matched_contact_id] : null
+            const name = row.first_name ? `${row.first_name} ${row.last_name || ''}`.trim() : row.phone_number
+            return (
+              <div key={i} className="px-6 py-4 flex items-center gap-4">
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: lead ? `${segColor(lead.segmento)}20` : '#1E1E2E' }}>
+                  <User size={12} style={{ color: lead ? segColor(lead.segmento) : '#4A4A6A' }}/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#E0E0F0] truncate">{name}</p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="mono text-[9px] text-[#4A4A6A]">{row.phone_number}</span>
+                    {lead && lead.segmento && (
+                      <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{ color: segColor(lead.segmento), background: `${segColor(lead.segmento)}15` }}>
+                        {lead.segmento}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  {lead ? (
+                    <StagePill stage={lead.agent_stage}/>
+                  ) : (
+                    <span className="mono text-[9px] text-[#2A2A4A]">sin match</span>
+                  )}
+                  {lead?.engagement_score > 0 && (
+                    <span className="mono text-[9px] font-bold" style={{ color: scoreColor(lead.engagement_score) }}>★{lead.engagement_score}</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
