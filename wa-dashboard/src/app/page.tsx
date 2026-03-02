@@ -1838,6 +1838,36 @@ function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
               <MPin label="ACTUALIZADO" value={lead.updated_at?format(new Date(lead.updated_at),'dd/MM HH:mm'):'—'} color="#4A4A6A"/>
             </div>
           </div>
+          {(lead.kanshi_score||0)>0&&(
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">KANSHI SCORE</p>
+                <span className="mono text-sm font-bold"
+                  style={{color:lead.kanshi_segment==='listo'?'#00FF94':lead.kanshi_segment==='caliente'?'#FF6B35':lead.kanshi_segment==='templado'?'#FFB800':'#00b0f6'}}>
+                  {lead.kanshi_score}/100
+                </span>
+              </div>
+              <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{background:'#111118'}}>
+                {[
+                  {label:'FIT DEL PERFIL',    value: (lead as any).score_fit        ?? 0, max:25, color:'#C084FC'},
+                  {label:'ENGAGEMENT ACTIVO', value: (lead as any).score_engagement ?? 0, max:35, color:'#00b0f6'},
+                  {label:'INTENCIÓN DECLARADA',value:(lead as any).score_intencion  ?? 0, max:25, color:'#FF6B35'},
+                  {label:'CALIDAD DE FUENTE', value: (lead as any).score_fuente     ?? 0, max:15, color:'#FFB800'},
+                ].map(dim=>(
+                  <div key={dim.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{dim.label}</span>
+                      <span className="mono text-[10px] font-bold" style={{color:dim.color}}>{dim.value}<span className="text-[#4A4A6A] font-normal">/{dim.max}</span></span>
+                    </div>
+                    <div className="h-1.5 rounded-full" style={{background:'#1E1E2E'}}>
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{width:`${Math.round((dim.value/dim.max)*100)}%`,background:dim.color,opacity:0.8}}/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {lead.resumen_perfil&&<div className="space-y-2">
             <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">RESUMEN</p>
             <div className="rounded-xl border border-[#1E1E2E] p-4" style={{background:'#111118'}}><p className="text-xs text-[#E0E0F0] leading-relaxed">{lead.resumen_perfil}</p></div>
@@ -2348,6 +2378,7 @@ interface CampaignGroup {
   rows: UtmRow[]; totalLeads: number
   calientes: number; calPct: number
   compradores: number; convPct: number
+  avgKanshiScore: number
 }
 
 function FuentesTab({
@@ -2403,10 +2434,15 @@ function FuentesTab({
       const calientes = matchedLeads.filter(l => l.segmento === 'caliente').length
       const compradores = matchedLeads.filter(l => l.agent_stage === 'comprador').length
       const totalLeads = rows.length
+      const scoredLeads = matchedLeads.filter(l => (l.kanshi_score || 0) > 0)
+      const avgKanshiScore = scoredLeads.length > 0
+        ? Math.round(scoredLeads.reduce((s, l) => s + (l.kanshi_score || 0), 0) / scoredLeads.length)
+        : 0
       return {
         campaign, source, content, rows, totalLeads,
         calientes, calPct: totalLeads > 0 ? Math.round((calientes / totalLeads) * 100) : 0,
         compradores, convPct: totalLeads > 0 ? Math.round((compradores / totalLeads) * 100) : 0,
+        avgKanshiScore,
       }
     }).sort((a, b) => b.totalLeads - a.totalLeads)
   }, [utmData, leadMap])
@@ -2484,7 +2520,7 @@ function FuentesTab({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#1E1E2E]">
-                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','CPL EST.','CPV EST.',''].map(h => (
+                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','SCORE PROM','CPL','CPV',''].map(h=>(
                     <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -2523,6 +2559,16 @@ function FuentesTab({
                           <span className="mono text-[10px]" style={{ color: '#00FF94' }}>{g.convPct}%</span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {g.avgKanshiScore > 0 ? (
+                        <span className="mono text-sm font-bold"
+                          style={{ color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' }}>
+                          {g.avgKanshiScore}
+                        </span>
+                      ) : (
+                        <span className="mono text-[10px] text-[#2E2E4E]">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? '#E0E0F0' : '#4A4A6A' }}>{cpl(g)}</td>
                     <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? '#00FF94' : '#4A4A6A' }}>{cpv(g)}</td>
