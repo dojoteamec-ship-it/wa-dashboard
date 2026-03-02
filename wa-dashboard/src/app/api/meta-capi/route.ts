@@ -24,11 +24,11 @@ function sha256(value: string): string {
   return createHash('sha256').update(value.trim().toLowerCase()).digest('hex')
 }
 
-async function sendMetaEvent(capiUrl: string, events: object[]): Promise<{ success: boolean; response: any }> {
+async function sendMetaEvent(capiUrl: string, events: object[], testEventCode?: string): Promise<{ success: boolean; response: any }> {
   const res = await fetch(capiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: events }),
+    body: JSON.stringify({ data: events, ...(testEventCode && { test_event_code: testEventCode }) }),
   })
   const response = await res.json()
   return { success: !response.error, response }
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       },
     }
 
-    const { success, response } = await sendMetaEvent(CAPI_URL, [event])
+   const { success, response } = await sendMetaEvent(CAPI_URL, [event], body.test_event_code)
 
     if (!success) {
       console.error('[meta-capi] Error de Meta:', response)
