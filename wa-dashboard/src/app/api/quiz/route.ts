@@ -110,19 +110,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Hook KANSHI Score — Día 9 ─────────────────────────────────────────────
-    // if (matched_contact_id) {
-    //   await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/score`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       contact_id: matched_contact_id,
-    //       project_id,
-    //       trigger: 'quiz_completed',
-    //       quiz_type,
-    //     }),
-    //   })
-    // }
+    // ── Hook KANSHI Score ─────────────────────────────────────────────────────
+if (matched_contact_id) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wa-dashboard-five.vercel.app'
+  fetch(`${appUrl}/api/score`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contact_id: matched_contact_id,
+      project_id: project_id || null,
+    }),
+  }).catch(err => console.error('[KANSHI /api/quiz] Score hook error:', err))
+}
 
     return NextResponse.json({
       success: true,
