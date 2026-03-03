@@ -2680,6 +2680,8 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
   const [editing, setEditing] = useState(false)
   const [pixelId, setPixelId] = useState('')
   const [capiToken, setCapiToken] = useState('')
+  const [adAccountId, setAdAccountId] = useState('')
+  const [marketingToken, setMarketingToken] = useState('')
   const [saving, setSaving] = useState(false)
 
   const fetchMeta = useCallback(async () => {
@@ -2693,6 +2695,8 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
       setCred(data)
       setPixelId(data.credentials.pixel_id || '')
       setCapiToken(data.credentials.capi_token || '')
+      setAdAccountId(data.credentials.ad_account_id || '')
+      setMarketingToken(data.credentials.marketing_api_token || '')
     }
   }, [])
 
@@ -2705,7 +2709,12 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
         name: 'Meta Ads CAPI',
         type: 'meta_ads',
         is_active: true,
-        credentials: { pixel_id: pixelId.trim(), capi_token: capiToken.trim() }
+        credentials: {
+          pixel_id: pixelId.trim(),
+          capi_token: capiToken.trim(),
+          ad_account_id: adAccountId.trim(),
+          marketing_api_token: marketingToken.trim(),
+        }
       }
       if (cred) {
         await supabase.from('kanshi_credentials').update({ credentials: payload.credentials }).eq('id', cred.id)
@@ -2714,7 +2723,7 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
       }
       await fetchMeta()
       setEditing(false)
-      onToast('success', 'Meta Ads CAPI actualizado')
+      onToast('success', 'Meta Ads actualizado')
     } catch (e: any) {
       onToast('error', e?.message || 'Error al guardar')
     } finally {
@@ -2722,7 +2731,8 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
     }
   }
 
-  const isConfigured = cred && cred.credentials.pixel_id && cred.credentials.capi_token
+  const isCAPIConfigured = cred && cred.credentials.pixel_id && cred.credentials.capi_token
+  const isAdsConfigured = cred && cred.credentials.ad_account_id && cred.credentials.marketing_api_token
 
   return (
     <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
@@ -2734,56 +2744,83 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
             📡
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads CAPI</p>
+            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads — CAPI + Marketing API</p>
             <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mt-0.5">
-              {isConfigured ? `Pixel: ${cred.credentials.pixel_id}` : 'SIN CONFIGURAR'}
+              {isCAPIConfigured ? `Pixel: ${cred.credentials.pixel_id}` : 'CAPI sin configurar'}
+              {isAdsConfigured ? ` · Ads: ${cred.credentials.ad_account_id}` : ' · Marketing API sin configurar'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isConfigured && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
-              style={{ background: 'rgba(0,255,148,0.08)', border: '1px solid rgba(0,255,148,0.2)' }}>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse"/>
-              <span className="mono text-[9px] text-[#00FF94] tracking-widest">ACTIVO</span>
-            </div>
-          )}
+          <div className="flex flex-col gap-1">
+            {isCAPIConfigured && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md"
+                style={{ background: 'rgba(0,255,148,0.08)', border: '1px solid rgba(0,255,148,0.2)' }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse"/>
+                <span className="mono text-[8px] text-[#00FF94] tracking-widest">CAPI</span>
+              </div>
+            )}
+            {isAdsConfigured && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md"
+                style={{ background: 'rgba(0,20,173,0.15)', border: '1px solid rgba(0,20,173,0.4)' }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#0014ad] animate-pulse"/>
+                <span className="mono text-[8px] text-[#00b0f6] tracking-widest">ADS API</span>
+              </div>
+            )}
+          </div>
           <button onClick={() => setEditing(e => !e)}
             className="px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
-            {editing ? 'CANCELAR' : isConfigured ? 'EDITAR' : 'CONFIGURAR'}
+            {editing ? 'CANCELAR' : (isCAPIConfigured || isAdsConfigured) ? 'EDITAR' : 'CONFIGURAR'}
           </button>
         </div>
       </div>
 
       {/* Form */}
       {editing && (
-        <div className="p-5 space-y-4">
-          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
-            style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
-            <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-            <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
-              Events Manager → Andreti Page's Pixel → Configuración → API de conversiones → Generar token
-            </p>
+        <div className="p-5 space-y-5">
+          {/* CAPI section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-[#1E1E2E]"/>
+              <span className="mono text-[9px] text-[#00FF94] tracking-widest">CONVERSIONS API (CAPI)</span>
+              <div className="h-px flex-1 bg-[#1E1E2E]"/>
+            </div>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
+              style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
+              <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
+              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+                Events Manager → Pixel → Configuración → API de conversiones → Generar token
+              </p>
+            </div>
+            <CInput label="PIXEL ID" value={pixelId} onChange={e => setPixelId(e.target.value)} placeholder="ej. 120057833094582"/>
+            <CInput label="CAPI ACCESS TOKEN" value={capiToken} onChange={e => setCapiToken(e.target.value)} placeholder="EAAxxxxx..." masked/>
           </div>
-          <CInput
-            label="PIXEL ID"
-            value={pixelId}
-            onChange={e => setPixelId(e.target.value)}
-            placeholder="ej. 120057833094582"
-          />
-          <CInput
-            label="CAPI ACCESS TOKEN"
-            value={capiToken}
-            onChange={e => setCapiToken(e.target.value)}
-            placeholder="EAAxxxxx..."
-            masked
-          />
-          <button onClick={handleSave} disabled={!pixelId.trim() || !capiToken.trim() || saving}
+
+          {/* Marketing API section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-[#1E1E2E]"/>
+              <span className="mono text-[9px] text-[#0014ad] tracking-widest">MARKETING API (COSTOS REALES)</span>
+              <div className="h-px flex-1 bg-[#1E1E2E]"/>
+            </div>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
+              style={{ borderColor: 'rgba(0,20,173,0.3)', background: 'rgba(0,20,173,0.05)' }}>
+              <Info size={12} style={{ color: '#0014ad', flexShrink: 0, marginTop: 1 }}/>
+              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+                Meta Business Manager → Administrador de anuncios → ID de cuenta publicitaria (formato: 123456789)
+              </p>
+            </div>
+            <CInput label="AD ACCOUNT ID" value={adAccountId} onChange={e => setAdAccountId(e.target.value)} placeholder="ej. 123456789012345"/>
+            <CInput label="MARKETING API TOKEN" value={marketingToken} onChange={e => setMarketingToken(e.target.value)} placeholder="EAAxxxxx..." masked/>
+          </div>
+
+          <button onClick={handleSave}
+            disabled={saving}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30"
             style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
             {saving
               ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> GUARDANDO...</>
-              : <><CheckCircle size={12}/> GUARDAR</>
+              : <><CheckCircle size={12}/> GUARDAR META ADS</>
             }
           </button>
         </div>
