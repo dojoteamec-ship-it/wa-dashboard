@@ -15,6 +15,7 @@ interface MetaCampaignInsight {
   cpc: number
   ctr: number
   cost_per_lead: number
+  objective: string
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -120,7 +121,7 @@ export async function GET(req: NextRequest) {
     // Con level=campaign + sort=spend_descending → top campañas para visualización
     const campaignUrl = new URL(`https://graph.facebook.com/v19.0/act_${cleanAccountId}/insights`)
     campaignUrl.searchParams.set('fields', [
-      'campaign_id', 'campaign_name', 'spend', 'impressions',
+      'campaign_id', 'campaign_name', 'objective', 'spend', 'impressions',
       'clicks', 'reach', 'cpm', 'cpc', 'ctr',
       'actions', 'cost_per_action_type'
     ].join(','))
@@ -148,6 +149,7 @@ export async function GET(req: NextRequest) {
       cpc: safeNum(row.cpc),
       ctr: safeNum(row.ctr),
       cost_per_lead: extractCPL(row.cost_per_action_type),
+      objective: row.objective || '',
     }))
 
     // ── 5. Totales exactos desde ACCOUNT LEVEL ────────────────────────────────
