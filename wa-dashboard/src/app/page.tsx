@@ -3206,18 +3206,32 @@ function MetaAdsIntelligencePanel({
                       )
                     })}
                     {/* Totals row */}
-                    <tr style={{ background: 'rgba(0,20,173,0.05)' }}>
-                      <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A] tracking-widest">TOTALES</td>
-                      <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
-                      <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>{fmt$(insight.total_spend)}</td>
-                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(insight.total_impressions)}</td>
-                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(insight.total_clicks)}</td>
-                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{insight.cpm ? fmt$(insight.cpm) : '—'}</td>
-                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{insight.cpc ? fmt$(insight.cpc) : '—'}</td>
-                      <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#00b0f6' }}>{insight.total_leads}</td>
-                      <td className="px-4 py-3 mono text-[10px]" style={{ color: '#FFB800' }}>{insight.cost_per_lead ? fmt$(insight.cost_per_lead) : '—'}</td>
-                      <td colSpan={2} className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
-                    </tr>
+                    {(() => {
+                      const isFiltered = objectiveFilter !== 'all'
+                      const totSpend = isFiltered ? filteredCampaigns.reduce((s, c) => s + c.spend, 0) : insight.total_spend
+                      const totImpressions = isFiltered ? filteredCampaigns.reduce((s, c) => s + c.impressions, 0) : insight.total_impressions
+                      const totClicks = isFiltered ? filteredCampaigns.reduce((s, c) => s + c.clicks, 0) : insight.total_clicks
+                      const totLeads = isFiltered ? filteredCampaigns.reduce((s, c) => s + c.leads, 0) : insight.total_leads
+                      const totCPL = totLeads > 0 ? totSpend / totLeads : null
+                      const totCPM = totImpressions > 0 ? (totSpend / totImpressions) * 1000 : null
+                      const totCPC = totClicks > 0 ? totSpend / totClicks : null
+                      return (
+                        <tr style={{ background: 'rgba(0,20,173,0.05)' }}>
+                          <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A] tracking-widest">
+                            {isFiltered ? `SUBTOTAL (${objLabel(objectiveFilter)})` : 'TOTALES'}
+                          </td>
+                          <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>{fmt$(totSpend)}</td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(totImpressions)}</td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(totClicks)}</td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{totCPM ? fmt$(totCPM) : '—'}</td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{totCPC ? fmt$(totCPC) : '—'}</td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#00b0f6' }}>{totLeads}</td>
+                          <td className="px-4 py-3 mono text-[10px]" style={{ color: '#FFB800' }}>{totCPL ? fmt$(totCPL) : '—'}</td>
+                          <td colSpan={2} className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
+                        </tr>
+                      )
+                    })()}
                   </tbody>
                 </table>
               </div>
