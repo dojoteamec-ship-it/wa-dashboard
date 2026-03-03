@@ -3081,7 +3081,7 @@ function MetaAdsIntelligencePanel({
               <div style={{ height: Math.max(120, insight.campaigns.length * 36) }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={insight.campaigns.map(c => ({
+                    data={filteredCampaigns.map(c => ({
                       name: c.campaign_name.length > 22 ? c.campaign_name.slice(0, 22) + '…' : c.campaign_name,
                       spend: c.spend,
                       leads: c.leads,
@@ -3129,7 +3129,7 @@ function MetaAdsIntelligencePanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {insight.campaigns.map((c, i) => {
+                    {filteredCampaigns.map((c, i) => {
                       const matchKey = c.campaign_name.toLowerCase().trim()
                       const compradores = compradorMap[matchKey] || 0
                       const cpb = compradores > 0 ? c.spend / compradores : null
