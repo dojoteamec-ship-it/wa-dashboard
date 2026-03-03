@@ -11,7 +11,8 @@ import {
   RefreshCw, Wifi, WifiOff, X, ChevronRight, Brain, AlertCircle,
   Heart, Flame, Snowflake, Thermometer, Activity, Star, User,
   Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff,
-  Pause, Square, CheckCircle, Info, Search, DollarSign, Target, BookOpen
+  Pause, Square, CheckCircle, Info, Search, DollarSign, Target, BookOpen,
+  LayoutDashboard, GitBranch, Radio, Settings, Bell, LogOut
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -114,6 +115,288 @@ function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: 
         <path fill="#0d1c9f" d="M35.79,97.26a10.69,10.69,0,0,0-3,.41A10.85,10.85,0,0,0,25.4,105a10.5,10.5,0,0,0-.47,3.13,10.86,10.86,0,0,0,14,10.4,10.7,10.7,0,0,0,4.16-2.37l.73-.73a10.94,10.94,0,0,0,2.83-7.3A10.86,10.86,0,0,0,35.79,97.26Zm0,14.47a3.62,3.62,0,1,1,3.61-3.63A3.64,3.64,0,0,1,35.79,111.73Z"/>
       </g>
     </svg>
+  )
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+
+type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'config'
+
+const SIDEBAR_ITEMS: {
+  key: TabType
+  label: string
+  icon: React.ReactNode
+}[] = [
+  { key: 'overview',   label: 'Overview',  icon: <LayoutDashboard size={16}/> },
+  { key: 'psico',      label: 'Leads',     icon: <Users size={16}/> },
+  { key: 'pipeline',   label: 'Pipeline',  icon: <GitBranch size={16}/> },
+  { key: 'ventas',     label: 'Ventas',    icon: <DollarSign size={16}/> },
+  { key: 'fuentes',    label: 'Fuentes',   icon: <Radio size={16}/> },
+  { key: 'campaigns',  label: 'Campañas',  icon: <Send size={16}/> },
+]
+
+const STATUS_COLOR = (s: string) =>
+  s === 'active' ? '#00FF94' : s === 'planning' ? '#FFB800' : '#4A4A6A'
+const STATUS_LABEL = (s: string) =>
+  s === 'active' ? 'ACTIVO' : s === 'planning' ? 'PLANIF.' : 'CERRADO'
+
+function Sidebar({
+  activeTab,
+  onTabChange,
+  activeProject,
+  connected,
+  onLogout,
+  onRefresh,
+  lastUpdate,
+}: {
+  activeTab: TabType
+  onTabChange: (tab: TabType) => void
+  activeProject: Project | null
+  connected: boolean
+  onLogout: () => void
+  onRefresh: () => void
+  lastUpdate: Date
+}) {
+  return (
+    <aside
+      className="flex flex-col flex-shrink-0 h-screen sticky top-0 z-40"
+      style={{
+        width: '220px',
+        background: '#0A0A0F',
+        borderRight: '1px solid #1E1E2E',
+      }}
+    >
+      {/* ── Logo ── */}
+      <div
+        className="flex items-center gap-3 px-5 py-5"
+        style={{ borderBottom: '1px solid #1E1E2E' }}
+      >
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5 flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}
+        >
+          <KanshiLogo size={22} />
+        </div>
+        <div>
+          <p className="font-bold text-white tracking-[0.18em] text-[13px]" style={{ fontFamily: 'monospace' }}>
+            KANSHI
+          </p>
+          <p className="mono text-[9px] tracking-widest" style={{ color: '#00b0f6' }}>
+            OS · GPC
+          </p>
+        </div>
+      </div>
+
+      {/* ── Navegación principal ── */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {SIDEBAR_ITEMS.map(item => {
+          const isActive = activeTab === item.key
+          return (
+            <button
+              key={item.key}
+              onClick={() => onTabChange(item.key)}
+              className="w-full flex items-center gap-3 rounded-xl transition-all duration-150 text-left"
+              style={{
+                padding: '10px 14px',
+                background: isActive ? '#1a1a2e' : 'transparent',
+                borderLeft: isActive ? '2px solid #00b0f6' : '2px solid transparent',
+                color: isActive ? '#E0E0F0' : '#4A4A6A',
+              }}
+              onMouseEnter={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = '#111118'
+                  ;(e.currentTarget as HTMLElement).style.color = '#E0E0F0'
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent'
+                  ;(e.currentTarget as HTMLElement).style.color = '#4A4A6A'
+                }
+              }}
+            >
+              <span
+                style={{
+                  color: isActive ? '#00b0f6' : 'currentColor',
+                  flexShrink: 0,
+                  transition: 'color 0.15s',
+                }}
+              >
+                {item.icon}
+              </span>
+              <span
+                className="font-medium"
+                style={{
+                  fontSize: '15px',
+                  letterSpacing: '0.01em',
+                  lineHeight: 1,
+                }}
+              >
+                {item.label}
+              </span>
+            </button>
+          )
+        })}
+
+        {/* ── Separador ── */}
+        <div className="my-3" style={{ height: '1px', background: '#1E1E2E' }} />
+
+        {/* Config */}
+        {(['config'] as const).map(key => {
+          const isActive = activeTab === key
+          return (
+            <button
+              key={key}
+              onClick={() => onTabChange(key)}
+              className="w-full flex items-center gap-3 rounded-xl transition-all duration-150 text-left"
+              style={{
+                padding: '10px 14px',
+                background: isActive ? '#1a1a2e' : 'transparent',
+                borderLeft: isActive ? '2px solid #00b0f6' : '2px solid transparent',
+                color: isActive ? '#E0E0F0' : '#4A4A6A',
+              }}
+              onMouseEnter={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = '#111118'
+                  ;(e.currentTarget as HTMLElement).style.color = '#E0E0F0'
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent'
+                  ;(e.currentTarget as HTMLElement).style.color = '#4A4A6A'
+                }
+              }}
+            >
+              <span style={{ color: isActive ? '#00b0f6' : 'currentColor', flexShrink: 0 }}>
+                <Settings size={16} />
+              </span>
+              <span className="font-medium" style={{ fontSize: '15px' }}>Config</span>
+            </button>
+          )
+        })}
+
+        {/* Alertas — futuro (Día 14) */}
+        <div
+          className="w-full flex items-center gap-3 rounded-xl"
+          style={{ padding: '10px 14px', opacity: 0.35, cursor: 'not-allowed' }}
+        >
+          <Bell size={16} style={{ color: '#4A4A6A', flexShrink: 0 }} />
+          <span className="font-medium" style={{ fontSize: '15px', color: '#4A4A6A' }}>
+            Alertas
+          </span>
+          <span
+            className="ml-auto mono"
+            style={{
+              fontSize: '9px',
+              color: '#FFB800',
+              background: '#FFB80018',
+              border: '1px solid #FFB80030',
+              borderRadius: '4px',
+              padding: '1px 5px',
+              letterSpacing: '0.08em',
+            }}
+          >
+            PRONTO
+          </span>
+        </div>
+      </nav>
+
+      {/* ── Footer: proyecto activo ── */}
+      <div style={{ borderTop: '1px solid #1E1E2E' }}>
+        {activeProject ? (
+          <div className="px-4 py-4">
+            <p className="mono tracking-widest mb-2" style={{ fontSize: '9px', color: '#4A4A6A' }}>
+              PROYECTO ACTIVO
+            </p>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                style={{
+                  background: `${STATUS_COLOR(activeProject.status)}18`,
+                  border: `1px solid ${STATUS_COLOR(activeProject.status)}30`,
+                }}
+              >
+                {activeProject.emoji || '🚀'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className="font-semibold truncate"
+                  style={{ fontSize: '13px', color: '#E0E0F0', lineHeight: 1.2 }}
+                >
+                  {activeProject.name}
+                </p>
+                <span
+                  className="mono inline-block mt-0.5"
+                  style={{
+                    fontSize: '9px',
+                    color: STATUS_COLOR(activeProject.status),
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  ● {STATUS_LABEL(activeProject.status)}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 py-4">
+            <p className="mono tracking-widest mb-1" style={{ fontSize: '9px', color: '#4A4A6A' }}>
+              SIN PROYECTO
+            </p>
+            <p style={{ fontSize: '12px', color: '#2E2E4E' }}>Selecciona uno arriba</p>
+          </div>
+        )}
+
+        {/* ── Controles sistema ── */}
+        <div
+          className="px-4 py-3 flex items-center justify-between"
+          style={{ borderTop: '1px solid #1E1E2E' }}
+        >
+          {/* Status live */}
+          <div className="flex items-center gap-1.5">
+            {connected ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00b0f6' }} />
+                <span className="mono" style={{ fontSize: '10px', color: '#00b0f6' }}>LIVE</span>
+              </>
+            ) : (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#4A4A6A' }} />
+                <span className="mono" style={{ fontSize: '10px', color: '#4A4A6A' }}>OFFLINE</span>
+              </>
+            )}
+          </div>
+          {/* Acciones */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onRefresh}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ border: '1px solid #1E1E2E' }}
+              title="Actualizar datos"
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#00b0f6')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = '#1E1E2E')}
+            >
+              <RefreshCw size={11} style={{ color: '#4A4A6A' }} />
+            </button>
+            <button
+              onClick={onLogout}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ border: '1px solid #1E1E2E' }}
+              title="Cerrar sesión"
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#FF6B35')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = '#1E1E2E')}
+            >
+              <LogOut size={11} style={{ color: '#4A4A6A' }} />
+            </button>
+          </div>
+        </div>
+
+        <p className="mono text-center pb-3" style={{ fontSize: '9px', color: '#2E2E4E' }}>
+          {format(lastUpdate, 'HH:mm:ss')}
+        </p>
+      </div>
+    </aside>
   )
 }
 
