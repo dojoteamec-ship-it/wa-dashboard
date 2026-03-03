@@ -3666,20 +3666,9 @@ function VentasTab({
               {saving ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/> : <CheckCircle size={12}/>}
               {saving ? 'GUARDANDO...' : 'CONFIRMAR VENTA'}
             </button>
-          </div>
-
-      {/* ══ COMPRADORES HOTMART ══ */}
-      {showHotmart && (
-        <HotmartImportSection
-          activeProjectId={activeProjectId}
-          stats={hotmartStats}
-          onImportComplete={() => { fetchSales(); fetchHotmartStats() }}
-          onToast={onToast}
-        />
+         </div>
+        </div>
       )}
-    </div>
-  )
-}
 
       {/* KPIs */}
       {metrics && (
@@ -3780,6 +3769,16 @@ function VentasTab({
           </table>
         )}
       </div>
+
+      {/* ══ COMPRADORES HOTMART ══ */}
+      {showHotmart && (
+        <HotmartImportSection
+          activeProjectId={activeProjectId}
+          stats={hotmartStats}
+          onImportComplete={() => { fetchSales(); fetchHotmartStats() }}
+          onToast={onToast}
+        />
+      )}
     </div>
   )
 }
