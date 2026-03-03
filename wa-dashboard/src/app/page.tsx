@@ -3323,6 +3323,194 @@ interface SalesMetrics {
   by_campaign: Record<string, { sales: number; revenue: number }>
 }
 
+// ─── HOTMART IMPORT SECTION ───────────────────────────────────────────────────
+// Insertar ANTES de "function VentasTab(" en page.tsx
+
+function HotmartImportSection({
+  activeProjectId, stats, onImportComplete, onToast
+}: {
+  activeProjectId: string | null
+  stats: { total: number; matched: number; capi_sent: number; total_revenue: number; match_rate: number } | null
+  onImportComplete: () => void
+  onToast: (type: 'success' | 'error' | 'info' | 'warning', msg: string) => void
+}) {
+  const [dragging, setDragging] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [result, setResult] = useState<{
+    inserted: number; matched_contacts: number; skipped_dup: number;
+    skipped_no_phone: number; capi_sent: number; total_csv: number; valid_rows: number; message: string
+  } | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const processFile = async (file: File) => {
+    if (!activeProjectId) return
+    if (!file.name.endsWith('.csv')) {
+      onToast('error', 'Solo se aceptan archivos .csv de Hotmart')
+      return
+    }
+    setImporting(true)
+    setResult(null)
+    try {
+      const text = await file.text()
+      const res = await fetch('/api/import-buyers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: activeProjectId, csv_text: text }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setResult(data)
+        onToast('success', `✅ ${data.inserted} compradores importados · ${data.matched_contacts} con match WA`)
+        onImportComplete()
+      } else {
+        onToast('error', data.error || 'Error al importar')
+      }
+    } catch {
+      onToast('error', 'Error procesando el archivo')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) processFile(file)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processFile(file)
+    e.target.value = ''
+  }
+
+  return (
+    <div className="rounded-2xl border overflow-hidden" style={{ background: '#111118', borderColor: '#FFB800' }}>
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between"
+           style={{ background: 'rgba(255,184,0,0.05)' }}>
+        <div>
+          <p className="mono text-[10px] tracking-widest font-bold" style={{ color: '#FFB800' }}>
+            COMPRADORES HOTMART
+          </p>
+          <p className="text-xs text-[#E0E0F0] mt-0.5">
+            Importa historial de ventas · Meta CAPI retroactivo automático
+          </p>
+        </div>
+        {stats && stats.total > 0 && (
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">IMPORTADOS</p>
+              <p className="text-sm font-bold" style={{ color: '#FFB800' }}>{stats.total.toLocaleString()}</p>
+            </div>
+            <div className="text-right">
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">MATCH WA</p>
+              <p className="text-sm font-bold" style={{ color: stats.match_rate >= 50 ? '#00FF94' : '#00b0f6' }}>
+                {stats.match_rate}%
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">CAPI ENVIADO</p>
+              <p className="text-sm font-bold text-[#E0E0F0]">{stats.capi_sent}</p>
+            </div>
+            <div className="text-right">
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">REVENUE HIST.</p>
+              <p className="text-sm font-bold" style={{ color: '#00FF94' }}>${stats.total_revenue.toLocaleString()}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Drag & Drop Zone */}
+      <div className="p-5">
+        <div
+          onDragOver={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => fileRef.current?.click()}
+          className="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition-all py-10"
+          style={{
+            borderColor: dragging ? '#FFB800' : '#2E2E4E',
+            background: dragging ? 'rgba(255,184,0,0.05)' : 'transparent',
+          }}
+        >
+          <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange}/>
+
+          {importing ? (
+            <>
+              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#FFB800' }}/>
+              <p className="mono text-[11px] text-[#4A4A6A] tracking-widest">PROCESANDO CSV...</p>
+              <p className="text-xs text-[#4A4A6A]">Normalizando teléfonos · Deduplicando · Enviando CAPI</p>
+            </>
+          ) : (
+            <>
+              <div className="w-12 h-12 rounded-2xl border border-[#2E2E4E] flex items-center justify-center"
+                   style={{ background: '#0A0A0F' }}>
+                <Upload size={20} style={{ color: '#FFB800' }}/>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-[#E0E0F0]">
+                  {dragging ? 'Suelta el archivo aquí' : 'Arrastra tu CSV de Hotmart'}
+                </p>
+                <p className="mono text-[10px] text-[#4A4A6A] mt-1">
+                  o haz clic para seleccionar · Solo Aprobado + Completo se importan
+                </p>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#2E2E4E] mono text-[10px] text-[#4A4A6A]">
+                <span>Exportar desde Hotmart</span>
+                <span>→</span>
+                <span>Ventas</span>
+                <span>→</span>
+                <span>Historial de Transacciones</span>
+                <span>→</span>
+                <span style={{ color: '#FFB800' }}>Exportar CSV</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Resultado de la importación */}
+        {result && (
+          <div className="mt-4 rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#0A0A0F' }}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse"/>
+              <p className="mono text-[10px] text-[#00FF94] tracking-widest font-bold">IMPORTACIÓN COMPLETADA</p>
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {[
+                { label: 'CSV TOTAL',    value: result.total_csv,        color: '#E0E0F0' },
+                { label: 'VÁLIDOS',      value: result.valid_rows,       color: '#00b0f6' },
+                { label: 'IMPORTADOS',   value: result.inserted,         color: '#00FF94' },
+                { label: 'MATCH WA',     value: result.matched_contacts, color: '#FFB800' },
+                { label: 'DUPLICADOS',   value: result.skipped_dup,      color: '#4A4A6A' },
+              ].map(s => (
+                <div key={s.label} className="text-center rounded-xl border border-[#1E1E2E] py-3" style={{ background: '#111118' }}>
+                  <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
+                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            {result.capi_sent > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(0,176,246,0.08)', border: '1px solid rgba(0,176,246,0.2)' }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00b0f6]"/>
+                <p className="mono text-[10px] text-[#00b0f6]">
+                  {result.capi_sent} eventos Purchase enviados a Meta CAPI con fecha histórica retroactiva
+                </p>
+              </div>
+            )}
+            {result.skipped_no_phone > 0 && (
+              <p className="mono text-[9px] text-[#4A4A6A]">
+                ⚠ {result.skipped_no_phone} filas omitidas por teléfono inválido o vacío
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function VentasTab({
   activeProjectId, projects, onToast
 }: {
@@ -3338,6 +3526,22 @@ function VentasTab({
   const [formAmount, setFormAmount] = useState('')
   const [formProduct, setFormProduct] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showHotmart, setShowHotmart] = useState(false)
+  const [hotmartStats, setHotmartStats] = useState<{
+    total: number; matched: number; capi_sent: number;
+    total_revenue: number; match_rate: number
+  } | null>(null)
+
+  const fetchHotmartStats = useCallback(async () => {
+    if (!activeProjectId) return
+    try {
+      const res = await fetch(`/api/import-buyers?project_id=${activeProjectId}`)
+      const data = await res.json()
+      if (data.success) setHotmartStats(data.stats)
+    } catch {}
+  }, [activeProjectId])
+
+  useEffect(() => { fetchHotmartStats() }, [fetchHotmartStats])
 
   const project = projects.find(p => p.id === activeProjectId)
 
@@ -3420,6 +3624,11 @@ function VentasTab({
           style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
           <Plus size={12}/> REGISTRAR VENTA
         </button>
+        <button onClick={() => setShowHotmart(s => !s)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl mono text-[11px] font-bold tracking-widest transition-all"
+          style={{ background: showHotmart ? '#1a1a2e' : '#111118', border: '1px solid #FFB800', color: '#FFB800' }}>
+          <Upload size={12}/> IMPORTAR HOTMART
+        </button>
       </div>
 
       {/* Form */}
@@ -3458,8 +3667,19 @@ function VentasTab({
               {saving ? 'GUARDANDO...' : 'CONFIRMAR VENTA'}
             </button>
           </div>
-        </div>
+
+      {/* ══ COMPRADORES HOTMART ══ */}
+      {showHotmart && (
+        <HotmartImportSection
+          activeProjectId={activeProjectId}
+          stats={hotmartStats}
+          onImportComplete={() => { fetchSales(); fetchHotmartStats() }}
+          onToast={onToast}
+        />
       )}
+    </div>
+  )
+}
 
       {/* KPIs */}
       {metrics && (
