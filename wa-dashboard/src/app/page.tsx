@@ -2859,6 +2859,7 @@ interface MetaInsight {
     cpc: number
     ctr: number
     cost_per_lead: number
+    objective: string
   }>
 }
 
@@ -2874,6 +2875,22 @@ function MetaAdsIntelligencePanel({
   const [error, setError] = useState<string | null>(null)
   const [adsConfigured, setAdsConfigured] = useState<boolean | null>(null)
   const [dateRange, setDateRange] = useState('last_30d')
+  const [objectiveFilter, setObjectiveFilter] = useState<string>('all')
+
+  const OBJECTIVE_LABELS: Record<string, string> = {
+    'LEAD_GENERATION': 'Lead Ads',
+    'MESSAGES': 'WhatsApp',
+    'CONVERSIONS': 'Conversiones',
+    'LINK_CLICKS': 'Tráfico',
+    'OUTCOME_LEADS': 'Leads (new)',
+    'OUTCOME_TRAFFIC': 'Tráfico (new)',
+    'OUTCOME_ENGAGEMENT': 'Engagement',
+    'REACH': 'Alcance',
+    'BRAND_AWARENESS': 'Branding',
+    'VIDEO_VIEWS': 'Video',
+    'POST_ENGAGEMENT': 'Engagement',
+  }
+  const objLabel = (o: string) => OBJECTIVE_LABELS[o] || o || '—'
 
   // Check if Marketing API is configured
   useEffect(() => {
@@ -2973,6 +2990,23 @@ function MetaAdsIntelligencePanel({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Objective filter */}
+          {insight && insight.campaigns.length > 0 && (() => {
+            const objectives = Array.from(new Set(insight.campaigns.map(c => c.objective).filter(Boolean)))
+            if (objectives.length < 2) return null
+            return (
+              <select
+                value={objectiveFilter}
+                onChange={e => setObjectiveFilter(e.target.value)}
+                className="bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1.5 mono text-[10px] text-[#4A4A6A] outline-none hover:border-[#2E2E4E] transition-colors"
+              >
+                <option value="all">Todos los objetivos</option>
+                {objectives.map(o => (
+                  <option key={o} value={o}>{objLabel(o)}</option>
+                ))}
+              </select>
+            )
+          })()}
           {/* Date range selector */}
          <select
             value={dateRange}
@@ -3037,7 +3071,11 @@ function MetaAdsIntelligencePanel({
           </div>
 
           {/* ── Bar Chart spend por campaña ── */}
-          {insight.campaigns.length > 0 && (
+          {(() => {
+            const filteredCampaigns = objectiveFilter === 'all'
+              ? insight.campaigns
+              : insight.campaigns.filter(c => c.objective === objectiveFilter)
+          return filteredCampaigns.length > 0 && (
             <div className="px-5 pb-5">
               <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">SPEND POR CAMPAÑA</p>
               <div style={{ height: Math.max(120, insight.campaigns.length * 36) }}>
@@ -3069,10 +3107,14 @@ function MetaAdsIntelligencePanel({
                 </ResponsiveContainer>
               </div>
             </div>
-          )}
+          )})()}
 
           {/* ── Tabla embudo completo ── */}
-          {insight.campaigns.length > 0 && (
+          {(() => {
+            const filteredCampaigns = objectiveFilter === 'all'
+              ? insight.campaigns
+              : insight.campaigns.filter(c => c.objective === objectiveFilter)
+          return filteredCampaigns.length > 0 && (
             <div className="border-t border-[#1E1E2E] overflow-hidden">
               <div className="px-5 py-3 flex items-center justify-between">
                 <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">EMBUDO DE COSTOS — CAMPAÑA A COMPRADOR</p>
@@ -3081,7 +3123,7 @@ function MetaAdsIntelligencePanel({
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#1E1E2E]">
-                      {['CAMPAÑA','SPEND','IMPRESIONES','CLICKS','CPM','CPC','LEADS','CPL','COMPRADORES KANSHI','CPB REAL'].map(h => (
+                       {['CAMPAÑA','OBJETIVO','SPEND','IMPRESIONES','CLICKS','CPM','CPC','LEADS','CPL','COMPRADORES KANSHI','CPB REAL'].map(h => (
                         <th key={h} className="px-4 py-2.5 text-left mono text-[8px] text-[#4A4A6A] tracking-widest whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -3095,6 +3137,25 @@ function MetaAdsIntelligencePanel({
                         <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#0A0A0F] transition-colors">
                           <td className="px-4 py-3">
                             <p className="text-xs text-[#E0E0F0] max-w-[160px] truncate">{c.campaign_name}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="mono text-[9px] px-2 py-0.5 rounded-full border"
+                              style={{
+                                color: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f6'
+                                  : c.objective === 'MESSAGES' ? '#00FF94'
+                                  : c.objective === 'CONVERSIONS' ? '#FFB800'
+                                  : '#4A4A6A',
+                                borderColor: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f630'
+                                  : c.objective === 'MESSAGES' ? '#00FF9430'
+                                  : c.objective === 'CONVERSIONS' ? '#FFB80030'
+                                  : '#1E1E2E',
+                                background: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f610'
+                                  : c.objective === 'MESSAGES' ? '#00FF9410'
+                                  : c.objective === 'CONVERSIONS' ? '#FFB80010'
+                                  : 'transparent',
+                              }}>
+                              {objLabel(c.objective)}
+                            </span>
                           </td>
                           <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>
                             {fmt$(c.spend)}
@@ -3129,6 +3190,7 @@ function MetaAdsIntelligencePanel({
                     {/* Totals row */}
                     <tr style={{ background: 'rgba(0,20,173,0.05)' }}>
                       <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A] tracking-widest">TOTALES</td>
+                      <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
                       <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>{fmt$(insight.total_spend)}</td>
                       <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(insight.total_impressions)}</td>
                       <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(insight.total_clicks)}</td>
