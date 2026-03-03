@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const CAPI_URL = `https://graph.facebook.com/v19.0/${config.pixel_id}/events?access_token=${config.capi_token}`
 
     const body = await req.json()
-    const { event_type, contact_id, phone_number, email, value, currency = 'USD', utm_campaign, sale_id } = body
+   const { event_type, contact_id, phone_number, email, value, currency = 'USD', utm_campaign, sale_id, event_time_override } = body
 
     if (!event_type) return NextResponse.json({ error: 'event_type requerido' }, { status: 400 })
     if (!phone_number) return NextResponse.json({ error: 'phone_number requerido' }, { status: 400 })
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     // Construir evento
     const event: Record<string, any> = {
       event_name: event_type,
-      event_time: Math.floor(Date.now() / 1000),
+      event_time: event_time_override ?? Math.floor(Date.now() / 1000),
       action_source: 'system_generated',
       user_data,
       custom_data: {
