@@ -3271,6 +3271,135 @@ interface CampaignGroup {
   avgKanshiScore: number
 }
 
+// AT3a: helper para tiempo relativo
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 60) return `${m}m`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d}d`
+  return `${Math.floor(d / 30)}mes`
+}
+
+// AT3a: Mini-timeline de leads por grupo de campaña — definido a nivel módulo
+function LeadMiniTimeline({
+  rows,
+  leadMap,
+  quizPhones,
+}: {
+  rows: UtmRow[]
+  leadMap: Record<string, Lead>
+  quizPhones: Set<string>
+}) {
+  const STAGE_LABELS: Record<string, string> = {
+    nuevo: 'Nuevo', descubrimiento: 'Desc.', perfilando_1: 'Perf.1',
+    perfilando_2: 'Perf.2', perfilando_3: 'Perf.3', perfil_completo: 'Completo',
+    calentando: 'Calent.', lives: 'Lives', clases: 'Clases', VIP: 'VIP', comprador: 'Comprador',
+  }
+  const STAGE_COLOR: Record<string, string> = {
+    nuevo: '#4A4A6A', descubrimiento: '#4A4A6A', perfilando_1: '#00b0f6',
+    perfilando_2: '#00b0f6', perfilando_3: '#00b0f6', perfil_completo: '#0014ad',
+    calentando: '#FFB800', lives: '#00FF94', clases: '#00FF94', VIP: '#C084FC', comprador: '#00FF94',
+  }
+
+  const sorted = [...rows]
+    .sort((a, b) => new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime())
+    .slice(0, 6)
+
+  if (sorted.length === 0) return null
+
+  return (
+    <div>
+      <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">
+        ACTIVIDAD RECIENTE — {rows.length} LEADS
+      </p>
+      <div className="space-y-0">
+        {sorted.map((row, idx) => {
+          const lead = row.matched_contact_id ? leadMap[row.matched_contact_id] : null
+          const hasQuiz = quizPhones.has(row.phone_number)
+          const score = lead?.kanshi_score || 0
+          const scoreColor = score >= 76 ? '#00FF94' : score >= 51 ? '#FF6B35' : score >= 26 ? '#FFB800' : '#00b0f6'
+          const stage = lead?.agent_stage || ''
+          const initials = (lead?.name || row.phone_number || '?')
+            .split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
+          const isLast = idx === sorted.length - 1
+
+          return (
+            <div key={row.phone_number + row.registered_at} className="flex items-stretch gap-3">
+              {/* Línea de tiempo */}
+              <div className="flex flex-col items-center flex-shrink-0 w-6 pt-1.5">
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: lead ? '#00b0f6' : '#2A2A3A', border: '1px solid #1E1E2E' }}/>
+                {!isLast && <div className="w-px flex-1 mt-1" style={{ background: '#1E1E2E', minHeight: '16px' }}/>}
+              </div>
+
+              {/* Contenido del evento */}
+              <div className={`flex items-center gap-2 flex-1 py-1.5 ${!isLast ? 'pb-2' : ''}`}>
+                {/* Avatar */}
+                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mono text-[8px] font-bold"
+                  style={{ background: lead ? '#0014ad20' : '#1E1E2E', color: lead ? '#00b0f6' : '#4A4A6A', border: `1px solid ${lead ? '#0014ad40' : '#2A2A3A'}` }}>
+                  {initials}
+                </div>
+
+                {/* Nombre / teléfono */}
+                <div className="flex-1 min-w-0">
+                  <span className="text-[11px] font-medium text-[#E0E0F0] truncate block">
+                    {lead?.name || row.phone_number}
+                  </span>
+                  {lead?.name && (
+                    <span className="mono text-[9px] text-[#2E2E4E] truncate block">{row.phone_number}</span>
+                  )}
+                </div>
+
+                {/* Tiempo relativo */}
+                <span className="mono text-[9px] text-[#4A4A6A] flex-shrink-0">
+                  {timeAgo(row.registered_at)}
+                </span>
+
+                {/* Badge Quiz */}
+                <span className="mono text-[8px] px-1.5 py-0.5 rounded flex-shrink-0"
+                  style={hasQuiz
+                    ? { color: '#00FF94', background: '#00FF9415', border: '1px solid #00FF9430' }
+                    : { color: '#2E2E4E', background: '#1E1E2E', border: '1px solid #2A2A3A' }}>
+                  {hasQuiz ? 'QUIZ ✓' : 'sin quiz'}
+                </span>
+
+                {/* Badge Score */}
+                {score > 0 && (
+                  <span className="mono text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+                    style={{ color: scoreColor, background: `${scoreColor}15`, border: `1px solid ${scoreColor}30` }}>
+                    {score}
+                  </span>
+                )}
+
+                {/* Badge Stage */}
+                {stage && (
+                  <span className="mono text-[8px] px-1.5 py-0.5 rounded flex-shrink-0"
+                    style={{ color: STAGE_COLOR[stage] || '#4A4A6A', background: `${STAGE_COLOR[stage] || '#4A4A6A'}15` }}>
+                    {STAGE_LABELS[stage] || stage}
+                  </span>
+                )}
+
+                {/* Sin match SAM */}
+                {!lead && (
+                  <span className="mono text-[8px] text-[#2E2E4E] flex-shrink-0">sin match</span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+        {rows.length > 6 && (
+          <p className="mono text-[9px] text-[#2E2E4E] pl-9 pt-1">
+            +{rows.length - 6} leads más en esta campaña
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FuentesTab({
   activeProjectId, leads, projects
 }: {
@@ -3410,6 +3539,9 @@ function FuentesTab({
 
   const sourcePlatformColor = (p: string|null) =>
     p === 'facebook' || p === 'ghl' ? '#00b0f6' : p === 'instagram' ? '#C084FC' : '#4A4A6A'
+
+  // AT3a: Set de teléfonos con quiz completado (O(1) lookup en LeadMiniTimeline)
+  const quizPhones = useMemo(() => new Set(quizResponses.map(q => q.phone_number)), [quizResponses])
 
   // AT2: badge de objetivo Meta con mismo color system que MetaAdsIntelligencePanel
   const OBJECTIVE_LABELS_F: Record<string, string> = {
@@ -3705,6 +3837,13 @@ function FuentesTab({
                                   </div>
                                 )
                               })()}
+
+                              {/* AT3a: Mini-timeline de leads del grupo */}
+                              <LeadMiniTimeline
+                                rows={g.rows}
+                                leadMap={leadMap}
+                                quizPhones={quizPhones}
+                              />
 
                             </div>
                           </td>
