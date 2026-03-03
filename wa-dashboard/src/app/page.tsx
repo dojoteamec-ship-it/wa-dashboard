@@ -3204,7 +3204,7 @@ function MetaAdsIntelligencePanel({
                 </table>
               </div>
             </div>
-          )}
+          )})()}
 
           {insight.campaigns.length === 0 && (
             <div className="px-5 pb-5 flex items-center gap-2">
