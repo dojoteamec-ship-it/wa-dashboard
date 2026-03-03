@@ -3511,6 +3511,270 @@ function HotmartImportSection({
   )
 }
 
+// ─── BUYER ANALYSIS PANEL ─────────────────────────────────────────────────────
+
+interface QuizInsight {
+  key: string
+  value: string
+  count: number
+}
+
+function BuyerAnalysisPanel({
+  activeProjectId,
+  stats,
+  byCampaign,
+}: {
+  activeProjectId: string
+  stats: { total: number; matched: number; capi_sent: number; total_revenue: number; match_rate: number }
+  byCampaign: Record<string, { sales: number; revenue: number }>
+}) {
+  const [avgScore, setAvgScore] = useState<number | null>(null)
+  const [scoreDistribution, setScoreDistribution] = useState<{ segment: string; count: number; color: string }[]>([])
+  const [quizInsights, setQuizInsights] = useState<QuizInsight[]>([])
+  const [loadingInsights, setLoadingInsights] = useState(true)
+
+  useEffect(() => {
+    const fetchInsights = async () => {
+      setLoadingInsights(true)
+      try {
+        // ── 1. Compradores matcheados + KANSHI Score ───────────────────────────
+        const { data: buyerRows } = await supabase
+          .from('hotmart_buyers')
+          .select('matched_contact_id, wa_contacts(kanshi_score, kanshi_segment)')
+          .eq('project_id', activeProjectId)
+          .not('matched_contact_id', 'is', null)
+
+        if (buyerRows && buyerRows.length > 0) {
+          // Avg score
+          const scores = buyerRows
+            .map(b => (b.wa_contacts as any)?.kanshi_score)
+            .filter((s): s is number => typeof s === 'number' && s > 0)
+          if (scores.length > 0) {
+            setAvgScore(Math.round(scores.reduce((a, b) => a + b, 0) / scores.length))
+          }
+
+          // Segmentos
+          const segMap: Record<string, { label: string; color: string }> = {
+            frio:     { label: 'Frío',     color: '#00b0f6' },
+            templado: { label: 'Templado', color: '#FFB800' },
+            caliente: { label: 'Caliente', color: '#FF6B35' },
+            fuego:    { label: 'Fuego',    color: '#FF6B35' },
+          }
+          const segCounts: Record<string, number> = {}
+          buyerRows.forEach(b => {
+            const seg = (b.wa_contacts as any)?.kanshi_segment
+            if (seg) segCounts[seg] = (segCounts[seg] || 0) + 1
+          })
+          setScoreDistribution(
+            Object.entries(segCounts)
+              .map(([seg, count]) => ({ segment: segMap[seg]?.label || seg, count, color: segMap[seg]?.color || '#4A4A6A' }))
+              .sort((a, b) => b.count - a.count)
+          )
+
+          // ── 2. Quiz cross-reference ────────────────────────────────────────
+          const contactIds = buyerRows
+            .map(b => b.matched_contact_id)
+            .filter((id): id is string => !!id)
+
+          if (contactIds.length > 0) {
+            const { data: quizRows } = await supabase
+              .from('lead_quiz_responses')
+              .select('responses')
+              .in('matched_contact_id', contactIds)
+              .limit(300)
+
+            if (quizRows && quizRows.length > 0) {
+              const tally: Record<string, Record<string, number>> = {}
+              quizRows.forEach(row => {
+                if (!row.responses || typeof row.responses !== 'object') return
+                Object.entries(row.responses as Record<string, unknown>).forEach(([key, val]) => {
+                  if (!tally[key]) tally[key] = {}
+                  const v = String(val)
+                  tally[key][v] = (tally[key][v] || 0) + 1
+                })
+              })
+              const insights: QuizInsight[] = []
+              Object.entries(tally).forEach(([key, vals]) => {
+                const top = Object.entries(vals).sort((a, b) => b[1] - a[1])[0]
+                if (top && top[1] >= 2) insights.push({ key, value: top[0], count: top[1] })
+              })
+              setQuizInsights(insights.sort((a, b) => b.count - a.count).slice(0, 6))
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[BuyerAnalysisPanel]', err)
+      } finally {
+        setLoadingInsights(false)
+      }
+    }
+    fetchInsights()
+  }, [activeProjectId])
+
+  const campaignData = Object.entries(byCampaign)
+    .map(([name, d]) => ({ name: name.length > 22 ? name.slice(0, 20) + '…' : name, sales: d.sales, revenue: d.revenue }))
+    .sort((a, b) => b.sales - a.sales)
+    .slice(0, 8)
+
+  const scoreColor = (s: number) => s >= 76 ? '#00FF94' : s >= 51 ? '#FF6B35' : s >= 26 ? '#FFB800' : '#00b0f6'
+  const capiPct = stats.total > 0 ? Math.round((stats.capi_sent / stats.total) * 100) : 0
+
+  return (
+    <div className="rounded-2xl border overflow-hidden" style={{ background: '#111118', borderColor: '#0014ad' }}>
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between"
+           style={{ background: 'rgba(0,20,173,0.07)' }}>
+        <div>
+          <p className="mono text-[10px] tracking-widest font-bold" style={{ color: '#00b0f6' }}>
+            ANÁLISIS DE COMPRADORES
+          </p>
+          <p className="text-xs text-[#E0E0F0] mt-0.5">
+            Avatar del comprador real · Quiz × historial Hotmart
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
+             style={{ background: 'rgba(0,176,246,0.08)', border: '1px solid rgba(0,176,246,0.2)' }}>
+          <Brain size={12} style={{ color: '#00b0f6' }}/>
+          <span className="mono text-[10px] text-[#00b0f6]">{stats.matched} leads identificados</span>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5">
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-4 gap-4">
+
+          {/* Match Rate */}
+          <div className="rounded-2xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#0A0A0F' }}>
+            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">MATCH WA</p>
+            <p className="text-2xl font-bold" style={{ color: stats.match_rate >= 50 ? '#00FF94' : '#00b0f6' }}>
+              {stats.match_rate}%
+            </p>
+            <div className="h-1.5 rounded-full bg-[#1E1E2E]">
+              <div className="h-1.5 rounded-full transition-all"
+                   style={{ width: `${Math.min(stats.match_rate, 100)}%`, background: stats.match_rate >= 50 ? '#00FF94' : '#00b0f6' }}/>
+            </div>
+            <p className="mono text-[9px] text-[#4A4A6A]">{stats.matched} de {stats.total} compradores</p>
+          </div>
+
+          {/* Avg KANSHI Score */}
+          <div className="rounded-2xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#0A0A0F' }}>
+            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">SCORE PROMEDIO</p>
+            {loadingInsights ? (
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin mt-1" style={{ borderColor: '#0014ad' }}/>
+            ) : avgScore !== null ? (
+              <>
+                <p className="text-2xl font-bold" style={{ color: scoreColor(avgScore) }}>{avgScore}</p>
+                <div className="h-1.5 rounded-full bg-[#1E1E2E]">
+                  <div className="h-1.5 rounded-full" style={{ width: `${avgScore}%`, background: scoreColor(avgScore) }}/>
+                </div>
+                <p className="mono text-[9px] text-[#4A4A6A]">KANSHI Score compradores</p>
+              </>
+            ) : (
+              <p className="mono text-[10px] text-[#4A4A6A] pt-1">Sin match WA</p>
+            )}
+          </div>
+
+          {/* CAPI Coverage */}
+          <div className="rounded-2xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#0A0A0F' }}>
+            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">COBERTURA CAPI</p>
+            <p className="text-2xl font-bold text-[#E0E0F0]">{capiPct}%</p>
+            <div className="h-1.5 rounded-full bg-[#1E1E2E]">
+              <div className="h-1.5 rounded-full bg-[#00b0f6]" style={{ width: `${capiPct}%` }}/>
+            </div>
+            <p className="mono text-[9px] text-[#4A4A6A]">{stats.capi_sent} eventos Meta enviados</p>
+          </div>
+
+          {/* Segmentos */}
+          <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
+            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">SEGMENTOS</p>
+            {loadingInsights ? (
+              <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0014ad' }}/>
+            ) : scoreDistribution.length > 0 ? (
+              <div className="space-y-2">
+                {scoreDistribution.map(s => (
+                  <div key={s.segment} className="flex items-center justify-between">
+                    <span className="mono text-[9px] text-[#4A4A6A]">{s.segment}</span>
+                    <span className="mono text-[10px] font-bold" style={{ color: s.color }}>{s.count}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mono text-[9px] text-[#4A4A6A]">Sin datos score</p>
+            )}
+          </div>
+        </div>
+
+        {/* Chart Campañas */}
+        {campaignData.length > 0 && (
+          <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">COMPRADORES POR CAMPAÑA</p>
+            <ResponsiveContainer width="100%" height={150}>
+              <BarChart data={campaignData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <XAxis dataKey="name" tick={{ fill: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fill: '#4A4A6A', fontSize: 9 }} axisLine={false} tickLine={false}/>
+                <Tooltip
+                  contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8, fontSize: 11 }}
+                  labelStyle={{ color: '#E0E0F0' }}
+                  formatter={(value: number, name: string) => [
+                    name === 'sales' ? `${value} compradores` : `$${value.toLocaleString()}`,
+                    name === 'sales' ? 'Ventas' : 'Revenue'
+                  ]}
+                />
+                <Bar dataKey="sales" fill="#0014ad" radius={[4,4,0,0]}/>
+                <Bar dataKey="revenue" fill="#00b0f6" radius={[4,4,0,0]}/>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex items-center gap-5 mt-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-sm" style={{ background: '#0014ad' }}/>
+                <span className="mono text-[9px] text-[#4A4A6A]">VENTAS</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-sm" style={{ background: '#00b0f6' }}/>
+                <span className="mono text-[9px] text-[#4A4A6A]">REVENUE</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quiz Insights */}
+        {!loadingInsights && quizInsights.length > 0 && (
+          <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen size={12} style={{ color: '#00b0f6' }}/>
+              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+                TOP RESPUESTAS QUIZ — COMPRADORES REALES
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {quizInsights.map((insight, i) => (
+                <div key={i} className="rounded-xl border border-[#1E1E2E] p-3" style={{ background: '#111118' }}>
+                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest truncate mb-1">
+                    {insight.key.replace(/_/g, ' ').toUpperCase().slice(0, 28)}
+                  </p>
+                  <p className="text-xs font-bold text-[#E0E0F0] truncate">{insight.value}</p>
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]"/>
+                    <span className="mono text-[9px] text-[#00FF94]">{insight.count} compradores</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {loadingInsights && (
+          <div className="flex items-center justify-center py-6 gap-2">
+            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0014ad' }}/>
+            <p className="mono text-[10px] text-[#4A4A6A]">Analizando perfil de compradores...</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function VentasTab({
   activeProjectId, projects, onToast
 }: {
@@ -3531,13 +3795,17 @@ function VentasTab({
     total: number; matched: number; capi_sent: number;
     total_revenue: number; match_rate: number
   } | null>(null)
+  const [byCampaign, setByCampaign] = useState<Record<string, { sales: number; revenue: number }>>({})
 
   const fetchHotmartStats = useCallback(async () => {
     if (!activeProjectId) return
     try {
       const res = await fetch(`/api/import-buyers?project_id=${activeProjectId}`)
-      const data = await res.json()
-      if (data.success) setHotmartStats(data.stats)
+     const data = await res.json()
+      if (data.success) {
+        setHotmartStats(data.stats)
+        if (data.by_campaign) setByCampaign(data.by_campaign)
+      }
     } catch {}
   }, [activeProjectId])
 
@@ -3777,6 +4045,15 @@ function VentasTab({
           stats={hotmartStats}
           onImportComplete={() => { fetchSales(); fetchHotmartStats() }}
           onToast={onToast}
+        />
+      )}
+
+      {/* ══ ANÁLISIS COMPRADORES (HB5) ══ */}
+      {hotmartStats && hotmartStats.total > 0 && activeProjectId && (
+        <BuyerAnalysisPanel
+          activeProjectId={activeProjectId}
+          stats={hotmartStats}
+          byCampaign={byCampaign}
         />
       )}
     </div>
