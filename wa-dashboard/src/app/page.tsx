@@ -1307,50 +1307,63 @@ export default function Dashboard() {
     </div>
   )
 
+ const TAB_TITLES: Record<TabType, string> = {
+    overview:  'Overview',
+    pipeline:  'Pipeline',
+    psico:     'Leads',
+    campaigns: 'Campañas',
+    fuentes:   'Fuentes',
+    ventas:    'Ventas',
+    config:    'Configuración',
+  }
+  const activeProject = projects.find(p => p.id === activeProjectId) ?? null
+
   return(
-    <div className="min-h-screen" style={{background:'#0A0A0F'}}>
+    <div className="flex h-screen overflow-hidden" style={{background:'#0A0A0F'}}>
       <style>{`@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
-      {/* HEADER */}
-      <header className="border-b border-[#1E1E2E] px-6 py-4 flex items-center justify-between sticky top-0 z-50"
-        style={{background:'rgba(10,10,15,0.97)',backdropFilter:'blur(12px)'}}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5" style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}><KanshiLogo size={24}/></div>
-          <div>
-            <h1 className="font-bold text-white tracking-[0.18em] text-sm" style={{fontFamily:'monospace'}}>KANSHI</h1>
-            <p className="mono text-[9px] tracking-widest" style={{color:'#00b0f6'}}>MONITORING SYSTEM · GPC</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <nav className="flex items-center gap-1">
-          {(['overview','pipeline','psico','campaigns','fuentes','ventas','config'] as const).map(k=>(
-            <button key={k} onClick={()=>setActiveTab(k)}
-              className={`mono text-[10px] tracking-widest px-3 py-1.5 rounded-lg transition-all ${activeTab===k?'font-bold text-white':'text-[#4A4A6A] hover:text-[#E0E0F0]'}`}
-              style={activeTab===k?{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}:{}}>
-              {k==='overview'?'OVERVIEW':k==='pipeline'?'PIPELINE':k==='psico'?'PSICOGRÁFICO':k==='campaigns'?'CAMPAÑAS':k==='fuentes'?'FUENTES':k==='ventas'?'VENTAS':'CONFIG'}
-          </button>
-        ))}
-          </nav>
-          <ProjectSelector projects={projects} activeProjectId={activeProjectId} onChange={handleProjectChange} onNewProject={()=>setShowProjectWizard(true)} onActivate={handleActivateProject}/>
-          <GlobalSearch leads={leads} onSelect={lead=>setSelectedLead(lead)}/>
-          <div className="flex items-center gap-3">
-            {connected
-              ?<><Wifi size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px]" style={{color:'#00b0f6'}}>LIVE</span><div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{background:'#00b0f6'}}/></>
-              :<><WifiOff size={12} className="text-[#4A4A6A]"/><span className="mono text-[10px] text-[#4A4A6A]">OFFLINE</span></>
-            }
-            <button onClick={fetchData} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#00b0f6] transition-colors group">
-              <RefreshCw size={12} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
-            </button>
-            <span className="mono text-[10px] text-[#4A4A6A]">{format(lastUpdate,'HH:mm:ss')}</span>
-            <button onClick={()=>{localStorage.removeItem(AUTH_KEY);setAuthenticated(false)}}
-              className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group" title="Cerrar sesión">
-              <Lock size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* ── SIDEBAR ── */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        activeProject={activeProject}
+        connected={connected}
+        onLogout={() => { localStorage.removeItem(AUTH_KEY); setAuthenticated(false) }}
+        onRefresh={fetchData}
+        lastUpdate={lastUpdate}
+      />
 
-      <main className="p-6 max-w-[1600px] mx-auto space-y-6">
+      {/* ── WORKSPACE ── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Workspace Header */}
+        <header className="flex items-center justify-between px-7 py-4 flex-shrink-0"
+          style={{background:'rgba(10,10,15,0.97)',borderBottom:'1px solid #1E1E2E',backdropFilter:'blur(12px)'}}>
+          <div>
+            <h2 className="font-bold text-[#E0E0F0]" style={{fontSize:'20px',letterSpacing:'-0.01em'}}>
+              {TAB_TITLES[activeTab]}
+            </h2>
+            {activeProject && (
+              <p className="mono text-[10px] mt-0.5 tracking-widest" style={{color:'#4A4A6A'}}>
+                {activeProject.emoji} {activeProject.name}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <ProjectSelector
+              projects={projects}
+              activeProjectId={activeProjectId}
+              onChange={handleProjectChange}
+              onNewProject={() => setShowProjectWizard(true)}
+              onActivate={handleActivateProject}
+            />
+            <GlobalSearch leads={leads} onSelect={lead => setSelectedLead(lead)}/>
+          </div>
+        </header>
+
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-[1400px] mx-auto space-y-6">
 
         {/* ══ OVERVIEW ══ */}
         {activeTab==='overview'&&<>
@@ -1613,12 +1626,14 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Footer */}
+       {/* Footer */}
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-2"><KanshiLogo size={14}/><p className="mono text-[10px] text-[#4A4A6A]">KANSHI v2.0 — SUPABASE REALTIME</p></div>
           <p className="mono text-[10px] text-[#4A4A6A]">SANTIAGO JIMÉNEZ · GROWTH PARTNER © 2026</p>
         </div>
-      </main>
+          </div>{/* /max-w wrapper */}
+        </main>{/* /scrollable content */}
+      </div>{/* /workspace */}
 
       {selectedLead&&<LeadPanel lead={selectedLead} onClose={()=>setSelectedLead(null)}/>}
       {showCreator&&<CampaignCreator leads={leads} templates={templates} onClose={()=>setShowCreator(false)}
