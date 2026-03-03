@@ -3284,6 +3284,8 @@ function FuentesTab({
     phone_number: string
     responses: Record<string, string>
   }>>([])
+  // AT2: mapa campaign_name.toLowerCase() → objective (desde meta_ads_insights caché)
+  const [metaCampaignMap, setMetaCampaignMap] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -3296,6 +3298,30 @@ function FuentesTab({
       setQuizResponses(data || [])
     }
     fetchQuizData()
+  }, [activeProjectId])
+
+  // AT2: Cargar caché de meta_ads_insights para cruzar campaign_name → objective
+  useEffect(() => {
+    const fetchMetaCampaigns = async () => {
+      let q = supabase
+        .from('meta_ads_insights')
+        .select('campaigns')
+        .order('fetched_at', { ascending: false })
+        .limit(1)
+      if (activeProjectId) q = q.eq('project_id', activeProjectId)
+      const { data } = await q
+      if (data && data.length > 0 && data[0].campaigns) {
+        const campaigns = data[0].campaigns as Array<{ campaign_name: string; objective: string }>
+        const map: Record<string, string> = {}
+        for (const c of campaigns) {
+          if (c.campaign_name && c.objective) {
+            map[c.campaign_name.toLowerCase().trim()] = c.objective
+          }
+        }
+        setMetaCampaignMap(map)
+      }
+    }
+    fetchMetaCampaigns()
   }, [activeProjectId])
 
   const toggleExpand = (key: string) => {
@@ -3385,6 +3411,37 @@ function FuentesTab({
   const sourcePlatformColor = (p: string|null) =>
     p === 'facebook' || p === 'ghl' ? '#00b0f6' : p === 'instagram' ? '#C084FC' : '#4A4A6A'
 
+  // AT2: badge de objetivo Meta con mismo color system que MetaAdsIntelligencePanel
+  const OBJECTIVE_LABELS_F: Record<string, string> = {
+    'LEAD_GENERATION': 'Lead Ads', 'MESSAGES': 'WhatsApp', 'CONVERSIONS': 'Conversiones',
+    'LINK_CLICKS': 'Tráfico', 'OUTCOME_LEADS': 'Leads (new)', 'OUTCOME_TRAFFIC': 'Tráfico (new)',
+    'OUTCOME_ENGAGEMENT': 'Engagement', 'REACH': 'Alcance', 'BRAND_AWARENESS': 'Branding',
+    'VIDEO_VIEWS': 'Video', 'POST_ENGAGEMENT': 'Engagement',
+  }
+  const objBadgeInFuentes = (campaign: string) => {
+    const key = campaign.toLowerCase().trim()
+    const objective = metaCampaignMap[key]
+    if (!objective) {
+      return (
+        <span className="mono text-[9px] px-2 py-0.5 rounded-full"
+          style={{ color: '#4A4A6A', background: '#4A4A6A18', border: '1px solid #4A4A6A30' }}>
+          Orgánico
+        </span>
+      )
+    }
+    const color = objective === 'LEAD_GENERATION' || objective === 'OUTCOME_LEADS' ? '#00b0f6'
+      : objective === 'MESSAGES' ? '#00FF94'
+      : objective === 'CONVERSIONS' ? '#FFB800'
+      : '#00b0f6'
+    const label = OBJECTIVE_LABELS_F[objective] || objective
+    return (
+      <span className="mono text-[9px] px-2 py-0.5 rounded-full"
+        style={{ color, background: `${color}10`, border: `1px solid ${color}30` }}>
+        {label}
+      </span>
+    )
+  }
+
 // Construye distribución de respuestas de quiz para un grupo de campaña
   const buildQuizDistribution = (group: CampaignGroup) => {
     const phones = new Set(group.rows.map(r => r.phone_number))
@@ -3472,7 +3529,7 @@ function FuentesTab({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#1E1E2E]">
-                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','SCORE PROM','CPL EST.','CPV EST.',''].map(h => (
+                  {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','SCORE PROM','CPL EST.','CPV EST.','OBJETIVO',''].map(h => (
                     <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -3559,6 +3616,10 @@ function FuentesTab({
                         </td>
                         <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? '#E0E0F0' : '#4A4A6A' }}>{cpl(g)}</td>
                         <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? '#00FF94' : '#4A4A6A' }}>{cpv(g)}</td>
+                        {/* AT2: Columna OBJETIVO — match utm_campaign vs meta_ads_insights */}
+                        <td className="px-4 py-3">
+                          {objBadgeInFuentes(g.campaign)}
+                        </td>
                         <td className="px-4 py-3">
                           <button
                             onClick={e => { e.stopPropagation(); setSelectedGroup(g) }}
@@ -3572,7 +3633,7 @@ function FuentesTab({
                       {/* ── Panel expandible ── */}
                       {isExpanded && (
                         <tr key={`funnel-${i}`} className="border-b border-[#1E1E2E]">
-                          <td colSpan={10} className="px-6 py-5" style={{ background: '#0D0D14' }}>
+                          <td colSpan={11} className="px-6 py-5" style={{ background: '#0D0D14' }}>
                             <div className="space-y-5">
 
                               {/* Funnel + métricas */}
