@@ -2974,16 +2974,19 @@ function MetaAdsIntelligencePanel({
         </div>
         <div className="flex items-center gap-2">
           {/* Date range selector */}
-          <select
+         <select
             value={dateRange}
             onChange={e => setDateRange(e.target.value)}
             className="bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1.5 mono text-[10px] text-[#4A4A6A] outline-none hover:border-[#2E2E4E] transition-colors"
           >
             <option value="last_7d">7 días</option>
             <option value="last_14d">14 días</option>
+            <option value="last_28d">28 días</option>
             <option value="last_30d">30 días</option>
-            <option value="last_60d">60 días</option>
             <option value="last_90d">90 días</option>
+            <option value="last_quarter">Trimestre</option>
+            <option value="last_year">Último año</option>
+            <option value="maximum">Máximo</option>
           </select>
           {/* MA5: Botón Actualizar */}
           <button
