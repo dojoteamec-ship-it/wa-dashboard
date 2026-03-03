@@ -12,7 +12,7 @@ import {
   Heart, Flame, Snowflake, Thermometer, Activity, Star, User,
   Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff,
   Pause, Square, CheckCircle, Info, Search, DollarSign, Target, BookOpen,
-  LayoutDashboard, GitBranch, Radio, Settings, Bell, LogOut
+  LayoutDashboard, GitBranch, Radio, Settings, Bell, LogOut, Upload
 } from 'lucide-react'
 import { format } from 'date-fns'
 
