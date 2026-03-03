@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { calculateKanshiScore, recalculateAllScores } from '@/lib/kanshi-score'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 // ─── POST /api/score ──────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
@@ -60,6 +66,64 @@ export async function POST(req: NextRequest) {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ── Alertas al equipo — Día 14 ────────────────────────────────────────────
+    // Se dispara cuando score cruza umbral 'ready' (≥75) o 'buyer' (≥90)
+    // El UNIQUE INDEX en (contact_id, alert_type) garantiza idempotencia en DB
+    const alertThresholdMap: Record<string, 'score_75' | 'score_90'> = {
+      ready:  'score_75',
+      buyer:  'score_90',
+    }
+
+    const alertThresholds = (result.thresholds_crossed ?? []).filter(
+      (t: string) => t === 'ready' || t === 'buyer'
+    )
+
+    if (alertThresholds.length > 0) {
+      // Fetch nombre del lead — no bloquea la respuesta
+      const fetchNameAndInsert = async () => {
+        try {
+          const { data: contactData } = await supabase
+            .from('wa_contacts')
+            .select('name, phone_number')
+            .eq('id', contact_id)
+            .maybeSingle()
+
+          const alertRows = alertThresholds.map((threshold: string) => ({
+            project_id:   project_id || null,
+            contact_id:   contact_id,
+            alert_type:   alertThresholdMap[threshold],
+            lead_name:    contactData?.name || null,
+            lead_phone:   contactData?.phone_number || phone_number || null,
+            kanshi_score: result.score_total,
+            metadata: {
+              segment:    result.segment,
+              trigger:    body.trigger || 'manual',
+              threshold:  threshold,
+            },
+          }))
+
+          const { error: alertError } = await supabase
+            .from('kanshi_alerts')
+            .upsert(alertRows, {
+              onConflict:        'contact_id,alert_type',
+              ignoreDuplicates:  true,   // si ya existe → no error, no sobreescribe
+            })
+
+          if (alertError) {
+            console.error('[score→alerts] Error insertando alerta:', alertError.message)
+          } else {
+            console.log(`[score→alerts] ✅ ${alertRows.length} alerta(s) insertadas para contact ${contact_id}`)
+          }
+        } catch (e: any) {
+          console.error('[score→alerts] Error inesperado:', e.message)
+        }
+      }
+
+      // Fire-and-forget — igual que CAPI
+      fetchNameAndInsert()
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+    
     return NextResponse.json({
       success: true,
       contact_id,
