@@ -2829,6 +2829,331 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
   )
 }
 
+// ─── META ADS INTELLIGENCE PANEL ─────────────────────────────────────────────
+
+interface MetaInsight {
+  id: string
+  project_id: string | null
+  fetched_at: string
+  date_range: string
+  date_start: string | null
+  date_stop: string | null
+  total_spend: number
+  total_impressions: number
+  total_clicks: number
+  total_reach: number
+  total_leads: number
+  cpm: number | null
+  cpc: number | null
+  ctr: number | null
+  cost_per_lead: number | null
+  campaigns: Array<{
+    campaign_id: string
+    campaign_name: string
+    spend: number
+    impressions: number
+    clicks: number
+    reach: number
+    leads: number
+    cpm: number
+    cpc: number
+    ctr: number
+    cost_per_lead: number
+  }>
+}
+
+function MetaAdsIntelligencePanel({
+  activeProjectId,
+  groups,
+}: {
+  activeProjectId: string | null
+  groups: Array<{ campaign: string; compradores: number; totalLeads: number }>
+}) {
+  const [insight, setInsight] = useState<MetaInsight | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [adsConfigured, setAdsConfigured] = useState<boolean | null>(null)
+  const [dateRange, setDateRange] = useState('last_30d')
+
+  // Check if Marketing API is configured
+  useEffect(() => {
+    supabase
+      .from('kanshi_credentials')
+      .select('credentials')
+      .eq('type', 'meta_ads')
+      .maybeSingle()
+      .then(({ data }) => {
+        setAdsConfigured(!!(data?.credentials?.ad_account_id && data?.credentials?.marketing_api_token))
+      })
+  }, [])
+
+  const fetchInsights = useCallback(async (forceRefresh = false) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ date_range: dateRange })
+      if (activeProjectId) params.set('project_id', activeProjectId)
+      if (forceRefresh) params.set('refresh', 'true')
+      const res = await fetch(`/api/meta-ads-insights?${params}`)
+      const json = await res.json()
+      if (json.success) {
+        setInsight(json.data)
+      } else {
+        setError(json.error || 'Error al cargar datos')
+      }
+    } catch {
+      setError('Error de conexión')
+    } finally {
+      setLoading(false)
+    }
+  }, [activeProjectId, dateRange])
+
+  useEffect(() => {
+    if (adsConfigured) fetchInsights()
+  }, [adsConfigured, fetchInsights])
+
+  // Build compradores map from UTM groups for CPB calculation
+  const compradorMap = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const g of groups) {
+      const key = (g.campaign || '').toLowerCase().trim()
+      if (key) m[key] = (m[key] || 0) + g.compradores
+    }
+    return m
+  }, [groups])
+
+  const fmt$ = (n: number) => n === 0 ? '$0' : n < 1 ? `$${n.toFixed(3)}` : `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const fmtK = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toString()
+
+  // Not configured state
+  if (adsConfigured === false) {
+    return (
+      <div className="rounded-2xl border border-[#1E1E2E] p-6" style={{ background: '#111118' }}>
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+            style={{ background: 'rgba(0,20,173,0.1)', border: '1px solid rgba(0,20,173,0.3)' }}>
+            📊
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads Intelligence</p>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mt-1">
+              Configura tu Ad Account ID y Marketing API Token en Configuración → Credenciales para ver costos reales.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (adsConfigured === null) return null
+
+  return (
+    <div className="rounded-2xl border overflow-hidden"
+      style={{ background: '#111118', borderColor: 'rgba(0,20,173,0.3)' }}>
+
+      {/* ── Header ── */}
+      <div className="px-5 py-4 border-b flex items-center justify-between"
+        style={{ borderColor: 'rgba(0,20,173,0.2)', background: 'rgba(0,20,173,0.05)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+            style={{ background: 'rgba(0,20,173,0.2)' }}>
+            📊
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads Intelligence</p>
+            {insight && (
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-0.5">
+                {insight.date_start && insight.date_stop
+                  ? `${insight.date_start} → ${insight.date_stop}`
+                  : dateRange.replace('last_', 'ÚLTIMOS ').replace('d', ' DÍAS')}
+                {' · '}
+                <span style={{ color: '#4A4A6A' }}>actualizado {new Date(insight.fetched_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}</span>
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Date range selector */}
+          <select
+            value={dateRange}
+            onChange={e => setDateRange(e.target.value)}
+            className="bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1.5 mono text-[10px] text-[#4A4A6A] outline-none hover:border-[#2E2E4E] transition-colors"
+          >
+            <option value="last_7d">7 días</option>
+            <option value="last_14d">14 días</option>
+            <option value="last_30d">30 días</option>
+            <option value="last_60d">60 días</option>
+            <option value="last_90d">90 días</option>
+          </select>
+          {/* MA5: Botón Actualizar */}
+          <button
+            onClick={() => fetchInsights(true)}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all disabled:opacity-40"
+          >
+            <RefreshCw size={11} className={loading ? 'animate-spin' : ''}/>
+            ACTUALIZAR
+          </button>
+        </div>
+      </div>
+
+      {/* ── Error ── */}
+      {error && (
+        <div className="mx-5 mt-4 px-4 py-3 rounded-xl border border-[#FF6B35] bg-[#FF6B3510]">
+          <p className="mono text-[10px] text-[#FF6B35]">⚠ {error}</p>
+        </div>
+      )}
+
+      {/* ── Loading skeleton ── */}
+      {loading && !insight && (
+        <div className="p-5 grid grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl border border-[#1E1E2E] p-4 h-20 animate-pulse" style={{ background: '#0A0A0F' }}/>
+          ))}
+        </div>
+      )}
+
+      {insight && (
+        <>
+          {/* ── KPIs ── */}
+          <div className="p-5 grid grid-cols-4 gap-4">
+            {[
+              { label: 'SPEND TOTAL', value: fmt$(insight.total_spend), color: '#FF6B35', icon: '💸' },
+              { label: 'LEADS META', value: fmtK(insight.total_leads), color: '#00b0f6', icon: '🎯' },
+              { label: 'COSTO POR LEAD', value: insight.cost_per_lead ? fmt$(insight.cost_per_lead) : '—', color: '#FFB800', icon: '📍' },
+              { label: 'CPC', value: insight.cpc ? fmt$(insight.cpc) : '—', color: '#00FF94', icon: '🖱️' },
+            ].map(kpi => (
+              <div key={kpi.label} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">{kpi.label}</p>
+                  <span className="text-sm">{kpi.icon}</span>
+                </div>
+                <p className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Bar Chart spend por campaña ── */}
+          {insight.campaigns.length > 0 && (
+            <div className="px-5 pb-5">
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">SPEND POR CAMPAÑA</p>
+              <div style={{ height: Math.max(120, insight.campaigns.length * 36) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={insight.campaigns.map(c => ({
+                      name: c.campaign_name.length > 22 ? c.campaign_name.slice(0, 22) + '…' : c.campaign_name,
+                      spend: c.spend,
+                      leads: c.leads,
+                    }))}
+                    layout="vertical"
+                    margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
+                  >
+                    <XAxis type="number" hide/>
+                    <YAxis type="category" dataKey="name" width={160}
+                      tick={{ fill: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }}/>
+                    <Tooltip
+                      contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8, fontSize: 11 }}
+                      formatter={(value: number, name: string) =>
+                        name === 'spend' ? [`$${value.toFixed(2)}`, 'Spend'] : [value, 'Leads']
+                      }
+                    />
+                    <Bar dataKey="spend" radius={[0, 4, 4, 0]}>
+                      {insight.campaigns.map((_, i) => (
+                        <Cell key={i} fill={i === 0 ? '#0014ad' : i === 1 ? '#00b0f6' : i === 2 ? '#FFB800' : '#4A4A6A'}/>
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tabla embudo completo ── */}
+          {insight.campaigns.length > 0 && (
+            <div className="border-t border-[#1E1E2E] overflow-hidden">
+              <div className="px-5 py-3 flex items-center justify-between">
+                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">EMBUDO DE COSTOS — CAMPAÑA A COMPRADOR</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#1E1E2E]">
+                      {['CAMPAÑA','SPEND','IMPRESIONES','CLICKS','CPM','CPC','LEADS','CPL','COMPRADORES KANSHI','CPB REAL'].map(h => (
+                        <th key={h} className="px-4 py-2.5 text-left mono text-[8px] text-[#4A4A6A] tracking-widest whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {insight.campaigns.map((c, i) => {
+                      const matchKey = c.campaign_name.toLowerCase().trim()
+                      const compradores = compradorMap[matchKey] || 0
+                      const cpb = compradores > 0 ? c.spend / compradores : null
+                      return (
+                        <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#0A0A0F] transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="text-xs text-[#E0E0F0] max-w-[160px] truncate">{c.campaign_name}</p>
+                          </td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>
+                            {fmt$(c.spend)}
+                          </td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                            {fmtK(c.impressions)}
+                          </td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                            {fmtK(c.clicks)}
+                          </td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                            {fmt$(c.cpm)}
+                          </td>
+                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                            {fmt$(c.cpc)}
+                          </td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#00b0f6' }}>
+                            {c.leads > 0 ? c.leads : '—'}
+                          </td>
+                          <td className="px-4 py-3 mono text-[10px]" style={{ color: c.cost_per_lead > 0 ? '#FFB800' : '#4A4A6A' }}>
+                            {c.cost_per_lead > 0 ? fmt$(c.cost_per_lead) : '—'}
+                          </td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: compradores > 0 ? '#00FF94' : '#4A4A6A' }}>
+                            {compradores > 0 ? compradores : '—'}
+                          </td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: cpb ? '#00FF94' : '#4A4A6A' }}>
+                            {cpb ? fmt$(cpb) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {/* Totals row */}
+                    <tr style={{ background: 'rgba(0,20,173,0.05)' }}>
+                      <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A] tracking-widest">TOTALES</td>
+                      <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>{fmt$(insight.total_spend)}</td>
+                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(insight.total_impressions)}</td>
+                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(insight.total_clicks)}</td>
+                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{insight.cpm ? fmt$(insight.cpm) : '—'}</td>
+                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{insight.cpc ? fmt$(insight.cpc) : '—'}</td>
+                      <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#00b0f6' }}>{insight.total_leads}</td>
+                      <td className="px-4 py-3 mono text-[10px]" style={{ color: '#FFB800' }}>{insight.cost_per_lead ? fmt$(insight.cost_per_lead) : '—'}</td>
+                      <td colSpan={2} className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {insight.campaigns.length === 0 && (
+            <div className="px-5 pb-5 flex items-center gap-2">
+              <AlertCircle size={12} className="text-[#4A4A6A]"/>
+              <p className="mono text-[10px] text-[#4A4A6A]">
+                Sin campañas activas en el período seleccionado.
+              </p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
 
 // ─── FUENTES TAB ─────────────────────────────────────────────────────────────
 
@@ -3235,6 +3560,12 @@ function FuentesTab({
           </div>
         )}
       </div>
+
+      {/* ══ META ADS INTELLIGENCE (MA4) ══ */}
+      <MetaAdsIntelligencePanel
+        activeProjectId={activeProjectId}
+        groups={groups}
+      />
 
       {/* Lead panel for selected campaign */}
       {selectedGroup && (
