@@ -95,6 +95,7 @@ export async function GET(req: NextRequest) {
     const cleanAccountId = String(ad_account_id).replace(/^act_/, '')
 
     // ── 3A. Fetch ACCOUNT LEVEL (para KPIs exactos — 1 sola fila) ────────────
+    // Sin level= parameter → Meta devuelve 1 fila con el total exacto de la cuenta
     const accountUrl = new URL(`https://graph.facebook.com/v19.0/act_${cleanAccountId}/insights`)
     accountUrl.searchParams.set('fields', [
       'spend', 'impressions', 'clicks', 'reach', 'cpm', 'cpc', 'ctr',
@@ -116,6 +117,7 @@ export async function GET(req: NextRequest) {
     const accountData = accountJson.data?.[0] || {}
 
     // ── 3B. Fetch CAMPAIGN LEVEL (para tabla y chart — top 100 por spend) ────
+    // Con level=campaign + sort=spend_descending → top campañas para visualización
     const campaignUrl = new URL(`https://graph.facebook.com/v19.0/act_${cleanAccountId}/insights`)
     campaignUrl.searchParams.set('fields', [
       'campaign_id', 'campaign_name', 'spend', 'impressions',
@@ -125,7 +127,7 @@ export async function GET(req: NextRequest) {
     campaignUrl.searchParams.set('level', 'campaign')
     campaignUrl.searchParams.set('date_preset', dateRange)
     campaignUrl.searchParams.set('limit', '100')
-    campaignUrl.searchParams.set('sort', 'spend_descending') // top campañas por spend
+    campaignUrl.searchParams.set('sort', 'spend_descending')
     campaignUrl.searchParams.set('access_token', marketing_api_token)
 
     const campaignRes = await fetch(campaignUrl.toString())
@@ -149,15 +151,17 @@ export async function GET(req: NextRequest) {
     }))
 
     // ── 5. Totales exactos desde ACCOUNT LEVEL ────────────────────────────────
-    const totalSpend      = safeNum(accountData.spend)
+    // CRÍTICO: Los KPIs se leen de accountData (1 fila exacta), NO de campaigns.reduce()
+    // campaigns.reduce() era incompleto porque Meta solo pagina ~100 campañas por request
+    const totalSpend       = safeNum(accountData.spend)
     const totalImpressions = parseInt(accountData.impressions || '0')
-    const totalClicks     = parseInt(accountData.clicks || '0')
-    const totalReach      = parseInt(accountData.reach || '0')
-    const totalLeads      = extractLeads(accountData.actions)
-    const avgCPM          = safeNum(accountData.cpm)
-    const avgCPC          = safeNum(accountData.cpc)
-    const avgCTR          = safeNum(accountData.ctr)
-    const costPerLead     = extractCPL(accountData.cost_per_action_type)
+    const totalClicks      = parseInt(accountData.clicks || '0')
+    const totalReach       = parseInt(accountData.reach || '0')
+    const totalLeads       = extractLeads(accountData.actions)
+    const avgCPM           = safeNum(accountData.cpm)
+    const avgCPC           = safeNum(accountData.cpc)
+    const avgCTR           = safeNum(accountData.ctr)
+    const costPerLead      = extractCPL(accountData.cost_per_action_type)
 
     // ── 6. Guardar / actualizar en caché Supabase ─────────────────────────────
     const insightRecord = {
@@ -176,7 +180,10 @@ export async function GET(req: NextRequest) {
       ctr: Math.round(avgCTR * 100) / 100,
       cost_per_lead: Math.round(costPerLead * 100) / 100,
       campaigns,
-      raw_response: { account_level: accountJson.data?.[0] || {}, campaigns_count: rawData.length },
+      raw_response: {
+        account_level: accountJson.data?.[0] || {},
+        campaigns_count: rawData.length,
+      },
     }
 
     // Delete old cache for this project+date_range before inserting fresh
