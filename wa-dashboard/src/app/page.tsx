@@ -3070,44 +3070,62 @@ function MetaAdsIntelligencePanel({
             ))}
           </div>
 
-          {/* ── Bar Chart spend por campaña ── */}
+          {/* ── Top Campañas spend (barras CSS) ── */}
           {(() => {
             const filteredCampaigns = objectiveFilter === 'all'
               ? insight.campaigns
               : insight.campaigns.filter(c => c.objective === objectiveFilter)
-          return filteredCampaigns.length > 0 && (
-            <div className="px-5 pb-5">
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">SPEND POR CAMPAÑA</p>
-              <div style={{ height: Math.max(120, insight.campaigns.length * 36) }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={filteredCampaigns.map(c => ({
-                      name: c.campaign_name.length > 22 ? c.campaign_name.slice(0, 22) + '…' : c.campaign_name,
-                      spend: c.spend,
-                      leads: c.leads,
-                    }))}
-                    layout="vertical"
-                    margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
-                  >
-                    <XAxis type="number" hide/>
-                    <YAxis type="category" dataKey="name" width={160}
-                      tick={{ fill: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }}/>
-                    <Tooltip
-                      contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8, fontSize: 11 }}
-                      formatter={(value: number, name: string) =>
-                        name === 'spend' ? [`$${value.toFixed(2)}`, 'Spend'] : [value, 'Leads']
-                      }
-                    />
-                    <Bar dataKey="spend" radius={[0, 4, 4, 0]}>
-                      {insight.campaigns.map((_, i) => (
-                        <Cell key={i} fill={i === 0 ? '#0014ad' : i === 1 ? '#00b0f6' : i === 2 ? '#FFB800' : '#4A4A6A'}/>
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+            const top10 = [...filteredCampaigns].sort((a, b) => b.spend - a.spend).slice(0, 10)
+            const maxSpend = top10[0]?.spend || 1
+            return top10.length > 0 && (
+              <div className="px-5 pb-5">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">TOP CAMPAÑAS POR SPEND</p>
+                  {filteredCampaigns.length > 10 && (
+                    <p className="mono text-[9px] text-[#4A4A6A]">mostrando 10 de {filteredCampaigns.length}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {top10.map((c, i) => {
+                    const pct = (c.spend / maxSpend) * 100
+                    const barColor = i === 0 ? '#0014ad' : i === 1 ? '#00b0f6' : i === 2 ? '#FFB800' : '#2A2A4A'
+                    const objColor = c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f6'
+                      : c.objective === 'MESSAGES' ? '#00FF94'
+                      : c.objective === 'CONVERSIONS' ? '#FFB800'
+                      : '#4A4A6A'
+                    return (
+                      <div key={i} className="group">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="mono text-[9px] text-[#4A4A6A] w-4 flex-shrink-0">{i + 1}</span>
+                            <span className="text-[11px] text-[#E0E0F0] truncate max-w-[280px]" title={c.campaign_name}>
+                              {c.campaign_name}
+                            </span>
+                            <span className="mono text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                              style={{ color: objColor, background: objColor + '15', border: `1px solid ${objColor}30` }}>
+                              {objLabel(c.objective)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                            {c.leads > 0 && (
+                              <span className="mono text-[9px] text-[#00b0f6]">{c.leads} leads</span>
+                            )}
+                            <span className="mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>
+                              ${c.spend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 rounded-full w-full" style={{ background: '#1E1E2E' }}>
+                          <div className="h-1.5 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%`, background: barColor }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )})()}
+            )
+          })()}
 
           {/* ── Tabla embudo completo ── */}
           {(() => {
