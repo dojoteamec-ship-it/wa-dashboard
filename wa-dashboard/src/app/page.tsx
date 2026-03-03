@@ -3252,6 +3252,385 @@ function MetaAdsIntelligencePanel({
   )
 }
 
+// ─── LEAD JOURNEY DRAWER (AT3b) ──────────────────────────────────────────────
+
+interface LeadJourneyData {
+  contact: {
+    id: string; name: string; phone_number: string; agent_stage: string
+    engagement_score: number; kanshi_score: number; kanshi_segment: string
+    segmento: string; created_at: string; updated_at: string
+    resumen_perfil: string; dolor_declarado: string; sueno_declarado: string
+  } | null
+  utmRows: Array<{
+    id: string; utm_source: string|null; utm_medium: string|null
+    utm_campaign: string|null; utm_content: string|null; utm_term: string|null
+    landing_url: string|null; registered_at: string; source_platform: string|null
+  }>
+  quizRows: Array<{
+    id: string; quiz_type: string; quiz_name: string|null
+    responses: Record<string, string>; submitted_at: string
+  }>
+  scoreBreakdown: {
+    kanshi_score: number
+    profile_fit: number; active_engagement: number
+    declared_intention: number; source_quality: number
+    capi_warm_sent_at: string|null; capi_hot_sent_at: string|null
+    capi_ready_sent_at: string|null; capi_buyer_sent_at: string|null
+    updated_at: string
+  } | null
+  sales: Array<{
+    id: string; amount: number; currency: string
+    product_name: string|null; sale_source: string
+    transaction_id: string|null; sale_date: string
+    utm_campaign: string|null; capi_purchase_sent_at: string|null
+  }>
+}
+
+// Helper visual para cada sección del journey — definido a nivel módulo
+function JourneySection({
+  icon, label, date, color, children,
+}: {
+  icon: string; label: string; date: string; color: string; children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-stretch gap-3 py-0.5">
+      <div className="flex flex-col items-center flex-shrink-0 w-8">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm"
+          style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
+          {icon}
+        </div>
+        <div className="w-px flex-1 mt-1" style={{ background: '#1E1E2E', minHeight: '8px' }}/>
+      </div>
+      <div className="flex-1 pb-4 min-w-0">
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <span className="mono text-[9px] font-bold tracking-widest flex-shrink-0" style={{ color }}>{label}</span>
+          <span className="mono text-[9px] text-[#2E2E4E] flex-shrink-0">{date}</span>
+        </div>
+        <div className="rounded-xl border border-[#1E1E2E] p-3" style={{ background: '#111118' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Drawer de journey completo del lead — definido a nivel módulo
+function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: () => void }) {
+  const [data, setData] = useState<LeadJourneyData | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!phone) { setData(null); return }
+    setLoading(true)
+    setData(null)
+
+    const fetchAll = async () => {
+      const [utmRes, contactRes, quizRes, salesRes] = await Promise.all([
+        supabase.from('utm_tracking')
+          .select('id,utm_source,utm_medium,utm_campaign,utm_content,utm_term,landing_url,registered_at,source_platform')
+          .eq('phone_number', phone).order('registered_at', { ascending: true }).limit(5),
+        supabase.from('wa_contacts')
+          .select('id,name,phone_number,agent_stage,engagement_score,kanshi_score,kanshi_segment,segmento,created_at,updated_at,resumen_perfil,dolor_declarado,sueno_declarado')
+          .eq('phone_number', phone).limit(1),
+        supabase.from('lead_quiz_responses')
+          .select('id,quiz_type,quiz_name,responses,submitted_at')
+          .eq('phone_number', phone).order('submitted_at', { ascending: true }),
+        supabase.from('kanshi_sales')
+          .select('id,amount,currency,product_name,sale_source,transaction_id,sale_date,utm_campaign,capi_purchase_sent_at')
+          .eq('phone_number', phone).order('sale_date', { ascending: true }),
+      ])
+
+      const contact = contactRes.data?.[0] || null
+
+      let scoreBreakdown: LeadJourneyData['scoreBreakdown'] = null
+      if (contact?.id) {
+        const { data: sb } = await supabase
+          .from('kanshi_score_breakdown')
+          .select('kanshi_score,profile_fit,active_engagement,declared_intention,source_quality,capi_warm_sent_at,capi_hot_sent_at,capi_ready_sent_at,capi_buyer_sent_at,updated_at')
+          .eq('contact_id', contact.id)
+          .maybeSingle()
+        scoreBreakdown = sb
+      }
+
+      setData({
+        contact: contact as LeadJourneyData['contact'],
+        utmRows: (utmRes.data || []) as LeadJourneyData['utmRows'],
+        quizRows: (quizRes.data || []) as LeadJourneyData['quizRows'],
+        scoreBreakdown,
+        sales: (salesRes.data || []) as LeadJourneyData['sales'],
+      })
+      setLoading(false)
+    }
+
+    fetchAll().catch(() => setLoading(false))
+  }, [phone])
+
+  if (!phone) return null
+
+  const segC = (s: string) => s === 'caliente' ? '#FF6B35' : s === 'templado' ? '#FFB800' : '#00b0f6'
+  const scoreC = (n: number) => n >= 76 ? '#00FF94' : n >= 51 ? '#FF6B35' : n >= 26 ? '#FFB800' : '#00b0f6'
+
+  const initials = (data?.contact?.name || phone || '?')
+    .split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
+
+  const fmtDate = (d: string) => {
+    try { return format(new Date(d), 'dd/MM/yy HH:mm') } catch { return d }
+  }
+
+  const capiEvents: Array<{ label: string; ts: string; color: string }> = []
+  if (data?.scoreBreakdown) {
+    const sb = data.scoreBreakdown
+    if (sb.capi_warm_sent_at)  capiEvents.push({ label: 'WarmLead → Meta',    ts: sb.capi_warm_sent_at,  color: '#00b0f6' })
+    if (sb.capi_hot_sent_at)   capiEvents.push({ label: 'HotLead → Meta',     ts: sb.capi_hot_sent_at,   color: '#FFB800' })
+    if (sb.capi_ready_sent_at) capiEvents.push({ label: 'ReadyLead → Meta',   ts: sb.capi_ready_sent_at, color: '#FF6B35' })
+    if (sb.capi_buyer_sent_at) capiEvents.push({ label: 'BuyerProfile → Meta',ts: sb.capi_buyer_sent_at, color: '#C084FC' })
+    capiEvents.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime())
+  }
+
+  const hasData = data && (
+    data.contact || data.utmRows.length > 0 || data.quizRows.length > 0 || data.sales.length > 0
+  )
+
+  return (
+    <div className="fixed inset-0 z-[300] flex justify-end" onClick={onClose}>
+      <div
+        className="w-full max-w-md h-full border-l border-[#1E1E2E] overflow-y-auto flex flex-col"
+        style={{ background: '#0A0A0F', boxShadow: '-32px 0 80px rgba(0,0,0,0.85)', animation: 'slideInRight 0.2s ease' }}
+        onClick={e => e.stopPropagation()}>
+
+        {/* ── Header ── */}
+        <div className="px-6 py-5 border-b border-[#1E1E2E] sticky top-0 z-10 flex-shrink-0"
+          style={{ background: 'rgba(10,10,15,0.97)' }}>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mono text-[11px] font-bold"
+                style={{
+                  background: data?.contact ? `${segC(data.contact.segmento)}20` : '#1E1E2E',
+                  color: data?.contact ? segC(data.contact.segmento) : '#4A4A6A',
+                  border: `1px solid ${data?.contact ? segC(data.contact.segmento) + '40' : '#2A2A3A'}`,
+                }}>
+                {loading ? '…' : initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-[#E0E0F0] text-sm truncate">
+                  {data?.contact?.name || phone}
+                </p>
+                <p className="mono text-[9px] text-[#4A4A6A]">{phone}</p>
+              </div>
+            </div>
+            <button onClick={onClose}
+              className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group ml-3 flex-shrink-0">
+              <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+            </button>
+          </div>
+
+          {data?.contact && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {data.contact.kanshi_score > 0 && (
+                <span className="mono text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ color: scoreC(data.contact.kanshi_score), background: `${scoreC(data.contact.kanshi_score)}15`, border: `1px solid ${scoreC(data.contact.kanshi_score)}30` }}>
+                  ⚡ {data.contact.kanshi_score} KANSHI
+                </span>
+              )}
+              {data.contact.kanshi_segment && (
+                <span className="mono text-[9px] px-2 py-0.5 rounded-full"
+                  style={{ color: scoreC(data.contact.kanshi_score), background: `${scoreC(data.contact.kanshi_score)}10` }}>
+                  {data.contact.kanshi_segment.toUpperCase()}
+                </span>
+              )}
+              {data.contact.agent_stage && <StagePill stage={data.contact.agent_stage}/>}
+              {data.sales.length > 0 && (
+                <span className="mono text-[9px] px-2 py-0.5 rounded-full font-bold"
+                  style={{ color: '#00FF94', background: '#00FF9415', border: '1px solid #00FF9430' }}>
+                  💰 COMPRADOR
+                </span>
+              )}
+            </div>
+          )}
+
+          <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-3">LEAD JOURNEY COMPLETO</p>
+        </div>
+
+        {/* ── Loading ── */}
+        {loading && (
+          <div className="flex items-center justify-center flex-1 py-20">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">CARGANDO JOURNEY...</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Timeline ── */}
+        {!loading && data && (
+          <div className="px-5 py-5 space-y-0">
+
+            {/* 1. Primer clic UTM */}
+            {data.utmRows.length > 0 && (
+              <JourneySection icon="🎯" label="PRIMER CLIC UTM" date={fmtDate(data.utmRows[0].registered_at)} color="#00b0f6">
+                <div className="space-y-2">
+                  {[
+                    { k: 'CAMPAÑA',    v: data.utmRows[0].utm_campaign },
+                    { k: 'FUENTE',     v: data.utmRows[0].utm_source },
+                    { k: 'MEDIO',      v: data.utmRows[0].utm_medium },
+                    { k: 'ANUNCIO',    v: data.utmRows[0].utm_content },
+                    { k: 'PLATAFORMA', v: data.utmRows[0].source_platform },
+                    { k: 'URL',        v: data.utmRows[0].landing_url
+                        ? data.utmRows[0].landing_url.replace(/^https?:\/\//, '').slice(0, 55)
+                        : null },
+                  ].filter(x => x.v).map(x => (
+                    <div key={x.k} className="flex items-start gap-2">
+                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
+                      <span className="text-[11px] text-[#E0E0F0] break-all leading-relaxed">{x.v}</span>
+                    </div>
+                  ))}
+                  {data.utmRows.length > 1 && (
+                    <p className="mono text-[9px] text-[#4A4A6A] pt-1">
+                      +{data.utmRows.length - 1} clic{data.utmRows.length > 2 ? 's' : ''} adicional{data.utmRows.length > 2 ? 'es' : ''}
+                    </p>
+                  )}
+                </div>
+              </JourneySection>
+            )}
+
+            {/* 2. Perfil SAM */}
+            {data.contact && (data.contact.dolor_declarado || data.contact.sueno_declarado || data.contact.engagement_score > 0) && (
+              <JourneySection icon="💬" label="INTERACCIONES SAM" date={fmtDate(data.contact.updated_at)} color="#0014ad">
+                <div className="space-y-2">
+                  {[
+                    { k: 'ENGAGEMENT', v: data.contact.engagement_score > 0 ? `${data.contact.engagement_score} / 14 pts` : null },
+                    { k: 'SEGMENTO',   v: data.contact.segmento },
+                    { k: 'DOLOR',      v: data.contact.dolor_declarado?.slice(0, 90) },
+                    { k: 'SUEÑO',      v: data.contact.sueno_declarado?.slice(0, 90) },
+                    { k: 'RESUMEN',    v: data.contact.resumen_perfil?.slice(0, 110) },
+                  ].filter(x => x.v).map(x => (
+                    <div key={x.k} className="flex items-start gap-2">
+                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
+                      <span className="text-[11px] text-[#E0E0F0] leading-relaxed">{x.v}</span>
+                    </div>
+                  ))}
+                </div>
+              </JourneySection>
+            )}
+
+            {/* 3. Quiz(es) */}
+            {data.quizRows.map(qr => (
+              <JourneySection
+                key={qr.id}
+                icon="📋"
+                label={`QUIZ: ${(qr.quiz_name || qr.quiz_type).toUpperCase()}`}
+                date={fmtDate(qr.submitted_at)}
+                color="#C084FC">
+                <div className="space-y-2">
+                  {Object.entries(qr.responses).slice(0, 7).map(([k, v]) => (
+                    <div key={k} className="flex items-start gap-2">
+                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-28 flex-shrink-0 pt-0.5 truncate">
+                        {k.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-[11px] text-[#E0E0F0] leading-relaxed break-words">
+                        {String(v).slice(0, 90)}
+                      </span>
+                    </div>
+                  ))}
+                  {Object.keys(qr.responses).length > 7 && (
+                    <p className="mono text-[9px] text-[#4A4A6A]">+{Object.keys(qr.responses).length - 7} campos más</p>
+                  )}
+                </div>
+              </JourneySection>
+            ))}
+
+            {/* 4. Score breakdown */}
+            {data.scoreBreakdown && (
+              <JourneySection icon="📈" label="KANSHI SCORE BREAKDOWN" date={fmtDate(data.scoreBreakdown.updated_at)} color="#FFB800">
+                <div className="space-y-2.5">
+                  {[
+                    { k: 'FIT PERFIL', v: data.scoreBreakdown.profile_fit,        max: 25 },
+                    { k: 'ENGAGEMENT', v: data.scoreBreakdown.active_engagement,   max: 35 },
+                    { k: 'INTENCIÓN',  v: data.scoreBreakdown.declared_intention,  max: 25 },
+                    { k: 'FUENTE',     v: data.scoreBreakdown.source_quality,      max: 15 },
+                  ].map(d => {
+                    const pct = d.max > 0 ? (d.v / d.max) * 100 : 0
+                    const c = pct >= 70 ? '#00FF94' : pct >= 40 ? '#FFB800' : '#FF6B35'
+                    return (
+                      <div key={d.k} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{d.k}</span>
+                          <span className="mono text-[10px] font-bold" style={{ color: c }}>{d.v} / {d.max}</span>
+                        </div>
+                        <div className="h-1 rounded-full" style={{ background: '#1E1E2E' }}>
+                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: c }}/>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {/* Total */}
+                  <div className="pt-2 border-t border-[#1E1E2E] flex items-center justify-between">
+                    <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">TOTAL KANSHI</span>
+                    <span className="mono text-sm font-bold" style={{ color: scoreC(data.scoreBreakdown.kanshi_score) }}>
+                      {data.scoreBreakdown.kanshi_score}
+                    </span>
+                  </div>
+                  {/* CAPI events */}
+                  {capiEvents.length > 0 && (
+                    <div className="pt-2 border-t border-[#1E1E2E] space-y-1.5">
+                      <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mb-2">SEÑALES ENVIADAS A META CAPI</p>
+                      {capiEvents.map(ev => (
+                        <div key={ev.label} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: ev.color }}/>
+                            <span className="mono text-[9px]" style={{ color: ev.color }}>{ev.label}</span>
+                          </div>
+                          <span className="mono text-[9px] text-[#4A4A6A]">{fmtDate(ev.ts)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </JourneySection>
+            )}
+
+            {/* 5. Venta */}
+            {data.sales.map(sale => (
+              <JourneySection key={sale.id} icon="💰" label="VENTA CONFIRMADA" date={fmtDate(sale.sale_date)} color="#00FF94">
+                <div className="space-y-2">
+                  {[
+                    { k: 'MONTO',    v: `$${sale.amount.toLocaleString()} ${sale.currency}` },
+                    { k: 'PRODUCTO', v: sale.product_name },
+                    { k: 'FUENTE',   v: sale.sale_source },
+                    { k: 'CAMPAÑA',  v: sale.utm_campaign },
+                    { k: 'TX ID',    v: sale.transaction_id },
+                    { k: 'CAPI',     v: sale.capi_purchase_sent_at
+                        ? `✓ Enviado ${fmtDate(sale.capi_purchase_sent_at)}`
+                        : '⏳ Pendiente' },
+                  ].filter(x => x.v).map(x => (
+                    <div key={x.k} className="flex items-start gap-2">
+                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
+                      <span className="text-[11px] font-medium break-all"
+                        style={{ color: x.k === 'MONTO' ? '#00FF94' : '#E0E0F0' }}>
+                        {x.v}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </JourneySection>
+            ))}
+
+            {/* Empty state */}
+            {!hasData && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <span className="text-3xl">🔍</span>
+                <p className="mono text-[11px] text-[#4A4A6A]">Sin datos disponibles para este lead</p>
+                <p className="mono text-[9px] text-[#2E2E4E]">{phone}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── FUENTES TAB ─────────────────────────────────────────────────────────────
 
 interface UtmRow {
@@ -3288,10 +3667,12 @@ function LeadMiniTimeline({
   rows,
   leadMap,
   quizPhones,
+  onLeadClick,
 }: {
   rows: UtmRow[]
   leadMap: Record<string, Lead>
   quizPhones: Set<string>
+  onLeadClick?: (phone: string) => void
 }) {
   const STAGE_LABELS: Record<string, string> = {
     nuevo: 'Nuevo', descubrimiento: 'Desc.', perfilando_1: 'Perf.1',
@@ -3327,7 +3708,10 @@ function LeadMiniTimeline({
           const isLast = idx === sorted.length - 1
 
           return (
-            <div key={row.phone_number + row.registered_at} className="flex items-stretch gap-3">
+            <div
+              key={row.phone_number + row.registered_at}
+              className={`flex items-stretch gap-3 rounded-xl transition-colors${onLeadClick ? ' cursor-pointer hover:bg-[#16161F] px-1 -mx-1' : ''}`}
+              onClick={onLeadClick ? () => onLeadClick(row.phone_number) : undefined}>
               {/* Línea de tiempo */}
               <div className="flex flex-col items-center flex-shrink-0 w-6 pt-1.5">
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -3409,6 +3793,7 @@ function FuentesTab({
   const [loading, setLoading] = useState(true)
   const [selectedGroup, setSelectedGroup] = useState<CampaignGroup|null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [selectedLeadPhone, setSelectedLeadPhone] = useState<string|null>(null)
   const [quizResponses, setQuizResponses] = useState<Array<{
     phone_number: string
     responses: Record<string, string>
@@ -3843,6 +4228,7 @@ function FuentesTab({
                                 rows={g.rows}
                                 leadMap={leadMap}
                                 quizPhones={quizPhones}
+                                onLeadClick={setSelectedLeadPhone}
                               />
 
                             </div>
@@ -3866,8 +4252,10 @@ function FuentesTab({
 
       {/* Lead panel for selected campaign */}
       {selectedGroup && (
-        <CampaignLeadPanel group={selectedGroup} leadMap={leadMap} onClose={() => setSelectedGroup(null)}/>
+        <CampaignLeadPanel group={selectedGroup} leadMap={leadMap} onClose={() => setSelectedGroup(null)} onLeadClick={setSelectedLeadPhone}/>
       )}
+
+      <LeadJourneyDrawer phone={selectedLeadPhone} onClose={() => setSelectedLeadPhone(null)}/>
     </div>
   )
 }
@@ -3875,11 +4263,12 @@ function FuentesTab({
 // ─── CAMPAIGN LEAD PANEL ──────────────────────────────────────────────────────
 
 function CampaignLeadPanel({
-  group, leadMap, onClose
+  group, leadMap, onClose, onLeadClick
 }: {
   group: CampaignGroup
   leadMap: Record<string, Lead>
   onClose: () => void
+  onLeadClick?: (phone: string) => void
 }) {
   return (
     <div className="fixed inset-0 z-[200] flex justify-end" onClick={onClose}>
@@ -3927,7 +4316,10 @@ function CampaignLeadPanel({
             const lead = row.matched_contact_id ? leadMap[row.matched_contact_id] : null
             const name = row.first_name ? `${row.first_name} ${row.last_name || ''}`.trim() : row.phone_number
             return (
-              <div key={i} className="px-6 py-4 flex items-center gap-4">
+              <div
+                key={i}
+                className={`px-6 py-4 flex items-center gap-4 transition-colors${onLeadClick ? ' cursor-pointer hover:bg-[#16161F]' : ''}`}
+                onClick={onLeadClick ? () => onLeadClick(row.phone_number) : undefined}>
                 {/* Avatar */}
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: lead ? `${segColor(lead.segmento)}20` : '#1E1E2E' }}>
