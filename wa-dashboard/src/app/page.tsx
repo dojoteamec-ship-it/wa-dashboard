@@ -47,6 +47,45 @@ interface ChartPoint { hour: string; inbound: number; outbound: number }
 interface RecentMsg { contact_name: string; body: string; created_at: string; direction: string }
 interface Toast { id: string; type: 'success'|'error'|'warning'|'info'; message: string }
 
+interface HormoziPlan {
+  id: string
+  name: string
+  badge: string | null
+  price_anchor: number
+  price_real: number
+  billing: string
+  cta_text: string
+  cta_url: string
+  highlight: boolean
+  features: string[]
+}
+
+interface OfferStackItem {
+  name: string
+  value: number
+}
+
+interface Testimonial {
+  name: string
+  text: string
+  result: string
+}
+
+interface HormoziConfig {
+  dream_outcome?: string
+  time_delay?: string
+  effort_sacrifice?: string
+  methodology_name?: string
+  guarantee_days?: number
+  guarantee_text?: string
+  urgency_reason?: string
+  letter_author_name?: string
+  letter_author_title?: string
+  plans?: HormoziPlan[]
+  offer_stack?: OfferStackItem[]
+  testimonials?: Testimonial[]
+}
+
 interface Project {
   id: string
   name: string
@@ -65,6 +104,8 @@ interface Project {
   color: string | null
   emoji: string | null
   credential_id: string | null
+  logo_url: string | null
+  hormozi_config: HormoziConfig | null
 }
 
 // ─── STAGE & HELPERS ─────────────────────────────────────────────────────────
@@ -1904,12 +1945,20 @@ export default function Dashboard() {
             
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
-          <CredentialsVault
-            activeProjectId={activeProjectId}
-            projects={projects}
-            onToast={addToast}
-            onProjectsUpdate={setProjects}
-          />
+          <div className="space-y-6">
+            <HormoziConfigPanel
+              activeProjectId={activeProjectId}
+              projects={projects}
+              onToast={addToast}
+              onProjectsUpdate={setProjects}
+            />
+            <CredentialsVault
+              activeProjectId={activeProjectId}
+              projects={projects}
+              onToast={addToast}
+              onProjectsUpdate={setProjects}
+            />
+          </div>
         )}
 
        {/* Footer */}
@@ -1938,6 +1987,515 @@ export default function Dashboard() {
       )}
       <LeadJourneyDrawer phone={journeyPhone} onClose={() => setJourneyPhone(null)} />
       <ToastContainer toasts={toasts} onRemove={removeToast}/>
+    </div>
+  )
+}
+
+// ─── HORMOZI CONFIG PANEL (LP2) ───────────────────────────────────────────────
+
+const EMPTY_PLAN: HormoziPlan = {
+  id: 'plan_a', name: '', badge: null, price_anchor: 0, price_real: 0,
+  billing: 'pago único', cta_text: '', cta_url: '', highlight: true, features: ['']
+}
+
+function HormoziConfigPanel({
+  activeProjectId, projects, onToast, onProjectsUpdate
+}: {
+  activeProjectId: string | null
+  projects: Project[]
+  onToast: (type: Toast['type'], msg: string) => void
+  onProjectsUpdate: (projects: Project[]) => void
+}) {
+  const project = projects.find(p => p.id === activeProjectId) || null
+  const [saving, setSaving] = useState(false)
+  const [logoUrl, setLogoUrl] = useState('')
+  const [dreamOutcome, setDreamOutcome] = useState('')
+  const [timeDelay, setTimeDelay] = useState('')
+  const [effortSacrifice, setEffortSacrifice] = useState('')
+  const [methodologyName, setMethodologyName] = useState('')
+  const [guaranteeDays, setGuaranteeDays] = useState('')
+  const [guaranteeText, setGuaranteeText] = useState('')
+  const [urgencyReason, setUrgencyReason] = useState('')
+  const [authorName, setAuthorName] = useState('')
+  const [authorTitle, setAuthorTitle] = useState('')
+  const [plans, setPlans] = useState<HormoziPlan[]>([
+    { id: 'plan_a', name: '', badge: 'MÁS POPULAR', price_anchor: 0, price_real: 0, billing: 'pago único', cta_text: '', cta_url: '', highlight: true, features: [''] },
+    { id: 'plan_b', name: '', badge: null, price_anchor: 0, price_real: 0, billing: 'pago único', cta_text: '', cta_url: '', highlight: false, features: [''] },
+  ])
+  const [offerStack, setOfferStack] = useState<OfferStackItem[]>([{ name: '', value: 0 }])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([{ name: '', text: '', result: '' }])
+  const [activeSection, setActiveSection] = useState<'oferta'|'planes'|'autor'|'social'>('oferta')
+
+  // Cargar datos del proyecto activo
+  useEffect(() => {
+    if (!project) return
+    const c = project.hormozi_config || {}
+    setLogoUrl(project.logo_url || '')
+    setDreamOutcome(c.dream_outcome || '')
+    setTimeDelay(c.time_delay || '')
+    setEffortSacrifice(c.effort_sacrifice || '')
+    setMethodologyName(c.methodology_name || '')
+    setGuaranteeDays(c.guarantee_days?.toString() || '')
+    setGuaranteeText(c.guarantee_text || '')
+    setUrgencyReason(c.urgency_reason || '')
+    setAuthorName(c.letter_author_name || '')
+    setAuthorTitle(c.letter_author_title || '')
+    if (c.plans?.length) setPlans(c.plans)
+    if (c.offer_stack?.length) setOfferStack(c.offer_stack)
+    if (c.testimonials?.length) setTestimonials(c.testimonials)
+  }, [activeProjectId])
+
+  const handleSave = async () => {
+    if (!project) return
+    setSaving(true)
+    const config: HormoziConfig = {
+      dream_outcome: dreamOutcome || undefined,
+      time_delay: timeDelay || undefined,
+      effort_sacrifice: effortSacrifice || undefined,
+      methodology_name: methodologyName || undefined,
+      guarantee_days: guaranteeDays ? parseInt(guaranteeDays) : undefined,
+      guarantee_text: guaranteeText || undefined,
+      urgency_reason: urgencyReason || undefined,
+      letter_author_name: authorName || undefined,
+      letter_author_title: authorTitle || undefined,
+      plans: plans.filter(p => p.name.trim()),
+      offer_stack: offerStack.filter(o => o.name.trim()),
+      testimonials: testimonials.filter(t => t.name.trim()),
+    }
+    const { error } = await supabase
+      .from('kanshi_projects')
+      .update({ hormozi_config: config, logo_url: logoUrl || null })
+      .eq('id', project.id)
+    if (error) {
+      onToast('error', 'Error al guardar configuración')
+    } else {
+      onToast('success', '✅ Configuración de oferta guardada')
+      onProjectsUpdate(projects.map(p => p.id === project.id
+        ? { ...p, hormozi_config: config, logo_url: logoUrl || null }
+        : p
+      ))
+    }
+    setSaving(false)
+  }
+
+  // helpers para offer stack
+  const updateOfferItem = (i: number, field: keyof OfferStackItem, val: string | number) => {
+    setOfferStack(prev => prev.map((o, idx) => idx === i ? { ...o, [field]: val } : o))
+  }
+  const addOfferItem = () => setOfferStack(prev => [...prev, { name: '', value: 0 }])
+  const removeOfferItem = (i: number) => setOfferStack(prev => prev.filter((_, idx) => idx !== i))
+
+  // helpers para planes
+  const updatePlan = (planIdx: number, field: keyof HormoziPlan, val: string | number | boolean) => {
+    setPlans(prev => prev.map((p, i) => i === planIdx ? { ...p, [field]: val } : p))
+  }
+  const updatePlanFeature = (planIdx: number, featIdx: number, val: string) => {
+    setPlans(prev => prev.map((p, i) => i === planIdx
+      ? { ...p, features: p.features.map((f, j) => j === featIdx ? val : f) }
+      : p
+    ))
+  }
+  const addPlanFeature = (planIdx: number) => {
+    setPlans(prev => prev.map((p, i) => i === planIdx ? { ...p, features: [...p.features, ''] } : p))
+  }
+  const removePlanFeature = (planIdx: number, featIdx: number) => {
+    setPlans(prev => prev.map((p, i) => i === planIdx
+      ? { ...p, features: p.features.filter((_, j) => j !== featIdx) }
+      : p
+    ))
+  }
+
+  // helpers para testimonios
+  const updateTestimonial = (i: number, field: keyof Testimonial, val: string) => {
+    setTestimonials(prev => prev.map((t, idx) => idx === i ? { ...t, [field]: val } : t))
+  }
+  const addTestimonial = () => setTestimonials(prev => [...prev, { name: '', text: '', result: '' }])
+  const removeTestimonial = (i: number) => setTestimonials(prev => prev.filter((_, idx) => idx !== i))
+
+  const totalValue = offerStack.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
+
+  const SECTIONS = [
+    { key: 'oferta', label: 'LA OFERTA', icon: '🎯' },
+    { key: 'planes', label: 'PLANES', icon: '💳' },
+    { key: 'autor', label: 'AUTOR & GARANTÍA', icon: '✍️' },
+    { key: 'social', label: 'PRUEBA SOCIAL', icon: '⭐' },
+  ] as const
+
+  const inputCls = "w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A] transition-colors"
+  const labelCls = "mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2"
+
+  if (!project) {
+    return (
+      <div className="rounded-2xl border border-dashed border-[#1E1E2E] p-12 text-center">
+        <p className="text-3xl mb-3">🎯</p>
+        <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para configurar la oferta</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">🎯</span>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OFERTA HORMOZI — {(project.product_name || project.name).toUpperCase()}</p>
+          </div>
+          <p className="text-xs text-[#4A4A6A]">Configura los parámetros de tu oferta irresistible para la landing personalizada</p>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold text-[#0A0A0F] disabled:opacity-40 transition-all hover:scale-105"
+          style={{ background: 'linear-gradient(135deg,#00FF94,#00b0f6)' }}>
+          {saving
+            ? <div className="w-3 h-3 border-2 border-[#0A0A0F] border-t-transparent rounded-full animate-spin"/>
+            : <CheckCircle size={12}/>}
+          {saving ? 'GUARDANDO...' : 'GUARDAR OFERTA'}
+        </button>
+      </div>
+
+      {/* Logo del producto */}
+      <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+        <div className="flex items-center gap-2">
+          <Rocket size={12} style={{ color: '#00b0f6' }}/>
+          <p className="mono text-[10px] tracking-widest text-[#4A4A6A]">IDENTIDAD DEL PRODUCTO</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>URL DEL LOGO</label>
+            <input value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
+              placeholder="https://tu-dominio.com/logo.png"
+              className={inputCls}/>
+            <p className="mono text-[9px] text-[#4A4A6A] mt-1.5">Se mostrará en el header de la landing (no el logo de KANSHI)</p>
+          </div>
+          <div>
+            {logoUrl ? (
+              <div className="rounded-xl border border-[#1E1E2E] p-3 flex items-center justify-center h-full" style={{ background: '#0A0A0F' }}>
+                <img src={logoUrl} alt="preview" className="max-h-12 max-w-full object-contain"
+                  onError={e => { (e.target as HTMLImageElement).style.display='none' }}/>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[#1E1E2E] p-3 flex items-center justify-center h-full">
+                <p className="mono text-[9px] text-[#2E2E4E]">Preview logo aquí</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Nav secciones */}
+      <div className="flex gap-1 p-1 rounded-2xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+        {SECTIONS.map(s => (
+          <button key={s.key} onClick={() => setActiveSection(s.key)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl transition-all mono text-[10px] tracking-widest"
+            style={{
+              background: activeSection === s.key ? '#0014ad' : 'transparent',
+              color: activeSection === s.key ? '#fff' : '#4A4A6A'
+            }}>
+            <span>{s.icon}</span>{s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* SECCIÓN: LA OFERTA */}
+      {activeSection === 'oferta' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">GRAN SLAM OFFER — ECUACIÓN DE VALOR</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>DREAM OUTCOME 🏆</label>
+                <input value={dreamOutcome} onChange={e => setDreamOutcome(e.target.value)}
+                  placeholder="Generar $5,000/mes con IA en 90 días"
+                  className={inputCls}/>
+              </div>
+              <div>
+                <label className={labelCls}>NOMBRE DEL MÉTODO</label>
+                <input value={methodologyName} onChange={e => setMethodologyName(e.target.value)}
+                  placeholder="SamurAI"
+                  className={inputCls}/>
+              </div>
+              <div>
+                <label className={labelCls}>TIME DELAY ⏱</label>
+                <input value={timeDelay} onChange={e => setTimeDelay(e.target.value)}
+                  placeholder="90 días"
+                  className={inputCls}/>
+              </div>
+              <div>
+                <label className={labelCls}>EFFORT & SACRIFICE 💪</label>
+                <input value={effortSacrifice} onChange={e => setEffortSacrifice(e.target.value)}
+                  placeholder="Sin experiencia técnica previa"
+                  className={inputCls}/>
+              </div>
+              <div className="col-span-2">
+                <label className={labelCls}>RAZÓN DE URGENCIA / ESCASEZ</label>
+                <input value={urgencyReason} onChange={e => setUrgencyReason(e.target.value)}
+                  placeholder="Cupos limitados a 200 estudiantes · carrito cierra el 25 de Abril"
+                  className={inputCls}/>
+              </div>
+            </div>
+          </div>
+
+          {/* Offer Stack */}
+          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OFFER STACK — LO QUE SE LLEVAN</p>
+                <p className="text-xs mt-0.5" style={{ color: '#00FF94' }}>
+                  Valor total percibido: <span className="font-bold">${totalValue.toLocaleString()}</span>
+                </p>
+              </div>
+              <button onClick={addOfferItem}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+                <Plus size={10}/> AGREGAR
+              </button>
+            </div>
+            <div className="space-y-2">
+              {offerStack.map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <input value={item.name} onChange={e => updateOfferItem(i, 'name', e.target.value)}
+                      placeholder={`Entregable ${i + 1} (ej: Módulo 0: Base IA)`}
+                      className={inputCls + ' text-xs'}/>
+                  </div>
+                  <div className="w-28">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] text-xs">$</span>
+                      <input value={item.value || ''} onChange={e => updateOfferItem(i, 'value', parseInt(e.target.value) || 0)}
+                        placeholder="197" type="number"
+                        className={inputCls + ' text-xs pl-6'}/>
+                    </div>
+                  </div>
+                  {offerStack.length > 1 && (
+                    <button onClick={() => removeOfferItem(i)}
+                      className="p-2 rounded-xl border border-[#1E1E2E] text-[#4A4A6A] hover:text-[#FF6B35] hover:border-[#FF6B35] transition-all">
+                      <X size={10}/>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECCIÓN: PLANES */}
+      {activeSection === 'planes' && (
+        <div className="grid grid-cols-2 gap-4">
+          {plans.map((plan, planIdx) => (
+            <div key={plan.id}
+              className="rounded-2xl border p-5 space-y-4"
+              style={{
+                background: '#111118',
+                borderColor: plan.highlight ? '#0014ad' : '#1E1E2E'
+              }}>
+              <div className="flex items-center justify-between">
+                <p className="mono text-[10px] tracking-widest" style={{ color: plan.highlight ? '#00b0f6' : '#4A4A6A' }}>
+                  PLAN {planIdx === 0 ? 'A — PRINCIPAL' : 'B — ALTERNATIVO'}
+                </p>
+                <button
+                  onClick={() => setPlans(prev => prev.map((p, i) => ({ ...p, highlight: i === planIdx })))}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-[9px] transition-all"
+                  style={{
+                    background: plan.highlight ? '#00FF9420' : 'transparent',
+                    color: plan.highlight ? '#00FF94' : '#4A4A6A',
+                    border: `1px solid ${plan.highlight ? '#00FF9440' : '#1E1E2E'}`
+                  }}>
+                  {plan.highlight ? '★ DESTACADO' : '☆ Destacar'}
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className={labelCls}>NOMBRE DEL PLAN</label>
+                  <input value={plan.name} onChange={e => updatePlan(planIdx, 'name', e.target.value)}
+                    placeholder={planIdx === 0 ? 'SamurAI Completo' : 'SamurAI Básico'}
+                    className={inputCls}/>
+                </div>
+                <div>
+                  <label className={labelCls}>BADGE (opcional)</label>
+                  <input value={plan.badge || ''} onChange={e => updatePlan(planIdx, 'badge', e.target.value)}
+                    placeholder="MÁS POPULAR"
+                    className={inputCls}/>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelCls}>PRECIO TACHADO</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] text-xs">$</span>
+                      <input value={plan.price_anchor || ''} onChange={e => updatePlan(planIdx, 'price_anchor', parseInt(e.target.value) || 0)}
+                        placeholder="997" type="number"
+                        className={inputCls + ' pl-6'}/>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>PRECIO REAL</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] text-xs">$</span>
+                      <input value={plan.price_real || ''} onChange={e => updatePlan(planIdx, 'price_real', parseInt(e.target.value) || 0)}
+                        placeholder="497" type="number"
+                        className={inputCls + ' pl-6'}/>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>FORMA DE PAGO</label>
+                  <input value={plan.billing} onChange={e => updatePlan(planIdx, 'billing', e.target.value)}
+                    placeholder="pago único / 3 cuotas de $197"
+                    className={inputCls}/>
+                </div>
+                <div>
+                  <label className={labelCls}>TEXTO DEL BOTÓN CTA</label>
+                  <input value={plan.cta_text} onChange={e => updatePlan(planIdx, 'cta_text', e.target.value)}
+                    placeholder="Quiero el plan completo →"
+                    className={inputCls}/>
+                </div>
+                <div>
+                  <label className={labelCls}>URL DE PAGO (Hotmart/Stripe)</label>
+                  <input value={plan.cta_url} onChange={e => updatePlan(planIdx, 'cta_url', e.target.value)}
+                    placeholder="https://pay.hotmart.com/..."
+                    className={inputCls}/>
+                </div>
+                {/* Features */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={labelCls + ' mb-0'}>QUÉ INCLUYE</label>
+                    <button onClick={() => addPlanFeature(planIdx)}
+                      className="mono text-[9px] text-[#4A4A6A] hover:text-[#00b0f6] transition-colors flex items-center gap-1">
+                      <Plus size={9}/> add
+                    </button>
+                  </div>
+                  <div className="space-y-1.5">
+                    {plan.features.map((feat, featIdx) => (
+                      <div key={featIdx} className="flex items-center gap-2">
+                        <span className="text-[#00FF94] text-xs flex-shrink-0">✓</span>
+                        <input value={feat} onChange={e => updatePlanFeature(planIdx, featIdx, e.target.value)}
+                          placeholder="Módulo 1: Fundamentos IA"
+                          className="flex-1 bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-3 py-2 text-xs text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A] transition-colors"/>
+                        {plan.features.length > 1 && (
+                          <button onClick={() => removePlanFeature(planIdx, featIdx)}
+                            className="text-[#4A4A6A] hover:text-[#FF6B35] transition-colors">
+                            <X size={9}/>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* SECCIÓN: AUTOR & GARANTÍA */}
+      {activeSection === 'autor' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">AUTOR DE LA CARTA PERSONAL</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>NOMBRE DEL AUTOR</label>
+                <input value={authorName} onChange={e => setAuthorName(e.target.value)}
+                  placeholder="Andreti"
+                  className={inputCls}/>
+                <p className="mono text-[9px] text-[#4A4A6A] mt-1.5">Claude firmará la carta con este nombre</p>
+              </div>
+              <div>
+                <label className={labelCls}>TÍTULO / ROL</label>
+                <input value={authorTitle} onChange={e => setAuthorTitle(e.target.value)}
+                  placeholder="Fundador de SamurAI"
+                  className={inputCls}/>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">GARANTÍA</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>DÍAS DE GARANTÍA</label>
+                <input value={guaranteeDays} onChange={e => setGuaranteeDays(e.target.value)}
+                  placeholder="30" type="number"
+                  className={inputCls}/>
+              </div>
+              <div>
+                <label className={labelCls}>TEXTO DE GARANTÍA</label>
+                <input value={guaranteeText} onChange={e => setGuaranteeText(e.target.value)}
+                  placeholder="Si no ves resultados en 30 días, devuelvo el 100%"
+                  className={inputCls}/>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECCIÓN: PRUEBA SOCIAL */}
+      {activeSection === 'social' && (
+        <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+          <div className="flex items-center justify-between">
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">TESTIMONIOS</p>
+            <button onClick={addTestimonial}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] transition-all">
+              <Plus size={10}/> AGREGAR
+            </button>
+          </div>
+          <div className="space-y-4">
+            {testimonials.map((t, i) => (
+              <div key={i} className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#0A0A0F' }}>
+                <div className="flex items-center justify-between">
+                  <p className="mono text-[9px] text-[#4A4A6A]">TESTIMONIO {i + 1}</p>
+                  {testimonials.length > 1 && (
+                    <button onClick={() => removeTestimonial(i)}
+                      className="text-[#4A4A6A] hover:text-[#FF6B35] transition-colors">
+                      <X size={11}/>
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>NOMBRE</label>
+                    <input value={t.name} onChange={e => updateTestimonial(i, 'name', e.target.value)}
+                      placeholder="Carlos M." className={inputCls}/>
+                  </div>
+                  <div>
+                    <label className={labelCls}>RESULTADO OBTENIDO</label>
+                    <input value={t.result} onChange={e => updateTestimonial(i, 'result', e.target.value)}
+                      placeholder="$2,000 en 60 días" className={inputCls}/>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>TESTIMONIO</label>
+                  <textarea value={t.text} onChange={e => updateTestimonial(i, 'text', e.target.value)}
+                    placeholder="En 60 días generé mis primeros $2,000 siguiendo el método..."
+                    rows={2}
+                    className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A] transition-colors resize-none"/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Preview resumen */}
+      <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
+        <p className="mono text-[9px] text-[#2E2E4E] tracking-widest mb-3">RESUMEN DE OFERTA CONFIGURADA</p>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Dream Outcome', value: dreamOutcome || '—' },
+            { label: 'Autor carta', value: authorName ? `${authorName} · ${authorTitle}` : '—' },
+            { label: 'Garantía', value: guaranteeDays ? `${guaranteeDays} días` : '—' },
+            { label: 'Valor percibido', value: totalValue > 0 ? `$${totalValue.toLocaleString()}` : '—' },
+            { label: 'Planes', value: plans.filter(p => p.name).length > 0 ? plans.filter(p => p.name).map(p => p.name).join(' · ') : '—' },
+            { label: 'Testimonios', value: testimonials.filter(t => t.name).length > 0 ? `${testimonials.filter(t => t.name).length} configurados` : '—' },
+          ].map(item => (
+            <div key={item.label}>
+              <p className="mono text-[9px] text-[#4A4A6A] mb-1">{item.label.toUpperCase()}</p>
+              <p className="text-xs text-[#E0E0F0] truncate">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
