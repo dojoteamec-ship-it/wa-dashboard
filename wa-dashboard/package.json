@@ -16,6 +16,7 @@
     "recharts": "^2.10.0",
     "date-fns": "^3.3.0",
     "lucide-react": "^0.263.1"
+    "openai": "^4.47.0"
   },
   "devDependencies": {
     "@types/node": "^20",
