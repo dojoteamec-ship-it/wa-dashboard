@@ -12,7 +12,8 @@ import {
   Heart, Flame, Snowflake, Thermometer, Activity, Star, User,
   Plus, ChevronLeft, Calendar, Clock, Filter, Eye, Rocket, Lock, EyeOff,
   Pause, Square, CheckCircle, Info, Search, DollarSign, Target, BookOpen,
-  LayoutDashboard, GitBranch, Radio, Settings, Bell, LogOut, Upload
+  LayoutDashboard, GitBranch, Radio, Settings, Bell, LogOut, Upload,
+  BarChart2, Sliders, TrendingDown, ArrowUp, Minus
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -120,7 +121,7 @@ function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: 
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'config'
+type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'traficker' | 'config'
 
 const SIDEBAR_ITEMS: {
   key: TabType
@@ -133,6 +134,8 @@ const SIDEBAR_ITEMS: {
   { key: 'ventas',     label: 'Ventas',    icon: <DollarSign size={16}/> },
   { key: 'fuentes',    label: 'Fuentes',   icon: <Radio size={16}/> },
   { key: 'campaigns',  label: 'Campañas',  icon: <Send size={16}/> },
+  { key: 'traficker',  label: 'Traficker', icon: <BarChart2 size={16}/> },
+]
 ]
 
 const STATUS_COLOR = (s: string) =>
@@ -1404,7 +1407,7 @@ export default function Dashboard() {
   const [loading,setLoading] = useState(true)
   const [connected,setConnected] = useState(false)
   const [lastUpdate,setLastUpdate] = useState(new Date())
- const [activeTab,setActiveTab] = useState<'overview'|'pipeline'|'psico'|'campaigns'|'fuentes'|'ventas'|'config'>('overview')
+  const [activeTab,setActiveTab] = useState<TabType>('overview')
   const [toasts,setToasts] = useState<Toast[]>([])
   const [leadsPage,setLeadsPage] = useState(1)
   const [campaignsPage,setCampaignsPage] = useState(1)
@@ -1569,13 +1572,14 @@ export default function Dashboard() {
   )
 
  const TAB_TITLES: Record<TabType, string> = {
-    overview:  'Overview',
-    pipeline:  'Pipeline',
-    psico:     'Leads',
-    campaigns: 'Campañas',
-    fuentes:   'Fuentes',
-    ventas:    'Ventas',
-    config:    'Configuración',
+    overview:   'Overview',
+    pipeline:   'Pipeline',
+    psico:      'Leads',
+    campaigns:  'Campañas',
+    fuentes:    'Fuentes',
+    ventas:     'Ventas',
+    traficker:  'Traficker — Calidad de Lead',
+    config:     'Configuración',
   }
   const activeProject = projects.find(p => p.id === activeProjectId) ?? null
 
@@ -1878,6 +1882,14 @@ export default function Dashboard() {
           />
         )}
 
+            {/* ══ TRAFICKER ══ */}
+        {activeTab==='traficker'&&(
+          <TrafickerTab
+            activeProjectId={activeProjectId}
+            projects={projects}
+            onToast={addToast}
+          />
+        )}
         
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
@@ -3901,6 +3913,51 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
             )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ─── TRAFICKER TAB ───────────────────────────────────────────────────────────
+
+function TrafickerTab({
+  activeProjectId,
+  projects,
+  onToast,
+}: {
+  activeProjectId: string | null
+  projects: Project[]
+  onToast: (type: 'success' | 'error' | 'info' | 'warning', msg: string) => void
+}) {
+  if (!activeProjectId) return (
+    <div className="flex items-center justify-center h-64">
+      <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para ver la tabla Traficker</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OPTIMIZACIÓN POR CALIDAD DE LEAD</p>
+          <p className="text-lg font-bold text-[#E0E0F0]">Tabla Traficker</p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E]"
+             style={{ background: '#111118' }}>
+          <Sliders size={11} style={{ color: '#00b0f6' }}/>
+          <span className="mono text-[10px] text-[#4A4A6A]">Cargando datos...</span>
+        </div>
+      </div>
+
+      {/* Placeholder */}
+      <div className="rounded-2xl border border-[#1E1E2E] flex flex-col items-center justify-center py-24 gap-4"
+           style={{ background: '#111118' }}>
+        <BarChart2 size={32} style={{ color: '#1E1E2E' }}/>
+        <p className="mono text-[11px] text-[#4A4A6A] tracking-widest">T2 — Conectando API de datos...</p>
+        <p className="text-xs text-[#2E2E4E] text-center max-w-xs">
+          La tabla dinámica por anuncio (utm_content) se construye en el siguiente paso
+        </p>
       </div>
     </div>
   )
