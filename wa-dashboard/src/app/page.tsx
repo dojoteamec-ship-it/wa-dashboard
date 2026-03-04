@@ -136,7 +136,6 @@ const SIDEBAR_ITEMS: {
   { key: 'campaigns',  label: 'Campañas',  icon: <Send size={16}/> },
   { key: 'traficker',  label: 'Traficker', icon: <BarChart2 size={16}/> },
 ]
-]
 
 const STATUS_COLOR = (s: string) =>
   s === 'active' ? '#00FF94' : s === 'planning' ? '#FFB800' : '#4A4A6A'
