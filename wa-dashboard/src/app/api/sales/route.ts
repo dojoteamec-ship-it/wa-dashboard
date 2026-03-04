@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const [contactResult, utmResult] = await Promise.all([
       supabase
         .from('wa_contacts')
-        .select('id')
+        .select('id, name')
         .eq('phone_number', phone)
         .maybeSingle(),
       supabase
@@ -90,6 +90,44 @@ export async function POST(req: NextRequest) {
         .neq('pipeline_stage', 'comprador') // solo si no es ya comprador
     }
 
+// ── Alerta venta confirmada — Día 14 ──────────────────────────────────────
+    // Fire-and-forget — no bloquea la respuesta
+    ;(async () => {
+      try {
+        const { error: alertError } = await supabase
+          .from('kanshi_alerts')
+          .upsert({
+            project_id,
+            contact_id:   contactResult.data?.id ?? null,
+            alert_type:   'sale',
+            lead_name:    contactResult.data?.name ?? null,
+            lead_phone:   phone,
+            kanshi_score: null,
+            sale_amount:  Number(amount),
+            metadata: {
+              product_name:   product_name ?? null,
+              sale_source,
+              transaction_id: transaction_id ?? null,
+              utm_source:     utmResult.data?.utm_source ?? null,
+              utm_campaign:   utmResult.data?.utm_campaign ?? null,
+              utm_content:    utmResult.data?.utm_content ?? null,
+            },
+          }, {
+            onConflict:       'contact_id,alert_type',
+            ignoreDuplicates: true,   // una sola alerta de venta por lead
+          })
+
+        if (alertError) {
+          console.error('[sales→alerts] Error insertando alerta:', alertError.message)
+        } else {
+          console.log(`[sales→alerts] ✅ Alerta venta creada para ${phone}`)
+        }
+      } catch (e: any) {
+        console.error('[sales→alerts] Error inesperado:', e.message)
+      }
+    })()
+    // ─────────────────────────────────────────────────────────────────────────
+    
     return NextResponse.json({
       success: true,
       sale,
