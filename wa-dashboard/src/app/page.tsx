@@ -1579,6 +1579,7 @@ export default function Dashboard() {
     fuentes:    'Fuentes',
     ventas:     'Ventas',
     traficker:  'Traficker — Calidad de Lead',
+    sala:       'Sala de Control',
     config:     'Configuración',
   }
   const activeProject = projects.find(p => p.id === activeProjectId) ?? null
