@@ -331,7 +331,7 @@ export default async function LandingPage({ params }: { params: { token: string 
                     </div>
                     <span className="mono" style={{ fontSize: 11, color: '#4A4A6A' }}>{plan.billing}</span>
                   </div>
-                  <ul style={{ listStyle: 'none', marginBottom: 32, space: '8px' }}>
+                  <ul style={{ listStyle: 'none', marginBottom: 32 }}>
                     {plan.features.filter(f => f.trim()).map((feat, i) => (
                       <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
                         <span className="checkmark" style={{ flexShrink: 0, marginTop: 2 }}>✓</span>
