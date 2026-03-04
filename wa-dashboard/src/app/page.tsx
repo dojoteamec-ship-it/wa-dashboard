@@ -156,6 +156,8 @@ function Sidebar({
   onLogout: () => void
   onRefresh: () => void
   lastUpdate: Date
+  unreadCount: number
+  onAlertsClick: () => void
 }) {
   return (
     <aside
@@ -276,30 +278,42 @@ function Sidebar({
           )
         })}
 
-        {/* Alertas — futuro (Día 14) */}
-        <div
-          className="w-full flex items-center gap-3 rounded-xl"
-          style={{ padding: '10px 14px', opacity: 0.35, cursor: 'not-allowed' }}
+        {/* Alertas — Día 14 ✅ */}
+        <button
+          onClick={onAlertsClick}
+          className="w-full flex items-center gap-3 rounded-xl transition-all duration-150 text-left relative"
+          style={{ padding: '10px 14px', background: 'transparent', borderLeft: '2px solid transparent', color: '#4A4A6A' }}
+          onMouseEnter={e => {
+            ;(e.currentTarget as HTMLElement).style.background = '#111118'
+            ;(e.currentTarget as HTMLElement).style.color = '#E0E0F0'
+          }}
+          onMouseLeave={e => {
+            ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+            ;(e.currentTarget as HTMLElement).style.color = '#4A4A6A'
+          }}
         >
-          <Bell size={16} style={{ color: '#4A4A6A', flexShrink: 0 }} />
-          <span className="font-medium" style={{ fontSize: '15px', color: '#4A4A6A' }}>
-            Alertas
+          <span style={{ color: 'currentColor', flexShrink: 0 }}>
+            <Bell size={16} />
           </span>
-          <span
-            className="ml-auto mono"
-            style={{
-              fontSize: '9px',
-              color: '#FFB800',
-              background: '#FFB80018',
-              border: '1px solid #FFB80030',
-              borderRadius: '4px',
-              padding: '1px 5px',
-              letterSpacing: '0.08em',
-            }}
-          >
-            PRONTO
-          </span>
-        </div>
+          <span className="font-medium" style={{ fontSize: '15px' }}>Alertas</span>
+          {unreadCount > 0 && (
+            <span
+              className="ml-auto mono font-bold"
+              style={{
+                fontSize: '9px',
+                color: '#0A0A0F',
+                background: '#FF6B35',
+                borderRadius: '999px',
+                padding: '1px 6px',
+                minWidth: '18px',
+                textAlign: 'center',
+                animation: 'pulse 2s infinite',
+              }}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </button>
       </nav>
 
       {/* ── Footer: proyecto activo ── */}
@@ -1170,6 +1184,8 @@ export default function Dashboard() {
   const [leadsPage,setLeadsPage] = useState(1)
   const [campaignsPage,setCampaignsPage] = useState(1)
   const [projects,setProjects] = useState<Project[]>([])
+  const [unreadAlerts, setUnreadAlerts] = useState(0)
+  const [showAlerts, setShowAlerts] = useState(false)
   const [activeProjectId,setActiveProjectId] = useState<string|null>(()=>{
     if(typeof window!=='undefined') return localStorage.getItem('kanshi_active_project')
     return null
@@ -1182,6 +1198,25 @@ export default function Dashboard() {
   },[])
   const removeToast = useCallback((id:string)=>setToasts(p=>p.filter(t=>t.id!==id)),[])
 
+  const fetchUnreadAlerts = useCallback(async () => {
+    if (!activeProjectId) return
+    try {
+      const { count } = await supabase
+        .from('kanshi_alerts')
+        .select('id', { count: 'exact', head: true })
+        .eq('project_id', activeProjectId)
+        .is('read_at', null)
+      setUnreadAlerts(count ?? 0)
+    } catch {}
+  }, [activeProjectId])
+
+  useEffect(() => {
+    if (!authenticated) return
+    fetchUnreadAlerts()
+    const iv = setInterval(fetchUnreadAlerts, 30000)
+    return () => clearInterval(iv)
+  }, [fetchUnreadAlerts, authenticated])
+  
   useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeTab])
   useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeProjectId])
   useEffect(()=>{const s=localStorage.getItem(AUTH_KEY);setAuthenticated(s==='true')},[])
@@ -1331,6 +1366,8 @@ export default function Dashboard() {
         onLogout={() => { localStorage.removeItem(AUTH_KEY); setAuthenticated(false) }}
         onRefresh={fetchData}
         lastUpdate={lastUpdate}
+        unreadCount={unreadAlerts}
+        onAlertsClick={() => setShowAlerts(true)}
       />
 
       {/* ── WORKSPACE ── */}
