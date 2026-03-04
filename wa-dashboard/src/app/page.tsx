@@ -1898,7 +1898,7 @@ export default function Dashboard() {
             activeProjectId={activeProjectId}
             projects={projects}
             leads={leads}
-            onToast={onToast}
+            onToast={addToast}
           />
         )}
             
