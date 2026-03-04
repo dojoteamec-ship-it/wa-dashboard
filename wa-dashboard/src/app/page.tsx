@@ -1886,6 +1886,7 @@ export default function Dashboard() {
           <TrafickerTab
             activeProjectId={activeProjectId}
             projects={projects}
+            leads={leads}
             onToast={addToast}
           />
         )}
@@ -3919,15 +3920,231 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
 
 // ─── TRAFICKER TAB ───────────────────────────────────────────────────────────
 
+interface TrafickerUtmRow {
+  id: string; utm_content: string | null; utm_source: string | null
+  utm_campaign: string | null; phone_number: string
+  registered_at: string; matched_contact_id: string | null
+}
+
+interface TrafickerAdRow {
+  utm_content: string
+  utm_source: string | null
+  utm_campaign: string | null
+  total_leads: number
+  responded: number
+  resp_rate: number
+  avg_score: number | null
+  avg_engagement: number | null
+  qualified_leads: number
+  quiz_completed: number
+  quiz_rate: number
+  seg_frio: number; seg_templado: number; seg_caliente: number; seg_listo: number
+  top_dolor: string | null
+  signal: 'ESCALAR' | 'MANTENER' | 'PAUSAR'
+  signal_reason: string
+  cpl: number | null
+}
+
+const SIGNAL_CFG = {
+  ESCALAR:  { color: '#00FF94', bg: '#00FF9415', icon: '🟢' },
+  MANTENER: { color: '#FFB800', bg: '#FFB80015', icon: '🟡' },
+  PAUSAR:   { color: '#FF6B35', bg: '#FF6B3515', icon: '🔴' },
+}
+
+function exportTrafickerCSV(rows: TrafickerAdRow[]) {
+  const headers = ['ANUNCIO','FUENTE','CAMPAÑA','LEADS','RESPONDIERON','RESP%','SCORE PROM','ENG PROM','CALIFICADOS','QUIZ%','FRÍO','TEMPLADO','CALIENTE','LISTO','TOP DOLOR','SEÑAL','CPL']
+  const lines = rows.map(r => [
+    r.utm_content, r.utm_source ?? '', r.utm_campaign ?? '',
+    r.total_leads, r.responded, r.resp_rate,
+    r.avg_score ?? '', r.avg_engagement ?? '',
+    r.qualified_leads, r.quiz_rate,
+    r.seg_frio, r.seg_templado, r.seg_caliente, r.seg_listo,
+    r.top_dolor ?? '', r.signal, r.cpl ?? ''
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+  const csv = [headers.join(','), ...lines].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = `traficker_${new Date().toISOString().slice(0,10)}.csv`
+  a.click(); URL.revokeObjectURL(url)
+}
+
 function TrafickerTab({
-  activeProjectId,
-  projects,
-  onToast,
+  activeProjectId, projects, leads, onToast,
 }: {
   activeProjectId: string | null
   projects: Project[]
+  leads: Lead[]
   onToast: (type: 'success' | 'error' | 'info' | 'warning', msg: string) => void
 }) {
+  const [utmData, setUtmData]       = useState<TrafickerUtmRow[]>([])
+  const [quizPhones, setQuizPhones] = useState<Set<string>>(new Set())
+  const [loading, setLoading]       = useState(true)
+  const [filterSignal, setFilterSignal] = useState<'TODOS'|'ESCALAR'|'MANTENER'|'PAUSAR'>('TODOS')
+  const [filterMinLeads, setFilterMinLeads] = useState(1)
+  const [sortCol, setSortCol] = useState<keyof TrafickerAdRow>('total_leads')
+  const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc')
+
+  const project  = projects.find(p => p.id === activeProjectId)
+  const adBudget = project?.ad_budget ?? null
+
+  useEffect(() => {
+    if (!activeProjectId) return
+    setLoading(true)
+    const fetchAll = async () => {
+      try {
+        const [utmRes, quizRes] = await Promise.all([
+          supabase
+            .from('utm_tracking')
+            .select('id,utm_content,utm_source,utm_campaign,phone_number,registered_at,matched_contact_id')
+            .eq('project_id', activeProjectId)
+            .order('registered_at', { ascending: true }),
+          supabase
+            .from('lead_quiz_responses')
+            .select('phone_number')
+            .eq('project_id', activeProjectId),
+        ])
+        setUtmData(utmRes.data || [])
+        setQuizPhones(new Set((quizRes.data || []).map((q: { phone_number: string }) => q.phone_number)))
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAll()
+  }, [activeProjectId])
+
+  // Maps para cruzar leads
+  const leadByPhone = useMemo(() => {
+    const m: Record<string, Lead> = {}
+    for (const l of leads) m[l.phone_number] = l
+    return m
+  }, [leads])
+
+  const leadById = useMemo(() => {
+    const m: Record<string, Lead> = {}
+    for (const l of leads) m[l.id] = l
+    return m
+  }, [leads])
+
+  // T2 — Agregación por utm_content
+  const allRows = useMemo<TrafickerAdRow[]>(() => {
+    if (utmData.length === 0) return []
+    const grouped: Record<string, TrafickerUtmRow[]> = {}
+    for (const row of utmData) {
+      const key = row.utm_content || '(sin anuncio)'
+      if (!grouped[key]) grouped[key] = []
+      grouped[key].push(row)
+    }
+    const totalLeads = utmData.length
+
+    return Object.entries(grouped).map(([content, rows]) => {
+      const n = rows.length
+      const enriched = rows.map(r => ({
+        utm: r,
+        lead: r.matched_contact_id ? leadById[r.matched_contact_id] : leadByPhone[r.phone_number],
+      }))
+
+      // Respondieron = engagement_score > 0 (interactuaron con SAM)
+      const responded   = enriched.filter(e => (e.lead?.engagement_score ?? 0) > 0).length
+      const respRate    = n > 0 ? Math.round((responded / n) * 100) : 0
+
+      const scores      = enriched.map(e => e.lead?.kanshi_score).filter((s): s is number => typeof s === 'number' && s > 0)
+      const avgScore    = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null
+
+      const engs        = enriched.map(e => e.lead?.engagement_score).filter((s): s is number => typeof s === 'number')
+      const avgEng      = engs.length > 0 ? Math.round((engs.reduce((a,b)=>a+b,0)/engs.length)*10)/10 : null
+
+      const qualifiedLeads = scores.filter(s => s >= 60).length
+
+      // Segmentos
+      let seg_frio=0, seg_templado=0, seg_caliente=0, seg_listo=0
+      for (const e of enriched) {
+        const s = e.lead?.kanshi_segment
+        if (s==='listo') seg_listo++
+        else if (s==='caliente') seg_caliente++
+        else if (s==='templado') seg_templado++
+        else seg_frio++
+      }
+
+      const quizCompleted = rows.filter(r => quizPhones.has(r.phone_number)).length
+      const quizRate      = n > 0 ? Math.round((quizCompleted/n)*100) : 0
+
+      // Top dolor
+      const dolorTally: Record<string, number> = {}
+      for (const e of enriched) {
+        const d = e.lead?.dolor_declarado
+        if (d && d.length > 2) { const k=d.slice(0,55); dolorTally[k]=(dolorTally[k]||0)+1 }
+      }
+      const topDolor = Object.entries(dolorTally).sort((a,b)=>b[1]-a[1])[0]?.[0] ?? null
+
+      const cpl = adBudget && totalLeads > 0
+        ? Math.round((adBudget / totalLeads) * n * 100) / 100
+        : null
+
+      // T5 — Señal
+      let signal: 'ESCALAR'|'MANTENER'|'PAUSAR' = 'MANTENER'
+      let signal_reason = ''
+      if (n < 3) {
+        signal = 'MANTENER'; signal_reason = 'Pocos datos (<3 leads)'
+      } else if (respRate >= 55 && (avgScore ?? 0) >= 50) {
+        signal = 'ESCALAR'; signal_reason = `Resp ${respRate}% · Score ${avgScore}`
+      } else if (respRate < 20 || (avgScore !== null && avgScore < 20)) {
+        signal = 'PAUSAR'; signal_reason = `Resp ${respRate}% · Score ${avgScore ?? 'N/A'}`
+      } else {
+        signal = 'MANTENER'; signal_reason = `Resp ${respRate}% · Score ${avgScore ?? 'N/A'}`
+      }
+
+      return {
+        utm_content: content, utm_source: rows[0].utm_source, utm_campaign: rows[0].utm_campaign,
+        total_leads: n, responded, resp_rate: respRate,
+        avg_score: avgScore, avg_engagement: avgEng, qualified_leads: qualifiedLeads,
+        quiz_completed: quizCompleted, quiz_rate: quizRate,
+        seg_frio, seg_templado, seg_caliente, seg_listo,
+        top_dolor: topDolor, signal, signal_reason, cpl,
+      }
+    }).sort((a,b) => b.total_leads - a.total_leads)
+  }, [utmData, quizPhones, leadById, leadByPhone, adBudget])
+
+  // T4 — Filtros client-side
+  const filteredRows = useMemo(() => {
+    let r = allRows
+    if (filterSignal !== 'TODOS') r = r.filter(row => row.signal === filterSignal)
+    r = r.filter(row => row.total_leads >= filterMinLeads)
+    return [...r].sort((a, b) => {
+      const av = a[sortCol] ?? 0
+      const bv = b[sortCol] ?? 0
+      if (typeof av === 'string' && typeof bv === 'string')
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
+      return sortDir === 'asc' ? Number(av) - Number(bv) : Number(bv) - Number(av)
+    })
+  }, [allRows, filterSignal, filterMinLeads, sortCol, sortDir])
+
+  const toggleSort = (col: keyof TrafickerAdRow) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('desc') }
+  }
+
+  // T6 — Resumen ejecutivo (calculado desde datos)
+  const summary = useMemo(() => {
+    if (allRows.length === 0) return null
+    const totalLeads   = allRows.reduce((a,r) => a+r.total_leads, 0)
+    const totalResp    = allRows.reduce((a,r) => a+r.responded, 0)
+    const avgRespRate  = totalLeads > 0 ? Math.round((totalResp/totalLeads)*100) : 0
+    const scores       = allRows.filter(r => r.avg_score !== null).map(r => r.avg_score!)
+    const avgScore     = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null
+    const totalQual    = allRows.reduce((a,r) => a+r.qualified_leads, 0)
+    const escalar      = allRows.filter(r => r.signal==='ESCALAR').length
+    const pausar       = allRows.filter(r => r.signal==='PAUSAR').length
+    const topAd        = [...allRows].sort((a,b) => (b.avg_score??0)-(a.avg_score??0))[0]
+    return { totalLeads, avgRespRate, avgScore, totalQual, escalar, pausar, topAd }
+  }, [allRows])
+
+  const SortIcon = ({ col }: { col: keyof TrafickerAdRow }) => (
+    <span className="ml-1 opacity-40" style={{ color: sortCol===col ? '#00b0f6' : undefined, opacity: sortCol===col ? 1 : 0.3 }}>
+      {sortCol===col ? (sortDir==='asc' ? '↑' : '↓') : '↕'}
+    </span>
+  )
+
   if (!activeProjectId) return (
     <div className="flex items-center justify-center h-64">
       <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para ver la tabla Traficker</p>
@@ -3935,29 +4152,258 @@ function TrafickerTab({
   )
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
+
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
           <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OPTIMIZACIÓN POR CALIDAD DE LEAD</p>
           <p className="text-lg font-bold text-[#E0E0F0]">Tabla Traficker</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E]"
-             style={{ background: '#111118' }}>
-          <Sliders size={11} style={{ color: '#00b0f6' }}/>
-          <span className="mono text-[10px] text-[#4A4A6A]">Cargando datos...</span>
+        <div className="flex items-center gap-2">
+          {loading && (
+            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6' }}/>
+          )}
+          <button
+            onClick={() => exportTrafickerCSV(filteredRows)}
+            disabled={filteredRows.length === 0}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all disabled:opacity-30"
+            style={{ background: '#111118' }}
+          >
+            <TrendingDown size={11}/> EXPORTAR CSV
+          </button>
         </div>
       </div>
 
-      {/* Placeholder */}
-      <div className="rounded-2xl border border-[#1E1E2E] flex flex-col items-center justify-center py-24 gap-4"
-           style={{ background: '#111118' }}>
-        <BarChart2 size={32} style={{ color: '#1E1E2E' }}/>
-        <p className="mono text-[11px] text-[#4A4A6A] tracking-widest">T2 — Conectando API de datos...</p>
-        <p className="text-xs text-[#2E2E4E] text-center max-w-xs">
-          La tabla dinámica por anuncio (utm_content) se construye en el siguiente paso
-        </p>
+      {/* ── T6: Resumen ejecutivo ── */}
+      {summary && !loading && (
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+          {[
+            { label: 'TOTAL LEADS',       value: summary.totalLeads,       color: '#00b0f6', fmt: (v: number) => v.toString() },
+            { label: 'TASA RESPUESTA',    value: summary.avgRespRate,      color: summary.avgRespRate >= 40 ? '#00FF94' : '#FFB800', fmt: (v: number) => `${v}%` },
+            { label: 'SCORE PROMEDIO',    value: summary.avgScore ?? 0,    color: (summary.avgScore??0)>=50?'#00FF94':(summary.avgScore??0)>=30?'#FFB800':'#FF6B35', fmt: (v: number) => v > 0 ? v.toString() : '—' },
+            { label: 'LEADS CALIFICADOS', value: summary.totalQual,        color: '#C084FC', fmt: (v: number) => v.toString() },
+            { label: 'ANUNCIOS ESCALAR',  value: summary.escalar,          color: '#00FF94', fmt: (v: number) => `${v} 🟢` },
+            { label: 'ANUNCIOS PAUSAR',   value: summary.pausar,           color: '#FF6B35', fmt: (v: number) => `${v} 🔴` },
+          ].map(kpi => (
+            <div key={kpi.label} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-1">{kpi.label}</p>
+              <p className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.fmt(kpi.value)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── T4: Filtros ── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1 p-1 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+          {(['TODOS','ESCALAR','MANTENER','PAUSAR'] as const).map(opt => (
+            <button key={opt} onClick={() => setFilterSignal(opt)}
+              className="px-3 py-1.5 rounded-lg mono text-[10px] font-bold transition-all"
+              style={{
+                background: filterSignal===opt ? (opt==='TODOS'?'#1E1E2E':SIGNAL_CFG[opt as 'ESCALAR'|'MANTENER'|'PAUSAR']?.bg ?? '#1E1E2E') : 'transparent',
+                color: filterSignal===opt ? (opt==='TODOS'?'#E0E0F0':SIGNAL_CFG[opt as 'ESCALAR'|'MANTENER'|'PAUSAR']?.color ?? '#E0E0F0') : '#4A4A6A',
+              }}>
+              {opt}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+          <span className="mono text-[10px] text-[#4A4A6A]">MIN LEADS</span>
+          <select value={filterMinLeads} onChange={e => setFilterMinLeads(Number(e.target.value))}
+            className="bg-transparent mono text-[10px] text-[#E0E0F0] outline-none">
+            {[1,3,5,10,20].map(n => <option key={n} value={n} style={{ background: '#111118' }}>{n}+</option>)}
+          </select>
+        </div>
+        <span className="mono text-[10px] text-[#4A4A6A]">
+          {filteredRows.length} de {allRows.length} anuncios
+        </span>
       </div>
+
+      {/* ── T3: Tabla dinámica ── */}
+      {loading ? (
+        <div className="rounded-2xl border border-[#1E1E2E] flex items-center justify-center py-20" style={{ background: '#111118' }}>
+          <div className="text-center space-y-3">
+            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: '#00b0f6' }}/>
+            <p className="mono text-[11px] text-[#4A4A6A] tracking-widest">CARGANDO DATOS DE ANUNCIOS...</p>
+          </div>
+        </div>
+      ) : filteredRows.length === 0 ? (
+        <div className="rounded-2xl border border-[#1E1E2E] flex flex-col items-center justify-center py-20 gap-4" style={{ background: '#111118' }}>
+          <BarChart2 size={28} style={{ color: '#2E2E4E' }}/>
+          <p className="mono text-[11px] text-[#4A4A6A]">
+            {allRows.length === 0 ? 'Sin datos UTM para este proyecto' : 'Sin anuncios con los filtros actuales'}
+          </p>
+          {allRows.length === 0 && (
+            <p className="mono text-[9px] text-[#2E2E4E] text-center max-w-xs">
+              Los leads deben llegar con utm_content en la URL para aparecer aquí
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full" style={{ minWidth: '900px' }}>
+              <thead>
+                <tr className="border-b border-[#1E1E2E]" style={{ background: '#0A0A0F' }}>
+                  {[
+                    { label: 'SEÑAL',         col: 'signal' as keyof TrafickerAdRow },
+                    { label: 'ANUNCIO',        col: 'utm_content' as keyof TrafickerAdRow },
+                    { label: 'LEADS',          col: 'total_leads' as keyof TrafickerAdRow },
+                    { label: 'RESP%',          col: 'resp_rate' as keyof TrafickerAdRow },
+                    { label: 'SCORE',          col: 'avg_score' as keyof TrafickerAdRow },
+                    { label: 'ENGAGEMENT',     col: 'avg_engagement' as keyof TrafickerAdRow },
+                    { label: 'CALIFICADOS',    col: 'qualified_leads' as keyof TrafickerAdRow },
+                    { label: 'QUIZ%',          col: 'quiz_rate' as keyof TrafickerAdRow },
+                    { label: 'SEGMENTOS',      col: null },
+                    { label: 'DOLOR TOP',      col: null },
+                    { label: 'CPL EST.',       col: 'cpl' as keyof TrafickerAdRow },
+                  ].map((h, i) => (
+                    <th key={i}
+                      onClick={h.col ? () => toggleSort(h.col!) : undefined}
+                      className={`px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap ${h.col ? 'cursor-pointer hover:text-[#E0E0F0] select-none' : ''}`}
+                      style={{ color: h.col && sortCol===h.col ? '#00b0f6' : undefined }}>
+                      {h.label}{h.col && <SortIcon col={h.col}/>}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row, i) => {
+                  const sig = SIGNAL_CFG[row.signal]
+                  const segTotal = row.seg_frio + row.seg_templado + row.seg_caliente + row.seg_listo || 1
+                  return (
+                    <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#0D0D14] transition-colors">
+
+                      {/* Señal */}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="mono text-[9px] font-bold px-2 py-1 rounded-lg whitespace-nowrap"
+                            style={{ color: sig.color, background: sig.bg, border: `1px solid ${sig.color}30` }}>
+                            {sig.icon} {row.signal}
+                          </span>
+                          <span className="mono text-[8px] text-[#4A4A6A] max-w-[90px] leading-tight">{row.signal_reason}</span>
+                        </div>
+                      </td>
+
+                      {/* Anuncio */}
+                      <td className="px-4 py-3 max-w-[180px]">
+                        <p className="text-xs font-medium text-[#E0E0F0] truncate" title={row.utm_content}>{row.utm_content}</p>
+                        <p className="mono text-[9px] text-[#4A4A6A] truncate">{row.utm_source ?? '—'} · {row.utm_campaign ?? '—'}</p>
+                      </td>
+
+                      {/* Leads */}
+                      <td className="px-4 py-3">
+                        <p className="mono text-sm font-bold text-[#E0E0F0]">{row.total_leads}</p>
+                      </td>
+
+                      {/* Tasa respuesta */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <p className="mono text-sm font-bold" style={{ color: row.resp_rate>=50?'#00FF94':row.resp_rate>=25?'#FFB800':'#FF6B35' }}>
+                            {row.resp_rate}%
+                          </p>
+                          <div className="h-1 w-14 rounded-full bg-[#1E1E2E]">
+                            <div className="h-full rounded-full" style={{ width:`${row.resp_rate}%`, background: row.resp_rate>=50?'#00FF94':row.resp_rate>=25?'#FFB800':'#FF6B35' }}/>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Score */}
+                      <td className="px-4 py-3">
+                        {row.avg_score !== null ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 mono text-[10px] font-bold"
+                              style={{
+                                borderColor: row.avg_score>=76?'#00FF94':row.avg_score>=51?'#FF6B35':row.avg_score>=26?'#FFB800':'#00b0f6',
+                                color:       row.avg_score>=76?'#00FF94':row.avg_score>=51?'#FF6B35':row.avg_score>=26?'#FFB800':'#00b0f6',
+                              }}>
+                              {row.avg_score}
+                            </div>
+                          </div>
+                        ) : <span className="mono text-[10px] text-[#2E2E4E]">—</span>}
+                      </td>
+
+                      {/* Engagement */}
+                      <td className="px-4 py-3">
+                        <span className="mono text-sm font-bold" style={{ color: (row.avg_engagement??0)>=5?'#00FF94':(row.avg_engagement??0)>=3?'#FFB800':'#4A4A6A' }}>
+                          {row.avg_engagement !== null ? `★${row.avg_engagement}` : '—'}
+                        </span>
+                      </td>
+
+                      {/* Calificados */}
+                      <td className="px-4 py-3">
+                        <p className="mono text-sm font-bold" style={{ color: '#C084FC' }}>{row.qualified_leads}</p>
+                        <p className="mono text-[9px] text-[#4A4A6A]">score ≥ 60</p>
+                      </td>
+
+                      {/* Quiz */}
+                      <td className="px-4 py-3">
+                        <p className="mono text-sm font-bold" style={{ color: row.quiz_rate>=50?'#00FF94':row.quiz_rate>=25?'#FFB800':'#4A4A6A' }}>
+                          {row.quiz_rate}%
+                        </p>
+                        <p className="mono text-[9px] text-[#4A4A6A]">{row.quiz_completed} leads</p>
+                      </td>
+
+                      {/* Segmentos mini-bar */}
+                      <td className="px-4 py-3">
+                        <div className="flex h-2 w-20 rounded-full overflow-hidden gap-px">
+                          {row.seg_listo    > 0 && <div style={{ flex: row.seg_listo,    background: '#00FF94' }} title={`Listo: ${row.seg_listo}`}/>}
+                          {row.seg_caliente > 0 && <div style={{ flex: row.seg_caliente, background: '#FF6B35' }} title={`Caliente: ${row.seg_caliente}`}/>}
+                          {row.seg_templado > 0 && <div style={{ flex: row.seg_templado, background: '#FFB800' }} title={`Templado: ${row.seg_templado}`}/>}
+                          {row.seg_frio     > 0 && <div style={{ flex: row.seg_frio,     background: '#00b0f6' }} title={`Frío: ${row.seg_frio}`}/>}
+                        </div>
+                        <p className="mono text-[8px] text-[#4A4A6A] mt-1">
+                          {row.seg_listo > 0 && <span style={{ color: '#00FF94' }}>{row.seg_listo}L </span>}
+                          {row.seg_caliente > 0 && <span style={{ color: '#FF6B35' }}>{row.seg_caliente}C </span>}
+                          {row.seg_templado > 0 && <span style={{ color: '#FFB800' }}>{row.seg_templado}T </span>}
+                          {row.seg_frio > 0 && <span style={{ color: '#00b0f6' }}>{row.seg_frio}F</span>}
+                        </p>
+                      </td>
+
+                      {/* Dolor top */}
+                      <td className="px-4 py-3 max-w-[160px]">
+                        {row.top_dolor ? (
+                          <p className="text-[11px] text-[#E0E0F0] truncate" title={row.top_dolor}>{row.top_dolor}</p>
+                        ) : (
+                          <span className="mono text-[9px] text-[#2E2E4E]">sin datos</span>
+                        )}
+                      </td>
+
+                      {/* CPL estimado */}
+                      <td className="px-4 py-3">
+                        {row.cpl !== null ? (
+                          <p className="mono text-sm font-bold text-[#FFB800]">${row.cpl}</p>
+                        ) : (
+                          <span className="mono text-[9px] text-[#2E2E4E]">sin presupuesto</span>
+                        )}
+                      </td>
+
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer de tabla */}
+          <div className="px-5 py-3 border-t border-[#1E1E2E] flex items-center justify-between"
+               style={{ background: '#0A0A0F' }}>
+            <p className="mono text-[9px] text-[#4A4A6A]">
+              {filteredRows.reduce((a,r) => a+r.total_leads, 0)} leads · {filteredRows.length} anuncios
+              {adBudget && ` · Presupuesto $${adBudget.toLocaleString()}`}
+            </p>
+            <div className="flex items-center gap-4">
+              {(['listo','caliente','templado','frio'] as const).map(s => (
+                <div key={s} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full" style={{ background: s==='listo'?'#00FF94':s==='caliente'?'#FF6B35':s==='templado'?'#FFB800':'#00b0f6' }}/>
+                  <span className="mono text-[9px] text-[#4A4A6A] capitalize">{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
