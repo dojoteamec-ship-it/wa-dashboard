@@ -121,7 +121,7 @@ function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: 
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'traficker' | 'config'
+type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'traficker' | 'sala' | 'config'
 
 const SIDEBAR_ITEMS: {
   key: TabType
@@ -135,6 +135,7 @@ const SIDEBAR_ITEMS: {
   { key: 'fuentes',    label: 'Fuentes',   icon: <Radio size={16}/> },
   { key: 'campaigns',  label: 'Campañas',  icon: <Send size={16}/> },
   { key: 'traficker',  label: 'Traficker', icon: <BarChart2 size={16}/> },
+  { key: 'sala',       label: 'Sala Control', icon: <Zap size={16}/> },
 ]
 
 const STATUS_COLOR = (s: string) =>
@@ -1890,7 +1891,16 @@ export default function Dashboard() {
             onToast={addToast}
           />
         )}
-        
+
+        {activeTab === 'sala' && (
+          <SalaDeControlTab
+            activeProjectId={activeProjectId}
+            projects={projects}
+            leads={leads}
+            onToast={onToast}
+          />
+        )}
+            
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
           <CredentialsVault
@@ -3914,6 +3924,484 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ─── SALA DE CONTROL TAB ─────────────────────────────────────────────────────
+
+interface SalaSale {
+  id: string
+  phone_number: string
+  amount: number
+  currency: string
+  sale_date: string
+  sale_source: string
+  utm_campaign: string | null
+  project_id: string | null
+  wa_contacts?: { name: string; kanshi_score: number; kanshi_segment: string } | null
+}
+
+function SalaDeControlTab({
+  activeProjectId,
+  projects,
+  leads,
+  onToast,
+}: {
+  activeProjectId: string | null
+  projects: Project[]
+  leads: Lead[]
+  onToast: (t: Toast) => void
+}) {
+  const [sales, setSales] = useState<SalaSale[]>([])
+  const [loading, setLoading] = useState(false)
+  const [now, setNow] = useState(new Date())
+
+  const project = projects.find(p => p.id === activeProjectId) || null
+
+  // Tick cada segundo para countdown
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  // Fetch ventas del proyecto
+  const fetchSales = useCallback(async () => {
+    if (!activeProjectId) return
+    setLoading(true)
+    try {
+      const { data } = await supabase
+        .from('kanshi_sales')
+        .select('*, wa_contacts(name, kanshi_score, kanshi_segment)')
+        .eq('project_id', activeProjectId)
+        .order('sale_date', { ascending: false })
+      setSales(data || [])
+    } catch (e) {
+      console.error('SalaDeControl fetch error:', e)
+    } finally {
+      setLoading(false)
+    }
+  }, [activeProjectId])
+
+  useEffect(() => { fetchSales() }, [fetchSales])
+
+  // Realtime — escucha INSERT en kanshi_sales
+  useEffect(() => {
+    if (!activeProjectId) return
+    const channel = supabase
+      .channel('sala-control-sales')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'kanshi_sales', filter: `project_id=eq.${activeProjectId}` },
+        (payload) => {
+          const newSale = payload.new as SalaSale
+          setSales(prev => [newSale, ...prev])
+          onToast({ id: Date.now().toString(), type: 'success', message: `🎉 ¡Nueva venta! $${newSale.amount.toLocaleString()}` })
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [activeProjectId, onToast])
+
+  // ── Cart timing ──
+  const cartOpen  = project?.cart_open  ? new Date(project.cart_open)  : null
+  const cartClose = project?.cart_close ? new Date(project.cart_close) : null
+  const isCartOpen   = !!(cartOpen && cartClose && now >= cartOpen && now <= cartClose)
+  const isCartFuture = !!(cartOpen && now < cartOpen)
+
+  const formatCountdown = (target: Date) => {
+    const diff = target.getTime() - now.getTime()
+    if (diff <= 0) return '00:00:00'
+    const totalSecs = Math.floor(diff / 1000)
+    const d = Math.floor(totalSecs / 86400)
+    const h = Math.floor((totalSecs % 86400) / 3600)
+    const m = Math.floor((totalSecs % 3600) / 60)
+    const s = totalSecs % 60
+    if (d > 0) return `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+  }
+
+  // ── KPIs ──
+  const totalRevenue = sales.reduce((sum, s) => sum + s.amount, 0)
+  const totalSales   = sales.length
+  const salesGoal    = project?.sales_goal || 0
+  const revenueGoal  = salesGoal * (project?.product_price || 0)
+  const progressPct  = salesGoal > 0 ? Math.min((totalSales / salesGoal) * 100, 100) : 0
+
+  // ── Velocity por hora ──
+  const velocityData = useMemo(() => {
+    if (!cartOpen || !isCartOpen) return []
+    const hoursElapsed = Math.max(1, Math.ceil((now.getTime() - cartOpen.getTime()) / 3600000))
+    return Array.from({ length: Math.min(hoursElapsed, 48) }, (_, i) => {
+      const slotStart = new Date(cartOpen.getTime() + i * 3600000)
+      const slotEnd   = new Date(slotStart.getTime() + 3600000)
+      const slotSales = sales.filter(s => {
+        const sd = new Date(s.sale_date)
+        return sd >= slotStart && sd < slotEnd
+      })
+      return {
+        hour:    `${String(slotStart.getHours()).padStart(2,'0')}h`,
+        ventas:  slotSales.length,
+        revenue: slotSales.reduce((sum, s) => sum + s.amount, 0),
+      }
+    })
+  }, [sales, cartOpen, isCartOpen, now])
+
+  // ── Velocity actual (últimos 60 min) ──
+  const currentVelocity = useMemo(() => {
+    const cutoff = new Date(now.getTime() - 3600000)
+    return sales.filter(s => new Date(s.sale_date) >= cutoff).length
+  }, [sales, now])
+
+  // ── Proyección al cierre ──
+  const projectedSales = useMemo(() => {
+    if (!cartOpen || !cartClose || !isCartOpen || totalSales === 0) return 0
+    const elapsed = (now.getTime() - cartOpen.getTime()) / 3600000
+    const total   = (cartClose.getTime() - cartOpen.getTime()) / 3600000
+    if (elapsed <= 0) return 0
+    return Math.round((totalSales / elapsed) * total)
+  }, [sales, cartOpen, cartClose, isCartOpen, now, totalSales])
+
+  // ── Leads listos sin comprar ──
+  const buyerPhones = useMemo(() => new Set(sales.map(s => s.phone_number)), [sales])
+  const leadsReady  = useMemo(() =>
+    leads
+      .filter(l => (l.kanshi_score || 0) >= 75 && !buyerPhones.has(l.phone_number))
+      .sort((a, b) => (b.kanshi_score || 0) - (a.kanshi_score || 0)),
+    [leads, buyerPhones]
+  )
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER: Sin proyecto
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!project) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <span className="text-5xl">🏯</span>
+        <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para activar la Sala de Control</p>
+      </div>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER: Carrito futuro — STANDBY
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (isCartFuture && cartOpen) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-8">
+        <div className="text-center space-y-3">
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CARRITO ABRE EN</p>
+          <p className="text-6xl font-bold tabular-nums tracking-tight" style={{ color: '#00b0f6', fontFamily: 'monospace' }}>
+            {formatCountdown(cartOpen)}
+          </p>
+          <p className="mono text-[10px] text-[#4A4A6A]">
+            {format(cartOpen, "dd 'de' MMMM yyyy · HH:mm")}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#FFB800]/30"
+          style={{ background: 'rgba(255,184,0,0.06)' }}>
+          <div className="w-2 h-2 rounded-full bg-[#FFB800] animate-pulse"/>
+          <span className="mono text-[10px] text-[#FFB800] tracking-widest">SALA EN STANDBY — LISTA PARA ACTIVARSE</span>
+        </div>
+        {/* Meta preview */}
+        <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+          <div className="rounded-xl border border-[#1E1E2E] p-4 text-center" style={{ background: '#111118' }}>
+            <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mb-1">META VENTAS</p>
+            <p className="text-xl font-bold text-[#E0E0F0]">{salesGoal > 0 ? salesGoal : '—'}</p>
+          </div>
+          <div className="rounded-xl border border-[#1E1E2E] p-4 text-center" style={{ background: '#111118' }}>
+            <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mb-1">LEADS LISTOS</p>
+            <p className="text-xl font-bold" style={{ color: leadsReady.length > 0 ? '#FFB800' : '#4A4A6A' }}>
+              {leadsReady.length}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER: Sin fechas configuradas
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!cartOpen && !cartClose) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Lock size={12} className="text-[#4A4A6A]"/>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">SALA DE CONTROL — SIN FECHAS CONFIGURADAS</p>
+        </div>
+        <div className="rounded-2xl border border-[#1E1E2E] p-10 flex flex-col items-center gap-4" style={{ background: '#111118' }}>
+          <span className="text-4xl">🔒</span>
+          <p className="mono text-[11px] text-[#4A4A6A] text-center">
+            Configura <span className="text-[#00b0f6]">Cart Open</span> y <span className="text-[#00b0f6]">Cart Close</span> en el proyecto para activar la Sala de Control
+          </p>
+          <p className="mono text-[9px] text-[#2E2E4E]">Configuración del proyecto → Fechas de carrito</p>
+        </div>
+        {/* Resumen si hay ventas de todos modos */}
+        {totalSales > 0 && (
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: 'VENTAS TOTALES', value: totalSales, color: '#00FF94' },
+              { label: 'INGRESOS', value: `$${totalRevenue.toLocaleString()}`, color: '#00b0f6' },
+              { label: 'TICKET PROM.', value: totalSales > 0 ? `$${Math.round(totalRevenue/totalSales).toLocaleString()}` : '—', color: '#FFB800' },
+            ].map(k => (
+              <div key={k.label} className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
+                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-2">{k.label}</p>
+                <p className="text-2xl font-bold" style={{ color: k.color }}>{k.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER: Post-carrito (cerrado)
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!isCartOpen && !isCartFuture) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#4A4A6A]"/>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">SALA DE CONTROL — CARRITO CERRADO</p>
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: 'VENTAS FINALES', value: totalSales, sub: `meta ${salesGoal}`, color: '#00FF94' },
+            { label: 'INGRESOS', value: `$${totalRevenue.toLocaleString()}`, sub: `meta $${revenueGoal.toLocaleString()}`, color: '#00b0f6' },
+            { label: 'TICKET PROM.', value: totalSales > 0 ? `$${Math.round(totalRevenue/totalSales).toLocaleString()}` : '—', sub: `precio: $${project.product_price?.toLocaleString() || '—'}`, color: '#FFB800' },
+            { label: 'CUMPLIMIENTO', value: `${Math.round(progressPct)}%`, sub: salesGoal > 0 ? (progressPct >= 100 ? '🎉 Meta alcanzada' : 'de meta') : 'sin meta', color: progressPct >= 100 ? '#00FF94' : '#FFB800' },
+          ].map(k => (
+            <div key={k.label} className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-2">{k.label}</p>
+              <p className="text-2xl font-bold" style={{ color: k.color }}>{k.value}</p>
+              <p className="mono text-[9px] text-[#4A4A6A] mt-1">{k.sub}</p>
+            </div>
+          ))}
+        </div>
+        {velocityData.length > 0 && (
+          <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">VELOCIDAD DE VENTAS — HISTORIAL DEL CARRITO</p>
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={velocityData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false}/>
+                <Tooltip contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8 }}
+                  labelStyle={{ color: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }}
+                  itemStyle={{ color: '#00FF94', fontSize: 10, fontFamily: 'monospace' }}
+                  formatter={(v: number) => [`${v} ventas`, '']}/>
+                <Bar dataKey="ventas" fill="#00FF94" radius={[4,4,0,0]} maxBarSize={32} opacity={0.6}/>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER: ★ CARRITO ABIERTO — SALA ACTIVA ★
+  // ─────────────────────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-5">
+
+      {/* Header LIVE */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#00FF94] animate-pulse"/>
+          <p className="mono text-[11px] text-[#E0E0F0] tracking-widest font-bold">SALA DE CONTROL</p>
+          <span className="mono text-[9px] px-2.5 py-0.5 rounded-full border border-[#00FF94]/30 text-[#00FF94]"
+            style={{ background: 'rgba(0,255,148,0.08)' }}>
+            CARRITO ABIERTO · EN VIVO
+          </span>
+        </div>
+        {cartClose && (
+          <div className="flex items-center gap-2">
+            <Clock size={12} className="text-[#FF6B35]"/>
+            <p className="mono text-[10px] text-[#4A4A6A]">CIERRA EN</p>
+            <p className="mono text-sm font-bold tabular-nums tracking-tight" style={{ color: '#FF6B35', fontFamily: 'monospace' }}>
+              {formatCountdown(cartClose)}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* KPIs 5 columnas */}
+      <div className="grid grid-cols-5 gap-3">
+        {[
+          {
+            label: 'VENTAS',
+            value: `${totalSales}${salesGoal > 0 ? ` / ${salesGoal}` : ''}`,
+            sub: salesGoal > 0 ? `${Math.round(progressPct)}% completado` : 'sin meta',
+            color: '#00FF94', icon: '🎯', progress: salesGoal > 0 ? progressPct : null,
+          },
+          {
+            label: 'INGRESOS',
+            value: `$${totalRevenue.toLocaleString()}`,
+            sub: revenueGoal > 0 ? `meta $${revenueGoal.toLocaleString()}` : '',
+            color: '#00FF94', icon: '💰', progress: null,
+          },
+          {
+            label: 'TICKET PROM.',
+            value: totalSales > 0 ? `$${Math.round(totalRevenue / totalSales).toLocaleString()}` : '—',
+            sub: project.product_price ? `precio $${project.product_price.toLocaleString()}` : '',
+            color: '#FFB800', icon: '🎫', progress: null,
+          },
+          {
+            label: 'VELOCIDAD',
+            value: `${currentVelocity}/h`,
+            sub: 'última hora',
+            color: currentVelocity > 0 ? '#00b0f6' : '#4A4A6A', icon: '⚡', progress: null,
+          },
+          {
+            label: 'PROYECCIÓN',
+            value: projectedSales > 0 ? `~${projectedSales}` : '—',
+            sub: 'ventas al cierre',
+            color: (salesGoal > 0 && projectedSales >= salesGoal) ? '#00FF94' : '#FFB800', icon: '🔮', progress: null,
+          },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-2xl border border-[#1E1E2E] p-4 relative overflow-hidden" style={{ background: '#111118' }}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="mono text-[8px] text-[#4A4A6A] tracking-widest">{kpi.label}</p>
+              <span className="text-sm">{kpi.icon}</span>
+            </div>
+            <p className="text-xl font-bold tabular-nums" style={{ color: kpi.color }}>{kpi.value}</p>
+            {kpi.sub && <p className="mono text-[8px] text-[#4A4A6A] mt-0.5">{kpi.sub}</p>}
+            {kpi.progress !== null && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E2E]">
+                <div className="h-full transition-all duration-1000" style={{ width: `${kpi.progress}%`, background: '#00FF94' }}/>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Velocity + Feed */}
+      <div className="grid grid-cols-2 gap-5">
+
+        {/* Velocity chart */}
+        <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
+          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">VENTAS POR HORA</p>
+          {velocityData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={velocityData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false}/>
+                <Tooltip
+                  contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8 }}
+                  labelStyle={{ color: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }}
+                  itemStyle={{ color: '#00FF94', fontSize: 10, fontFamily: 'monospace' }}
+                  formatter={(v: number) => [`${v} ventas`, '']}
+                />
+                <Bar dataKey="ventas" radius={[4,4,0,0]} maxBarSize={32}>
+                  {velocityData.map((_, i) => (
+                    <Cell
+                      key={i}
+                      fill={i === velocityData.length - 1 ? '#00b0f6' : '#00FF94'}
+                      opacity={i === velocityData.length - 1 ? 1 : 0.65}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-40 gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse"/>
+              <p className="mono text-[10px] text-[#4A4A6A]">Esperando primera venta...</p>
+            </div>
+          )}
+        </div>
+
+        {/* Feed realtime */}
+        <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+          <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between">
+            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">ÚLTIMAS VENTAS</p>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse"/>
+              <span className="mono text-[8px] text-[#00FF94]">LIVE</span>
+            </div>
+          </div>
+          <div className="divide-y divide-[#1E1E2E] overflow-y-auto" style={{ maxHeight: 200 }}>
+            {loading ? (
+              <div className="flex items-center justify-center py-10">
+                <div className="w-4 h-4 border-2 border-[#00FF94] border-t-transparent rounded-full animate-spin"/>
+              </div>
+            ) : sales.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <span className="text-2xl">⏳</span>
+                <p className="mono text-[10px] text-[#4A4A6A]">Esperando ventas en tiempo real...</p>
+              </div>
+            ) : sales.slice(0, 12).map(sale => (
+              <div key={sale.id} className="px-5 py-3 flex items-center justify-between hover:bg-[#0A0A0F] transition-colors">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold"
+                    style={{ background: '#1E1E2E', color: '#E0E0F0' }}>
+                    {(sale.wa_contacts?.name || sale.phone_number || '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#E0E0F0]">{sale.wa_contacts?.name || sale.phone_number}</p>
+                    <p className="mono text-[8px] text-[#4A4A6A]">{format(new Date(sale.sale_date), 'HH:mm:ss')}</p>
+                  </div>
+                </div>
+                <p className="mono text-sm font-bold" style={{ color: '#00FF94' }}>
+                  ${sale.amount.toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Panel: Leads listos sin comprar */}
+      {leadsReady.length > 0 && (
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,184,0,0.25)' }}>
+          <div className="px-5 py-4 border-b flex items-center gap-3"
+            style={{ background: 'rgba(255,184,0,0.06)', borderColor: 'rgba(255,184,0,0.15)' }}>
+            <Flame size={14} className="text-[#FFB800]"/>
+            <p className="mono text-[10px] text-[#FFB800] tracking-widest font-bold">
+              {leadsReady.length} LEADS LISTOS — SIN COMPRAR AÚN
+            </p>
+            <span className="mono text-[8px] text-[#4A4A6A]">score ≥ 75 · actuar ahora</span>
+          </div>
+          <div className="divide-y divide-[#1E1E2E]" style={{ background: '#111118' }}>
+            {leadsReady.slice(0, 8).map(lead => (
+              <div key={lead.id} className="px-5 py-3 flex items-center justify-between hover:bg-[#0A0A0F] transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold"
+                    style={{ background: '#1E1E2E', color: '#E0E0F0' }}>
+                    {(lead.name || '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#E0E0F0]">{lead.name || lead.phone_number}</p>
+                    <p className="mono text-[8px] text-[#4A4A6A]">{lead.agent_stage} · {lead.kanshi_segment}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className="mono text-[9px] font-bold px-2.5 py-0.5 rounded-full border"
+                    style={{
+                      borderColor: lead.kanshi_score >= 90 ? '#FF6B35' : '#FFB800',
+                      color:       lead.kanshi_score >= 90 ? '#FF6B35' : '#FFB800',
+                      background:  lead.kanshi_score >= 90 ? 'rgba(255,107,53,0.1)' : 'rgba(255,184,0,0.1)',
+                    }}>
+                    {lead.kanshi_score}
+                  </span>
+                  <span className="mono text-[8px] text-[#4A4A6A]">
+                    {lead.kanshi_score >= 90 ? '🔴 LISTO' : '🟠 CALIENTE'}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {leadsReady.length > 8 && (
+              <div className="px-5 py-3 text-center">
+                <span className="mono text-[9px] text-[#4A4A6A]">+{leadsReady.length - 8} leads más con score ≥ 75</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
