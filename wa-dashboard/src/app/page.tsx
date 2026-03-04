@@ -1165,6 +1165,229 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
   )
 }
 
+// ─── ALERTS PANEL — Día 14 ───────────────────────────────────────────────────
+
+interface KanshiAlert {
+  id: string
+  alert_type: 'score_75' | 'score_90' | 'sale'
+  lead_name: string | null
+  lead_phone: string | null
+  kanshi_score: number | null
+  sale_amount: number | null
+  metadata: Record<string, any>
+  read_at: string | null
+  created_at: string
+}
+
+function AlertsPanel({
+  projectId,
+  onClose,
+  onReadCountChange,
+  onLeadClick,
+}: {
+  projectId: string | null
+  onClose: () => void
+  onReadCountChange: () => void
+  onLeadClick: (phone: string) => void
+}) {
+  const [alerts, setAlerts] = useState<KanshiAlert[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchAlerts = useCallback(async () => {
+    if (!projectId) return
+    setLoading(true)
+    try {
+      const { data } = await supabase
+        .from('kanshi_alerts')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      setAlerts(data || [])
+    } finally {
+      setLoading(false)
+    }
+  }, [projectId])
+
+  useEffect(() => { fetchAlerts() }, [fetchAlerts])
+
+  const markRead = async (alertId: string) => {
+    await supabase
+      .from('kanshi_alerts')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', alertId)
+    setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, read_at: new Date().toISOString() } : a))
+    onReadCountChange()
+  }
+
+  const markAllRead = async () => {
+    if (!projectId) return
+    const unreadIds = alerts.filter(a => !a.read_at).map(a => a.id)
+    if (unreadIds.length === 0) return
+    await supabase
+      .from('kanshi_alerts')
+      .update({ read_at: new Date().toISOString() })
+      .in('id', unreadIds)
+    setAlerts(prev => prev.map(a => ({ ...a, read_at: a.read_at ?? new Date().toISOString() })))
+    onReadCountChange()
+  }
+
+  const alertConfig = {
+    score_75: { label: 'READY LEAD',    color: '#FF6B35', bg: '#FF6B3515', icon: '🔥', desc: 'Score ≥ 75' },
+    score_90: { label: 'BUYER PROFILE', color: '#00FF94', bg: '#00FF9415', icon: '⚡', desc: 'Score ≥ 90' },
+    sale:     { label: 'VENTA',         color: '#C084FC', bg: '#C084FC15', icon: '💰', desc: 'Venta confirmada' },
+  }
+
+  const unreadCount = alerts.filter(a => !a.read_at).length
+
+  return (
+    <div className="fixed inset-0 z-[350] flex justify-end" onClick={onClose}>
+      <div
+        className="w-full max-w-md h-full border-l border-[#1E1E2E] flex flex-col"
+        style={{ background: '#0D0D14', boxShadow: '-24px 0 80px rgba(0,0,0,0.7)', animation: 'slideInRight 0.2s ease' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between flex-shrink-0"
+          style={{ background: 'rgba(13,13,20,0.97)' }}>
+          <div className="flex items-center gap-3">
+            <Bell size={16} style={{ color: '#FF6B35' }} />
+            <div>
+              <p className="font-bold text-[#E0E0F0] text-sm">Alertas del Equipo</p>
+              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                {unreadCount > 0 ? `${unreadCount} SIN LEER` : 'TODO AL DÍA ✓'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="mono text-[9px] px-2 py-1 rounded-lg border border-[#1E1E2E] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all"
+              >
+                MARCAR TODAS
+              </button>
+            )}
+            <button onClick={onClose} className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors">
+              <X size={12} style={{ color: '#4A4A6A' }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Lista */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0014ad' }} />
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Bell size={24} style={{ color: '#2E2E4E' }} />
+              <p className="mono text-[11px] text-[#4A4A6A]">Sin alertas aún</p>
+              <p className="mono text-[9px] text-[#2E2E4E] text-center px-8">
+                Las alertas aparecen cuando un lead cruza score 75/90 o se confirma una venta
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#1E1E2E]">
+              {alerts.map(alert => {
+                const cfg = alertConfig[alert.alert_type]
+                const isUnread = !alert.read_at
+                return (
+                  <div
+                    key={alert.id}
+                    className="px-5 py-4 transition-colors"
+                    style={{ background: isUnread ? '#111118' : 'transparent' }}
+                  >
+                    {/* Top row */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* Dot no leído */}
+                        <div
+                          className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-0.5"
+                          style={{ background: isUnread ? cfg.color : 'transparent', border: isUnread ? 'none' : '1px solid #2E2E4E' }}
+                        />
+                        {/* Badge tipo */}
+                        <span
+                          className="mono text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                          style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}30` }}
+                        >
+                          {cfg.icon} {cfg.label}
+                        </span>
+                        {/* Nombre lead */}
+                        <span className="text-xs font-medium text-[#E0E0F0] truncate">
+                          {alert.lead_name || alert.lead_phone || '—'}
+                        </span>
+                      </div>
+                      {/* Score o monto */}
+                      {alert.alert_type !== 'sale' && alert.kanshi_score && (
+                        <span className="mono text-xs font-bold flex-shrink-0" style={{ color: cfg.color }}>
+                          {alert.kanshi_score} pts
+                        </span>
+                      )}
+                      {alert.alert_type === 'sale' && alert.sale_amount && (
+                        <span className="mono text-xs font-bold flex-shrink-0 text-[#C084FC]">
+                          ${Number(alert.sale_amount).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Metadata row */}
+                    <div className="flex items-center gap-3 mb-3 pl-5">
+                      {alert.lead_phone && (
+                        <span className="mono text-[9px] text-[#4A4A6A]">{alert.lead_phone}</span>
+                      )}
+                      {alert.metadata?.utm_source && (
+                        <span className="mono text-[9px] px-1.5 py-0.5 rounded border border-[#1E1E2E] text-[#4A4A6A]">
+                          {alert.metadata.utm_source}
+                        </span>
+                      )}
+                      {alert.metadata?.utm_campaign && (
+                        <span className="mono text-[9px] text-[#4A4A6A] truncate max-w-[120px]">
+                          {alert.metadata.utm_campaign}
+                        </span>
+                      )}
+                      <span className="mono text-[9px] text-[#2E2E4E] ml-auto flex-shrink-0">
+                        {format(new Date(alert.created_at), 'dd/MM HH:mm')}
+                      </span>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex items-center gap-2 pl-5">
+                      {alert.lead_phone && (
+                        <button
+                          onClick={() => {
+                            onLeadClick(alert.lead_phone!)
+                            if (isUnread) markRead(alert.id)
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mono text-[9px] font-bold transition-all"
+                          style={{ background: '#0014ad20', color: '#00b0f6', border: '1px solid #0014ad40' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#0014ad40')}
+                          onMouseLeave={e => (e.currentTarget.style.background = '#0014ad20')}
+                        >
+                          <Eye size={10} /> VER JOURNEY
+                        </button>
+                      )}
+                      {isUnread && (
+                        <button
+                          onClick={() => markRead(alert.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mono text-[9px] transition-all border border-[#1E1E2E] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E]"
+                        >
+                          <CheckCheck size={10} /> LEÍDA
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -1188,6 +1411,7 @@ export default function Dashboard() {
   const [projects,setProjects] = useState<Project[]>([])
   const [unreadAlerts, setUnreadAlerts] = useState(0)
   const [showAlerts, setShowAlerts] = useState(false)
+  const [journeyPhone, setJourneyPhone] = useState<string | null>(null)
   const [activeProjectId,setActiveProjectId] = useState<string|null>(()=>{
     if(typeof window!=='undefined') return localStorage.getItem('kanshi_active_project')
     return null
@@ -1678,6 +1902,18 @@ export default function Dashboard() {
       {showCreator&&<CampaignCreator leads={leads} templates={templates} onClose={()=>setShowCreator(false)}
         onCreated={()=>{setShowCreator(false);fetchData();setActiveTab('campaigns');addToast('success','Campaña creada — el scheduler la procesará en ~5 min')}}/>}
       {showProjectWizard&&<ProjectWizard onClose={()=>setShowProjectWizard(false)} onCreated={handleProjectCreated}/>}
+      {showAlerts && (
+        <AlertsPanel
+          projectId={activeProjectId}
+          onClose={() => setShowAlerts(false)}
+          onReadCountChange={fetchUnreadAlerts}
+          onLeadClick={(phone) => {
+            setJourneyPhone(phone)
+            setShowAlerts(false)
+          }}
+        />
+      )}
+      <LeadJourneyDrawer phone={journeyPhone} onClose={() => setJourneyPhone(null)} />
       <ToastContainer toasts={toasts} onRemove={removeToast}/>
     </div>
   )
