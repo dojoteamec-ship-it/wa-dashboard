@@ -3952,7 +3952,7 @@ function SalaDeControlTab({
   activeProjectId: string | null
   projects: Project[]
   leads: Lead[]
-  onToast: (t: Toast) => void
+  onToast: (type: Toast['type'], message: string) => void
 }) {
   const [sales, setSales] = useState<SalaSale[]>([])
   const [loading, setLoading] = useState(false)
@@ -3997,7 +3997,7 @@ function SalaDeControlTab({
         (payload) => {
           const newSale = payload.new as SalaSale
           setSales(prev => [newSale, ...prev])
-          onToast({ id: Date.now().toString(), type: 'success', message: `🎉 ¡Nueva venta! $${newSale.amount.toLocaleString()}` })
+          onToast('success', `🎉 ¡Nueva venta! $${newSale.amount.toLocaleString()}`)
         }
       )
       .subscribe()
