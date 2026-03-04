@@ -1506,7 +1506,7 @@ export default function Dashboard() {
       const [msgsR,convsR,cntR,campsR,leadsR,tplsR,projR] = await Promise.all([
         msgsQ, supabase.from('wa_conversations').select('status'), cntQ, campsQ, leadsQ,
         supabase.from('wa_templates').select('*').eq('status','APPROVED').order('name'),
-        supabase.from('kanshi_projects').select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji,credential_id').order('created_at',{ascending:false}),
+        supabase.from('kanshi_projects').select('id,name,product_name,product_price,status,captation_start,captation_end,cart_open,cart_close,class_dates,sales_goal,leads_goal,ad_budget,agent_context,color,emoji,credential_id,logo_url,hormozi_config').order('created_at',{ascending:false}),
       ])
       const msgs=msgsR.data||[]; const leadsData:Lead[]=leadsR.data||[]
       const campData:Campaign[]=campsR.data||[]; const tplData:Template[]=tplsR.data||[]
