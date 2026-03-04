@@ -148,6 +148,8 @@ function Sidebar({
   onLogout,
   onRefresh,
   lastUpdate,
+  unreadCount,
+  onAlertsClick,
 }: {
   activeTab: TabType
   onTabChange: (tab: TabType) => void
