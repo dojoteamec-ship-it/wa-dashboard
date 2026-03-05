@@ -122,8 +122,41 @@ export async function POST(req: NextRequest) {
       // Fire-and-forget — igual que CAPI
       fetchNameAndInsert()
     }
+   // ─────────────────────────────────────────────────────────────────────────
+
+    // ── LP5: Landing personalizada — fire-and-forget ──────────────────────────
+    // Se dispara cuando score cruza 'ready' (≥75) por primera vez.
+    // Verifica idempotencia antes de llamar: solo genera si no existe landing.
+    if ((result.thresholds_crossed ?? []).includes('ready')) {
+      const triggerLandingGen = async () => {
+        try {
+          const { data: existingLanding } = await supabase
+            .from('landing_pages')
+            .select('id')
+            .eq('contact_id', contact_id)
+            .maybeSingle()
+
+          if (!existingLanding) {
+            await fetch(
+              `${process.env.NEXT_PUBLIC_APP_URL || 'https://wa-dashboard-five.vercel.app'}/api/landing-gen`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contact_id, project_id: project_id || null }),
+              }
+            )
+            console.log(`[score→landing-gen] ✅ Landing encolada para contact ${contact_id}`)
+          } else {
+            console.log(`[score→landing-gen] ⏭️  Landing ya existe para contact ${contact_id}, skip`)
+          }
+        } catch (e: any) {
+          console.error('[score→landing-gen] Error:', e.message)
+        }
+      }
+      triggerLandingGen() // fire-and-forget — no await
+    }
     // ─────────────────────────────────────────────────────────────────────────
-    
+
     return NextResponse.json({
       success: true,
       contact_id,
