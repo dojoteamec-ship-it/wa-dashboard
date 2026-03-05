@@ -64,7 +64,7 @@ export default async function LandingPage({ params }: { params: { token: string 
   const config = proj.hormozi_config || {}
   const accent = proj.color || '#0014ad'
   const rawName = landing.wa_contacts?.name || 'Tú'
-  const leadName = rawName.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA9F}]/gu, '').replace(/[^\w\sáéíóúÁÉÍÓÚñÑüÜ]/g, '').split(/\s+/)[0]?.trim() || 'Tú'
+  const leadName = rawName.split('').filter((c: string) => c.charCodeAt(0) < 800).join('').trim().split(' ')[0]?.trim() || 'Tú'
   const productName = proj.product_name || proj.name
   const authorName = config.letter_author_name || 'El Fundador'
   const authorTitle = config.letter_author_title || `Fundador de ${productName}`
