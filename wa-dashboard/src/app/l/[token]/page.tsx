@@ -63,7 +63,8 @@ export default async function LandingPage({ params }: { params: { token: string 
   const proj = landing.kanshi_projects
   const config = proj.hormozi_config || {}
   const accent = proj.color || '#0014ad'
-  const leadName = landing.wa_contacts?.name?.split(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/)[0]?.trim() || 'Tú'
+  const rawName = landing.wa_contacts?.name || 'Tú'
+  const leadName = rawName.replace(/[^\p{L}\p{M}\s]/gu, '').split(/\s+/)[0]?.trim() || 'Tú'
   const productName = proj.product_name || proj.name
   const authorName = config.letter_author_name || 'El Fundador'
   const authorTitle = config.letter_author_title || `Fundador de ${productName}`
@@ -605,8 +606,9 @@ export default async function LandingPage({ params }: { params: { token: string 
           from { opacity: 0; transform: translateY(32px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
         .reveal.vis { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; } }
 
         /* RESPONSIVE */
         @media (max-width: 768px) {
@@ -964,9 +966,14 @@ export default async function LandingPage({ params }: { params: { token: string 
         (function() {
           var obs = new IntersectionObserver(function(entries){
             entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('vis');});
-          },{threshold:0.1,rootMargin:'0px 0px -60px 0px'});
+          },{threshold:0.05,rootMargin:'0px 0px -20px 0px'});
           document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
         })();
+
+        // Fallback: mostrar todo si el observer no dispara en 2s
+        setTimeout(function(){
+        document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('vis'); });
+      }, 2000);
 
         // FAQ ACCORDION
         (function() {
