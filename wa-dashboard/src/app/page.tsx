@@ -27,6 +27,7 @@ interface Lead {
   objecion_probable: string; resumen_perfil: string; preguntas_respondidas: number
   created_at: string; updated_at: string
   kanshi_score: number; kanshi_segment: string
+  landing_pages?: Array<{ token: string; status: string }> | null
 }
 interface Template {
   id: string; name: string; display_name: string; language: string
@@ -1495,7 +1496,7 @@ export default function Dashboard() {
     try {
       let msgsQ = supabase.from('wa_messages').select('direction,created_at,body,contact_name').order('created_at',{ascending:false}).limit(200)
       let campsQ = supabase.from('wa_campaigns').select('*').order('created_at',{ascending:false}).limit(200)
-      let leadsQ = supabase.from('wa_contacts').select('*').order('updated_at',{ascending:false}).limit(500)
+      let leadsQ = supabase.from('wa_contacts').select('*, landing_pages(token,status)').order('updated_at',{ascending:false}).limit(500)
       let cntQ   = supabase.from('wa_contacts').select('id',{count:'exact',head:true})
       if(activeProjectId){
         msgsQ=msgsQ.eq('project_id',activeProjectId)
@@ -1819,14 +1820,16 @@ export default function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead><tr className="border-b border-[#1E1E2E]">
-                    {['CONTACTO','ETAPA','SEGMENTO','SCORE','COMPROMISO','URGENCIA','SITUACIÓN','DOLOR'].map(h=>(
+                    {['CONTACTO','ETAPA','SEGMENTO','SCORE','COMPROMISO','URGENCIA','SITUACIÓN','DOLOR','LANDING'].map(h=>(
                       <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
                     ))}
                   </tr></thead>
                   <tbody>
                     {profiledLeads.length===0
-                      ?<tr><td colSpan={8} className="px-4 py-8 text-center text-[#4A4A6A] text-xs">Sin leads perfilados aún</td></tr>
-                      :paginatedLeads.map((lead,i)=>(
+                      ?<tr><td colSpan={9} className="px-4 py-8 text-center text-[#4A4A6A] text-xs">Sin leads perfilados aún</td></tr>
+                      :paginatedLeads.map((lead,i)=>{
+                        const lp = lead.landing_pages?.[0] ?? null
+                        return (
                       <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
                         <td className="px-4 py-3"><div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-[#1E1E2E] flex items-center justify-center"><User size={10} className="text-[#4A4A6A]"/></div>
@@ -1839,8 +1842,25 @@ export default function Dashboard() {
                         <td className="px-4 py-3"><span className="mono text-[10px]" style={{color:urgColor(lead.urgencia_financiera)}}>{lead.urgencia_financiera||'—'}</span></td>
                         <td className="px-4 py-3 max-w-[180px]"><p className="text-[11px] text-[#E0E0F0] truncate">{lead.situacion_actual||'—'}</p></td>
                         <td className="px-4 py-3 max-w-[200px]"><p className="text-[11px] text-[#4A4A6A] truncate">{lead.dolor_declarado||'—'}</p></td>
+                        <td className="px-4 py-3" onClick={e=>e.stopPropagation()}>
+                          {(lead.kanshi_score||0)>=75
+                            ? lp?.status==='active'
+                              ? <a href={`/l/${lp.token}`} target="_blank" rel="noopener noreferrer"
+                                  className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-[9px] font-bold tracking-widest whitespace-nowrap transition-all hover:scale-105"
+                                  style={{background:'#00b0f615',color:'#00b0f6',border:'1px solid #00b0f630'}}>
+                                  <Zap size={9}/> VER LANDING
+                                </a>
+                              : lp?.status==='draft'
+                                ? <span className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-[9px] tracking-widest whitespace-nowrap"
+                                    style={{background:'#FFB80015',color:'#FFB800',border:'1px solid #FFB80030'}}>
+                                    <RefreshCw size={9} className="animate-spin"/> GENERANDO
+                                  </span>
+                                : <span className="mono text-[9px] text-[#4A4A6A]">PENDIENTE</span>
+                            : null}
+                        </td>
                       </tr>
-                    ))}
+                        )
+                      })}
                   </tbody>
                 </table>
               </div>
