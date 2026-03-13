@@ -68,17 +68,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'project_id requerido' }, { status: 400 })
     }
 
-    // 1. Obtener credenciales del proyecto
+    // 1. Obtener credential_id desde kanshi_projects
+    // La relación es: kanshi_projects.credential_id → kanshi_credentials.id
+    const { data: project, error: projError } = await supabase
+      .from('kanshi_projects')
+      .select('credential_id')
+      .eq('id', project_id)
+      .maybeSingle()
+
+    if (projError || !project?.credential_id) {
+      return NextResponse.json(
+        { error: 'Este proyecto no tiene un número de WhatsApp asignado. Asígnalo en Configuración → Credenciales.' },
+        { status: 404 }
+      )
+    }
+
+    // 2. Obtener la credencial por su ID
     const { data: cred, error: credError } = await supabase
       .from('kanshi_credentials')
       .select('credentials')
-      .eq('project_id', project_id)
-      .eq('is_active', true)
+      .eq('id', project.credential_id)
       .maybeSingle()
 
     if (credError || !cred) {
       return NextResponse.json(
-        { error: 'No se encontraron credenciales activas para este proyecto' },
+        { error: 'No se encontró la credencial asignada al proyecto.' },
         { status: 404 }
       )
     }
@@ -90,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     if (!waba_id || !access_token) {
       return NextResponse.json(
-        { error: 'Credenciales incompletas: se requieren waba_id y access_token' },
+        { error: 'Credenciales incompletas: agrega el WABA ID y Access Token en Configuración → Credenciales.' },
         { status: 400 }
       )
     }
