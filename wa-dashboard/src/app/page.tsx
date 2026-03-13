@@ -1978,6 +1978,10 @@ export default function Dashboard() {
               onToast={addToast}
               onProjectsUpdate={setProjects}
             />
+             <NexoTemplatesPanel
+              activeProjectId={activeProjectId}
+              onToast={addToast}
+            />
           </div>
         )}
 
@@ -3544,6 +3548,433 @@ function AddCredentialModal({
             }
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INSTRUCCIONES DE INSERCIÓN — SP7 NEXO TEMPLATES PANEL
+// ═══════════════════════════════════════════════════════════════════════
+//
+// CAMBIO 1: En el bloque activeTab==='config' (línea ~1967)
+// Agrega <NexoTemplatesPanel> DESPUÉS de <CredentialsVault>:
+//
+//   {activeTab==='config'&&(
+//     <div className="space-y-6">
+//       <HormoziConfigPanel ... />
+//       <CredentialsVault ... />
+//       <NexoTemplatesPanel                     ← AGREGAR ESTO
+//         activeProjectId={activeProjectId}
+//         onToast={addToast}
+//       />
+//     </div>
+//   )}
+//
+// CAMBIO 2: Pegar el componente NexoTemplatesPanel después de la línea 3550
+// (justo antes del comentario "// ─── META ADS CREDENTIAL CARD")
+// ═══════════════════════════════════════════════════════════════════════
+
+// ─── NEXO TEMPLATES PANEL (SP7) ───────────────────────────────────────────────
+
+interface SamTemplate {
+  id: string
+  project_id: string
+  name: string
+  stage: string
+  scenario: string
+  trigger_condition: string | null
+  content: string
+  meta_template_name: string
+  meta_template_approved: boolean
+  language: string
+  is_active: boolean
+  created_at: string
+}
+
+const STAGE_OPTIONS = [
+  'registered','confirming','profiling','warming',
+  'live_tracking','post_live','classes','vip','closing','post_sale'
+]
+
+const STAGE_LABELS: Record<string, string> = {
+  registered: 'Registrado', confirming: 'Confirmando', profiling: 'Perfilando',
+  warming: 'Calentamiento', live_tracking: 'LIVE Tracking', post_live: 'Post LIVE',
+  classes: 'Clases', vip: 'VIP', closing: 'Cierre', post_sale: 'Post Venta'
+}
+
+const STATUS_CFG = {
+  approved:   { label: 'APROBADO',  bg: 'rgba(0,255,148,0.1)',  border: 'rgba(0,255,148,0.3)',  color: '#00FF94' },
+  pending:    { label: 'PENDIENTE', bg: 'rgba(255,184,0,0.1)',  border: 'rgba(255,184,0,0.3)',  color: '#FFB800' },
+  rejected:   { label: 'RECHAZADO', bg: 'rgba(255,107,53,0.1)', border: 'rgba(255,107,53,0.3)', color: '#FF6B35' },
+  inactive:   { label: 'INACTIVO',  bg: 'rgba(74,74,106,0.15)', border: 'rgba(74,74,106,0.4)', color: '#4A4A6A' },
+}
+
+function templateStatus(t: SamTemplate) {
+  if (!t.meta_template_approved) return 'pending'
+  if (!t.is_active) return 'inactive'
+  return 'approved'
+}
+
+function NexoTemplatesPanel({
+  activeProjectId,
+  onToast,
+}: {
+  activeProjectId: string | null
+  onToast: (type: Toast['type'], msg: string) => void
+}) {
+  const [templates, setTemplates] = useState<SamTemplate[]>([])
+  const [loading, setLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editStage, setEditStage] = useState('')
+  const [editScenario, setEditScenario] = useState('')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const fetchTemplates = useCallback(async () => {
+    if (!activeProjectId) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/sync-meta-templates?project_id=${activeProjectId}`)
+      const data = await res.json()
+      setTemplates(data.templates || [])
+    } catch {
+      onToast('error', 'Error cargando templates')
+    } finally {
+      setLoading(false)
+    }
+  }, [activeProjectId, onToast])
+
+  useEffect(() => { fetchTemplates() }, [fetchTemplates])
+
+  const handleSync = async () => {
+    if (!activeProjectId) return
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/sync-meta-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: activeProjectId }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        onToast('error', data.error)
+      } else {
+        onToast('success', data.message)
+        await fetchTemplates()
+      }
+    } catch {
+      onToast('error', 'Error al sincronizar con Meta')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const startEdit = (t: SamTemplate) => {
+    setEditingId(t.id)
+    setEditStage(t.stage)
+    setEditScenario(t.scenario)
+  }
+
+  const saveEdit = async (id: string) => {
+    try {
+      const res = await fetch('/api/sync-meta-templates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, stage: editStage, scenario: editScenario }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        onToast('error', data.error)
+      } else {
+        onToast('success', 'Template actualizado')
+        setEditingId(null)
+        await fetchTemplates()
+      }
+    } catch {
+      onToast('error', 'Error guardando cambios')
+    }
+  }
+
+  const toggleActive = async (t: SamTemplate) => {
+    // Solo permitir desactivar templates aprobados — nunca activar uno no aprobado
+    if (!t.meta_template_approved && !t.is_active) {
+      onToast('warning', 'Este template no está aprobado por Meta — no se puede activar')
+      return
+    }
+    try {
+      await fetch('/api/sync-meta-templates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: t.id, is_active: !t.is_active }),
+      })
+      await fetchTemplates()
+    } catch {
+      onToast('error', 'Error actualizando template')
+    }
+  }
+
+  // Agrupar por stage para mostrar organizado
+  const byStage = STAGE_OPTIONS.reduce<Record<string, SamTemplate[]>>((acc, s) => {
+    const items = templates.filter(t => t.stage === s)
+    if (items.length) acc[s] = items
+    return acc
+  }, {})
+
+  const approvedCount = templates.filter(t => t.meta_template_approved).length
+  const pendingCount  = templates.filter(t => !t.meta_template_approved).length
+
+  return (
+    <div className="rounded-2xl border overflow-hidden"
+      style={{ background: '#111118', borderColor: 'rgba(0,176,246,0.2)' }}>
+
+      {/* Header */}
+      <div className="px-5 py-4 border-b flex items-center justify-between"
+        style={{ borderColor: 'rgba(0,176,246,0.15)', background: 'rgba(0,176,246,0.04)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+            style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.3)' }}>
+            🤖
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#E0E0F0' }}>NEXO — Templates Meta</p>
+            <p className="mono text-[10px] tracking-widest mt-0.5" style={{ color: '#4A4A6A' }}>
+              SINCRONIZACIÓN AUTOMÁTICA · WHATSAPP BUSINESS API
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Counters */}
+          {templates.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-mono"
+                style={{ background: 'rgba(0,255,148,0.1)', color: '#00FF94', border: '1px solid rgba(0,255,148,0.3)' }}>
+                {approvedCount} aprobados
+              </span>
+              {pendingCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono"
+                  style={{ background: 'rgba(255,184,0,0.1)', color: '#FFB800', border: '1px solid rgba(255,184,0,0.3)' }}>
+                  {pendingCount} pendientes
+                </span>
+              )}
+            </div>
+          )}
+          {/* Sync button */}
+          <button
+            onClick={handleSync}
+            disabled={syncing || !activeProjectId}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+            style={{
+              background: syncing ? 'rgba(0,176,246,0.1)' : 'rgba(0,176,246,0.15)',
+              border: '1px solid rgba(0,176,246,0.4)',
+              color: '#00b0f6',
+            }}
+          >
+            <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Sincronizando...' : 'Sync desde Meta'}
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        {!activeProjectId ? (
+          <p className="text-center text-sm py-8" style={{ color: '#4A4A6A' }}>
+            Selecciona un proyecto para ver sus templates
+          </p>
+        ) : loading ? (
+          <div className="flex items-center justify-center py-10 gap-3">
+            <RefreshCw size={14} className="animate-spin" style={{ color: '#4A4A6A' }} />
+            <p className="text-sm" style={{ color: '#4A4A6A' }}>Cargando templates...</p>
+          </div>
+        ) : templates.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-3xl mb-3">📋</p>
+            <p className="text-sm font-medium mb-1" style={{ color: '#E0E0F0' }}>Sin templates sincronizados</p>
+            <p className="text-xs mb-4" style={{ color: '#4A4A6A' }}>
+              Haz clic en "Sync desde Meta" para importar tus templates aprobados
+            </p>
+            <p className="text-xs px-4 py-3 rounded-xl inline-block"
+              style={{ background: 'rgba(255,184,0,0.07)', border: '1px solid rgba(255,184,0,0.2)', color: '#FFB800' }}>
+              ⚠️ Asegúrate de tener el WABA ID y Access Token configurados en Credenciales
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {Object.entries(byStage).map(([stage, stageTemplates]) => (
+              <div key={stage}>
+                {/* Stage header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-wider"
+                    style={{ background: '#1A1A2E', color: '#4A4A6A', border: '1px solid #1E1E2E' }}>
+                    {STAGE_LABELS[stage] || stage.toUpperCase()}
+                  </span>
+                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
+                </div>
+
+                {/* Templates del stage */}
+                <div className="space-y-2">
+                  {stageTemplates.map(t => {
+                    const status = templateStatus(t)
+                    const cfg = STATUS_CFG[status as keyof typeof STATUS_CFG]
+                    const isEditing = editingId === t.id
+                    const isExpanded = expandedId === t.id
+
+                    return (
+                      <div key={t.id} className="rounded-xl border overflow-hidden"
+                        style={{ background: '#0D0D14', borderColor: '#1E1E2E' }}>
+
+                        {/* Template row */}
+                        <div className="px-4 py-3 flex items-center gap-3">
+                          {/* Status badge */}
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono flex-shrink-0"
+                            style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}>
+                            {cfg.label}
+                          </span>
+
+                          {/* Name */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate" style={{ color: '#E0E0F0' }}>
+                              {t.meta_template_name}
+                            </p>
+                            <p className="text-[11px] mono" style={{ color: '#4A4A6A' }}>
+                              {t.language.toUpperCase()} · {t.scenario}
+                            </p>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Expand body */}
+                            <button
+                              onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                              className="p-1.5 rounded-lg transition-all"
+                              style={{ color: '#4A4A6A', background: isExpanded ? '#1A1A2E' : 'transparent' }}
+                              title="Ver contenido"
+                            >
+                              <Eye size={13} />
+                            </button>
+
+                            {/* Edit stage */}
+                            {!isEditing ? (
+                              <button
+                                onClick={() => startEdit(t)}
+                                className="p-1.5 rounded-lg transition-all"
+                                style={{ color: '#4A4A6A' }}
+                                title="Editar stage"
+                              >
+                                <Settings size={13} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => saveEdit(t.id)}
+                                className="p-1.5 rounded-lg transition-all"
+                                style={{ color: '#00FF94' }}
+                                title="Guardar"
+                              >
+                                <CheckCircle size={13} />
+                              </button>
+                            )}
+
+                            {/* Toggle active */}
+                            <button
+                              onClick={() => toggleActive(t)}
+                              className="p-1.5 rounded-lg transition-all"
+                              style={{ color: t.is_active ? '#00FF94' : '#4A4A6A' }}
+                              title={t.is_active ? 'Desactivar' : 'Activar'}
+                            >
+                              {t.is_active ? <CheckCheck size={13} /> : <Pause size={13} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Edit row */}
+                        {isEditing && (
+                          <div className="px-4 pb-3 flex items-center gap-3 border-t"
+                            style={{ borderColor: '#1E1E2E' }}>
+                            <div className="flex-1">
+                              <p className="text-[10px] mono mb-1" style={{ color: '#4A4A6A' }}>STAGE</p>
+                              <select
+                                value={editStage}
+                                onChange={e => setEditStage(e.target.value)}
+                                className="w-full text-xs px-2 py-1.5 rounded-lg outline-none"
+                                style={{ background: '#1A1A2E', border: '1px solid #1E1E2E', color: '#E0E0F0' }}
+                              >
+                                {STAGE_OPTIONS.map(s => (
+                                  <option key={s} value={s}>{STAGE_LABELS[s]} ({s})</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] mono mb-1" style={{ color: '#4A4A6A' }}>SCENARIO</p>
+                              <select
+                                value={editScenario}
+                                onChange={e => setEditScenario(e.target.value)}
+                                className="w-full text-xs px-2 py-1.5 rounded-lg outline-none"
+                                style={{ background: '#1A1A2E', border: '1px solid #1E1E2E', color: '#E0E0F0' }}
+                              >
+                                <option value="system_initiated">system_initiated</option>
+                                <option value="user_initiated">user_initiated</option>
+                              </select>
+                            </div>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="mt-4 p-1.5 rounded-lg"
+                              style={{ color: '#4A4A6A' }}
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Expanded body */}
+                        {isExpanded && t.content && (
+                          <div className="px-4 pb-3 border-t" style={{ borderColor: '#1E1E2E' }}>
+                            <p className="text-[10px] mono mb-2 mt-2" style={{ color: '#4A4A6A' }}>CONTENIDO</p>
+                            <p className="text-xs leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
+                              style={{ background: '#0A0A0F', color: '#A0A0C0', border: '1px solid #1E1E2E' }}>
+                              {t.content}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Templates sin stage reconocido */}
+            {templates.filter(t => !STAGE_OPTIONS.includes(t.stage)).length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono"
+                    style={{ background: '#1A1A2E', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)' }}>
+                    SIN STAGE ASIGNADO
+                  </span>
+                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
+                </div>
+                {templates.filter(t => !STAGE_OPTIONS.includes(t.stage)).map(t => (
+                  <div key={t.id} className="rounded-xl border px-4 py-3 flex items-center gap-3 mb-2"
+                    style={{ background: '#0D0D14', borderColor: 'rgba(255,107,53,0.2)' }}>
+                    <span className="text-xs flex-1 truncate" style={{ color: '#E0E0F0' }}>{t.meta_template_name}</span>
+                    <button onClick={() => startEdit(t)}
+                      className="text-xs px-2 py-1 rounded-lg"
+                      style={{ background: 'rgba(255,107,53,0.1)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)' }}>
+                      Asignar stage
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Note */}
+            <p className="text-[10px] mono text-center pt-1" style={{ color: '#2E2E4E' }}>
+              EL SYNC PRESERVA TUS ASIGNACIONES DE STAGE · SOLO ACTUALIZA STATUS Y CONTENIDO
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
