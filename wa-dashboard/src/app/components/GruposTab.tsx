@@ -32,6 +32,7 @@ interface WaGroup {
   is_active: boolean
   is_full: boolean
   sequence_number: number
+  description: string
   group_type: string
   created_at: string
 }
@@ -150,7 +151,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
   function openEdit(g: WaGroup) {
     setEditGroup(g)
     setEditName(g.name)
-    setEditDesc('')
+    setEditDesc(g.description ?? '')
     setEditLimit(g.member_limit)
     setEditActive(g.is_active)
     setEditTab('info')
@@ -214,6 +215,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         .from('wa_groups')
         .update({
           name: editName,
+          description: editDesc,
           member_limit: editLimit,
           is_active: editActive,
         })
