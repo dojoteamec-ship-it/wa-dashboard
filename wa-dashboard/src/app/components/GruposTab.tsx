@@ -1350,8 +1350,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                         <button key={campName}
                           onClick={() => {
                             if (allSelected) setBcSelectedGroups(prev => prev.filter(id => !campGroupIds.includes(id)))
-                            else setBcSelectedGroups(prev => [...new Set([...prev, ...campGroupIds])])
-                          }}
+                            else setBcSelectedGroups(prev => Array.from(new Set([...prev, ...campGroupIds])))
                           className="w-full flex items-center justify-between rounded-xl px-3 py-2.5"
                           style={{ background: allSelected ? '#00b0f615' : C.bg, border: `1px solid ${allSelected ? C.accent : C.border}` }}>
                           <div className="text-left">
