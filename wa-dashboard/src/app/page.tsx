@@ -1968,12 +1968,12 @@ export default function Dashboard() {
 
         {/* ══ GRUPOS ══ */}
         {activeTab === 'grupos' && (
-          <GruposTab
-            activeProjectId={activeProjectId}
-            projects={projects}
-            onToast={addToast}
-          />
-        )}
+         <GruposTab
+          activeProjectId={activeProjectId}
+          projects={projects}
+          onToast={(t) => addToast(t.type, t.message)}
+        />
+      )}
             
         {/* ══ CONFIG ══ */}
         {activeTab==='config'&&(
