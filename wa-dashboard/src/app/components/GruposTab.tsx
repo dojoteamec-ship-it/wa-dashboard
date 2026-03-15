@@ -315,12 +315,12 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
       const cred = await getWhapiCred()
       if (!cred) throw new Error('Sin credencial Whapi')
       const action = (member.rank === 'admin' || member.rank === 'superadmin') ? 'demote' : 'promote'
-      // Whapi espera JID: 593XXXXXXXXX@s.whatsapp.net
-      const jid = member.id.includes('@') ? member.id : `${member.id}@s.whatsapp.net`
-      const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}/participants`, {
-        method: 'PUT',
+      // PATCH /groups/{id}/admins — endpoint verificado 15 Mar
+      const phone = member.id.replace('@s.whatsapp.net', '').replace('@lid', '')
+      const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}/admins`, {
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, participants: [jid.replace('@s.whatsapp.net', '')] }),
+        body: JSON.stringify({ participants: [phone] }),
       })
       const rd = await r.json()
       if (!r.ok) throw new Error(`Error ${action}: ` + JSON.stringify(rd))
@@ -336,11 +336,11 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     try {
       const cred = await getWhapiCred()
       if (!cred) throw new Error('Sin credencial Whapi')
-      const jid = `${contact.phone_number}@s.whatsapp.net`
-      const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${group.whapi_group_id}/participants`, {
-        method: 'PUT',
+      const phone = contact.phone_number.replace(/\D/g, '')
+      const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${group.whapi_group_id}/admins`, {
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'promote', participants: [contact.phone_number.replace(/\D/g, '')] }),
+        body: JSON.stringify({ participants: [phone] }),
       })
       const rd = await r.json()
       if (!r.ok) throw new Error(JSON.stringify(rd))
