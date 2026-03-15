@@ -7,6 +7,7 @@ import {
   Users, Loader2, Smartphone, Key, Trash2,
   Shield, Edit2, Image, UserCheck, Lock,
   RotateCcw, ToggleLeft, ToggleRight, X,
+  Send, Radio, Clock, MessageSquare, Shuffle, ChevronDown,
 } from 'lucide-react'
 
 interface Project { id: string; name: string }
@@ -42,6 +43,21 @@ interface WhapiMember {
 }
 
 type EditTab = 'info' | 'imagen' | 'admins' | 'permisos'
+
+interface WaBroadcast {
+  id: string
+  title: string
+  message_body: string
+  target_mode: 'all' | 'selected'
+  target_group_ids: string[]
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed' | 'cancelled'
+  scheduled_at: string | null
+  sent_at: string | null
+  total_groups: number
+  sent_count: number
+  failed_count: number
+  created_at: string
+}
 
 interface Props {
   activeProjectId: string | null
@@ -100,6 +116,20 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
   const [onlyAdminsSend, setOnlyAdminsSend] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // ── BROADCAST STATE ──────────────────────────────────────
+  const [broadcasts, setBroadcasts]           = useState<WaBroadcast[]>([])
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false)
+  const [showBroadcastsPanel, setShowBroadcastsPanel] = useState(false)
+  const [bcTitle, setBcTitle]                 = useState('')
+  const [bcBody, setBcBody]                   = useState('')
+  const [bcTargetMode, setBcTargetMode]       = useState<'all' | 'selected'>('all')
+  const [bcSelectedGroups, setBcSelectedGroups] = useState<string[]>([])
+  const [bcScheduleMode, setBcScheduleMode]   = useState<'now' | 'later'>('now')
+  const [bcScheduledAt, setBcScheduledAt]     = useState('')
+  const [savingBroadcast, setSavingBroadcast] = useState(false)
+  const [sendingBroadcast, setSendingBroadcast] = useState<string | null>(null)
+  const [spintaxPreview, setSpintaxPreview]   = useState('')
+
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -132,6 +162,13 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         .eq('project_id', activeProjectId)
         .order('sequence_number', { ascending: true })
       setGroups(grps ?? [])
+      const { data: bcs } = await supabase
+        .from('wa_broadcasts')
+        .select('*')
+        .eq('project_id', activeProjectId)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      setBroadcasts(bcs ?? [])
     } finally {
       setLoading(false)
     }
@@ -322,6 +359,151 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     }
   }
 
+  // ── BROADCAST HELPERS ─────────────────────────────────────
+  function resolveSpintax(text: string): string {
+    return text.replace(/\{([^{}]+)\}/g, (_, opts: string) => {
+      const parts = opts.split('|')
+      return parts[Math.floor(Math.random() * parts.length)]
+    })
+  }
+
+  function refreshSpintaxPreview(text: string) {
+    setSpintaxPreview(resolveSpintax(text))
+  }
+
+  function resetBroadcastForm() {
+    setBcTitle('')
+    setBcBody('')
+    setBcTargetMode('all')
+    setBcSelectedGroups([])
+    setBcScheduleMode('now')
+    setBcScheduledAt('')
+    setSpintaxPreview('')
+  }
+
+  function toggleBcGroup(groupId: string) {
+    setBcSelectedGroups(prev =>
+      prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
+    )
+  }
+
+  async function executeBroadcast(broadcastId: string, groupIds: string[], messageBody: string, cred: any) {
+    if (!cred) { onToast({ type: 'error', message: 'Sin credencial Whapi' }); return }
+    setSendingBroadcast(broadcastId)
+    let sentCount = 0
+    let failedCount = 0
+
+    for (let i = 0; i < groupIds.length; i++) {
+      const groupId  = groupIds[i]
+      const finalMsg = resolveSpintax(messageBody)
+      const group    = groups.find(g => g.whapi_group_id === groupId)
+
+      try {
+        const res = await fetch(`${cred.WHAPI_BASE_URL}messages/text`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: groupId, body: finalMsg }),
+        })
+        const data = await res.json()
+        await supabase.from('wa_broadcast_logs').insert({
+          broadcast_id: broadcastId,
+          group_id:     groupId,
+          group_name:   group?.name ?? groupId,
+          status:       res.ok ? 'sent' : 'failed',
+          message_id:   data.id ?? null,
+          final_message: finalMsg,
+          error_message: res.ok ? null : JSON.stringify(data),
+          sent_at:      res.ok ? new Date().toISOString() : null,
+        })
+        if (res.ok) sentCount++; else failedCount++
+      } catch (e: any) {
+        await supabase.from('wa_broadcast_logs').insert({
+          broadcast_id: broadcastId,
+          group_id:     groupId,
+          group_name:   group?.name ?? groupId,
+          status:       'failed',
+          error_message: e.message,
+        })
+        failedCount++
+      }
+
+      // Anti-ban: delay aleatorio 3–8s entre grupos
+      if (i < groupIds.length - 1) {
+        const delay = 3000 + Math.random() * 5000
+        await new Promise(r => setTimeout(r, delay))
+      }
+    }
+
+    await supabase.from('wa_broadcasts').update({
+      status:      failedCount === groupIds.length ? 'failed' : 'sent',
+      sent_at:     new Date().toISOString(),
+      sent_count:  sentCount,
+      failed_count: failedCount,
+    }).eq('id', broadcastId)
+
+    onToast({
+      type:    sentCount > 0 ? 'success' : 'error',
+      message: `Broadcast: ${sentCount} enviados · ${failedCount} fallidos`,
+    })
+    setSendingBroadcast(null)
+    await load()
+  }
+
+  async function handleSaveBroadcast(sendNow: boolean) {
+    if (!bcTitle.trim() || !bcBody.trim()) {
+      onToast({ type: 'error', message: 'Completa título y mensaje' }); return
+    }
+    const targetGroupIds = bcTargetMode === 'all'
+      ? groups.map(g => g.whapi_group_id)
+      : bcSelectedGroups
+
+    if (targetGroupIds.length === 0) {
+      onToast({ type: 'error', message: 'Selecciona al menos un grupo' }); return
+    }
+
+    setSavingBroadcast(true)
+    try {
+      const cred       = channels.length > 0 ? await getWhapiCred() : null
+      const channelId  = cred?.WHAPI_CHANNEL_ID ?? ''
+
+      const { data: bc, error } = await supabase
+        .from('wa_broadcasts')
+        .insert({
+          project_id:       activeProjectId,
+          channel_id:       channelId,
+          title:            bcTitle.trim(),
+          message_type:     'text',
+          message_body:     bcBody.trim(),
+          target_mode:      bcTargetMode,
+          target_group_ids: targetGroupIds,
+          status:           sendNow ? 'sending' : bcScheduleMode === 'later' ? 'scheduled' : 'draft',
+          scheduled_at:     bcScheduleMode === 'later' && bcScheduledAt
+            ? new Date(bcScheduledAt).toISOString() : null,
+          total_groups:     targetGroupIds.length,
+          delay_min_seconds: 3,
+          delay_max_seconds: 8,
+          max_groups_per_day: 5,
+        })
+        .select()
+        .single()
+      if (error) throw error
+
+      setShowBroadcastModal(false)
+      resetBroadcastForm()
+
+      if (sendNow && bc) {
+        await executeBroadcast(bc.id, targetGroupIds, bcBody.trim(), cred)
+      } else {
+        onToast({ type: 'success', message: `✅ Broadcast ${bcScheduleMode === 'later' ? 'programado' : 'guardado como borrador'}` })
+        await load()
+      }
+    } catch (e: any) {
+      onToast({ type: 'error', message: e.message })
+    } finally {
+      setSavingBroadcast(false)
+    }
+  }
+
   async function handleSaveChannel() {
     if (!whapiToken || !whapiChannelId || !whapiNumber) {
       onToast({ type: 'error', message: 'Completa todos los campos' })
@@ -433,6 +615,13 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
             style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}>
             <RefreshCw size={14} /> Actualizar
           </button>
+          {channels.length > 0 && (
+            <button onClick={() => { resetBroadcastForm(); setShowBroadcastModal(true) }}
+              className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium"
+              style={{ background: '#00FF9420', border: '1px solid #00FF9440', color: C.success }}>
+              <Radio size={14} /> Broadcast
+            </button>
+          )}
           <button onClick={() => setShowConnectModal(true)}
             className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium"
             style={{ background: C.accent, color: '#fff' }}>
@@ -581,6 +770,73 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         )}
       </section>
 
+
+      {/* ══ BROADCASTS ══ */}
+      {broadcasts.length > 0 && (
+        <section>
+          <button onClick={() => setShowBroadcastsPanel(!showBroadcastsPanel)}
+            className="w-full flex items-center justify-between mb-3 group">
+            <h3 className="text-sm font-semibold" style={{ color: C.muted, letterSpacing: '0.08em' }}>
+              BROADCASTS ({broadcasts.length})
+            </h3>
+            <ChevronDown size={14} style={{ color: C.muted, transform: showBroadcastsPanel ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </button>
+
+          {showBroadcastsPanel && (
+            <div className="space-y-2">
+              {broadcasts.map(bc => {
+                const statusColor = bc.status === 'sent' ? C.success : bc.status === 'failed' ? C.danger : bc.status === 'sending' ? C.accent : bc.status === 'scheduled' ? C.warning : C.muted
+                const statusLabel = { draft: 'BORRADOR', scheduled: 'PROGRAMADO', sending: 'ENVIANDO...', sent: 'ENVIADO', failed: 'FALLIDO', cancelled: 'CANCELADO' }[bc.status] ?? bc.status.toUpperCase()
+                const isSending   = sendingBroadcast === bc.id
+                return (
+                  <div key={bc.id} className="rounded-2xl p-4 flex items-center justify-between gap-4"
+                    style={{ background: C.card, border: `1px solid ${C.border}` }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${statusColor}15` }}>
+                        {isSending ? <Loader2 size={14} className="animate-spin" style={{ color: statusColor }} />
+                          : bc.status === 'sent' ? <Send size={14} style={{ color: statusColor }} />
+                          : bc.status === 'scheduled' ? <Clock size={14} style={{ color: statusColor }} />
+                          : <MessageSquare size={14} style={{ color: statusColor }} />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: C.text }}>{bc.title}</p>
+                        <p className="text-xs truncate" style={{ color: C.muted }}>{bc.message_body}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="text-right">
+                        <span className="text-xs font-bold block" style={{ color: statusColor }}>{statusLabel}</span>
+                        {bc.status === 'sent' && (
+                          <span className="text-xs" style={{ color: C.muted }}>{bc.sent_count}/{bc.total_groups}</span>
+                        )}
+                        {bc.status === 'scheduled' && bc.scheduled_at && (
+                          <span className="text-xs" style={{ color: C.muted }}>
+                            {new Date(bc.scheduled_at).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                      {(bc.status === 'draft' || bc.status === 'scheduled') && !isSending && (
+                        <button
+                          onClick={async () => {
+                            const cred = await getWhapiCred()
+                            await supabase.from('wa_broadcasts').update({ status: 'sending' }).eq('id', bc.id)
+                            await executeBroadcast(bc.id, bc.target_group_ids, bc.message_body, cred)
+                          }}
+                          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
+                          style={{ background: '#00FF9420', border: '1px solid #00FF9440', color: C.success }}>
+                          <Send size={11} /> Enviar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
+      
       {/* ══ MODAL: EDITAR ══ */}
       {editGroup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
