@@ -16,6 +16,7 @@ import {
   BarChart2, Sliders, TrendingDown, ArrowUp, Minus
 } from 'lucide-react'
 import { format } from 'date-fns'
+import GruposTab from '@/app/components/GruposTab'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
