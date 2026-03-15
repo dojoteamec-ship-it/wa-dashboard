@@ -1367,9 +1367,28 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                   ))}
                 </div>
                 {bcScheduleMode === 'later' && (
-                  <input type="datetime-local" value={bcScheduledAt} onChange={e => setBcScheduledAt(e.target.value)}
-                    className="w-full mt-2 rounded-xl px-3 py-2.5 text-sm"
-                    style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div>
+                      <label className="text-xs block mb-1" style={{ color: C.muted }}>Fecha</label>
+                      <input type="date" value={bcScheduledAt.split('T')[0] || ''}
+                        onChange={e => {
+                          const t = bcScheduledAt.split('T')[1] || '00:00'
+                          setBcScheduledAt(e.target.value + 'T' + t)
+                        }}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm"
+                        style={{ background: C.bg, border: `1px solid ${C.accent}`, color: C.text, colorScheme: 'dark' }} />
+                    </div>
+                    <div>
+                      <label className="text-xs block mb-1" style={{ color: C.muted }}>Hora</label>
+                      <input type="time" value={bcScheduledAt.split('T')[1] || ''}
+                        onChange={e => {
+                          const d = bcScheduledAt.split('T')[0] || new Date().toISOString().split('T')[0]
+                          setBcScheduledAt(d + 'T' + e.target.value)
+                        }}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm"
+                        style={{ background: C.bg, border: `1px solid ${C.accent}`, color: C.text, colorScheme: 'dark' }} />
+                    </div>
+                  </div>
                 )}
               </div>
               <div className="rounded-xl p-3 text-xs" style={{ background: '#FFB80010', border: '1px solid #FFB80030' }}>
