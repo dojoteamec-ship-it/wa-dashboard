@@ -143,7 +143,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
   const [showBroadcastsPanel, setShowBroadcastsPanel] = useState(false)
   const [bcTitle, setBcTitle]                     = useState('')
   const [bcBody, setBcBody]                       = useState('')
-  const [bcTargetMode, setBcTargetMode]           = useState<'all' | 'selected'>('all')
+  const [bcTargetMode, setBcTargetMode]           = useState<'all' | 'campaign' | 'selected'>('all')
   const [bcSelectedGroups, setBcSelectedGroups]   = useState<string[]>([])
   const [bcScheduleMode, setBcScheduleMode]       = useState<'now' | 'later'>('now')
   const [bcScheduledAt, setBcScheduledAt]         = useState('')
@@ -627,7 +627,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     }
     const targetGroupIds = bcTargetMode === 'all'
       ? groups.map(g => g.whapi_group_id)
-      : bcSelectedGroups
+      : bcSelectedGroups  // 'campaign' y 'selected' ambos usan bcSelectedGroups
     if (targetGroupIds.length === 0) {
       onToast({ type: 'error', message: 'Selecciona al menos un grupo' }); return
     }
@@ -1330,29 +1330,67 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
               </div>
               <div>
                 <label className="text-xs font-medium block mb-2" style={{ color: C.muted }}>Destinatarios</label>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {(['all', 'selected'] as const).map(m => (
-                    <button key={m} onClick={() => setBcTargetMode(m)}
+                {/* Selector por campaña o grupo específico */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {(['all', 'campaign', 'selected'] as const).map(m => (
+                    <button key={m} onClick={() => { setBcTargetMode(m as any); setBcSelectedGroups([]) }}
                       className="py-2 rounded-xl text-xs font-medium"
                       style={{ background: bcTargetMode === m ? C.accent : C.bg, border: `1px solid ${bcTargetMode === m ? C.accent : C.border}`, color: bcTargetMode === m ? '#fff' : C.muted }}>
-                      {m === 'all' ? `Todos los grupos (${groups.length})` : 'Grupos específicos'}
+                      {m === 'all' ? `Todos (${groups.length})` : m === 'campaign' ? 'Por campaña' : 'Específicos'}
                     </button>
                   ))}
                 </div>
-                {bcTargetMode === 'selected' && groups.length > 0 && (
-                  <div className="space-y-2 max-h-36 overflow-y-auto">
+                {/* Por campaña */}
+                {(bcTargetMode as string) === 'campaign' && Object.keys(campaigns).length > 0 && (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {Object.entries(campaigns).map(([campName, campGroups]) => {
+                      const campGroupIds = campGroups.map(g => g.whapi_group_id)
+                      const allSelected = campGroupIds.every(id => bcSelectedGroups.includes(id))
+                      return (
+                        <button key={campName}
+                          onClick={() => {
+                            if (allSelected) setBcSelectedGroups(prev => prev.filter(id => !campGroupIds.includes(id)))
+                            else setBcSelectedGroups(prev => [...new Set([...prev, ...campGroupIds])])
+                          }}
+                          className="w-full flex items-center justify-between rounded-xl px-3 py-2.5"
+                          style={{ background: allSelected ? '#00b0f615' : C.bg, border: `1px solid ${allSelected ? C.accent : C.border}` }}>
+                          <div className="text-left">
+                            <p className="text-sm font-medium" style={{ color: C.text }}>{campName}</p>
+                            <p className="text-xs" style={{ color: C.muted }}>{campGroups.length} grupo{campGroups.length !== 1 ? 's' : ''} · {campGroups.reduce((s, g) => s + g.member_count, 0)} miembros</p>
+                          </div>
+                          <div className="w-5 h-5 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+                            style={{ background: allSelected ? C.accent : C.border, color: '#fff' }}>
+                            {allSelected ? '✓' : ''}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                {/* Grupos específicos */}
+                {(bcTargetMode as string) === 'selected' && groups.length > 0 && (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
                     {groups.map(g => (
                       <button key={g.id} onClick={() => toggleBcGroup(g.whapi_group_id)}
                         className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm"
                         style={{ background: bcSelectedGroups.includes(g.whapi_group_id) ? '#00b0f615' : C.bg, border: `1px solid ${bcSelectedGroups.includes(g.whapi_group_id) ? C.accent : C.border}` }}>
-                        <span style={{ color: C.text }}>{g.campaign_name} — {g.name}</span>
-                        <div className="w-4 h-4 rounded flex items-center justify-center text-xs font-bold"
+                        <div className="text-left">
+                          <p className="text-xs font-medium" style={{ color: C.text }}>{g.name}</p>
+                          <p className="text-xs" style={{ color: C.muted }}>{g.campaign_name}</p>
+                        </div>
+                        <div className="w-4 h-4 rounded flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ background: bcSelectedGroups.includes(g.whapi_group_id) ? C.accent : C.border, color: '#fff' }}>
                           {bcSelectedGroups.includes(g.whapi_group_id) ? '✓' : ''}
                         </div>
                       </button>
                     ))}
                   </div>
+                )}
+                {/* Resumen selección */}
+                {bcSelectedGroups.length > 0 && (
+                  <p className="text-xs mt-2" style={{ color: C.accent }}>
+                    {bcSelectedGroups.length} grupo{bcSelectedGroups.length !== 1 ? 's' : ''} seleccionado{bcSelectedGroups.length !== 1 ? 's' : ''}
+                  </p>
                 )}
               </div>
               <div>
