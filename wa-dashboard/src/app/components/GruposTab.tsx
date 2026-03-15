@@ -1022,6 +1022,142 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         </div>
       )}
 
+
+      {/* ══ MODAL: BROADCAST COMPOSER ══ */}
+      {showBroadcastModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.85)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowBroadcastModal(false) }}>
+          <div className="w-full max-w-lg rounded-2xl overflow-hidden" style={{ background: '#111118', border: `1px solid ${C.border}` }}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <div className="flex items-center gap-2">
+                <Radio size={16} style={{ color: C.success }} />
+                <h3 className="font-bold text-base" style={{ color: C.text }}>Nuevo Broadcast</h3>
+              </div>
+              <button onClick={() => setShowBroadcastModal(false)}><X size={18} style={{ color: C.muted }} /></button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+
+              {/* Título interno */}
+              <div>
+                <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>Nombre interno</label>
+                <input value={bcTitle} onChange={e => setBcTitle(e.target.value)}
+                  placeholder="Ej: Recordatorio Live 1 — 14 Abr"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm"
+                  style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
+              </div>
+
+              {/* Mensaje + spintax */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium" style={{ color: C.muted }}>Mensaje</label>
+                  <span className="text-xs" style={{ color: C.muted }}>Usa {'{'}opción1|opción2{'}'} para spintax</span>
+                </div>
+                <textarea value={bcBody}
+                  onChange={e => { setBcBody(e.target.value); setSpintaxPreview('') }}
+                  rows={5} placeholder={'Hola {Carlos|amigo|crack} 👋\nArrancan los Lives del Growth Partner Club.\n¡Te esperamos!'}
+                  className="w-full rounded-xl px-3 py-2.5 text-sm resize-none font-mono"
+                  style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs" style={{ color: C.muted }}>{bcBody.length} chars</span>
+                  <button onClick={() => refreshSpintaxPreview(bcBody)}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg"
+                    style={{ background: '#00b0f615', border: '1px solid #00b0f630', color: C.accent }}>
+                    <Shuffle size={11} /> Preview aleatorio
+                  </button>
+                </div>
+                {spintaxPreview && (
+                  <div className="mt-2 rounded-xl p-3 text-xs" style={{ background: '#00FF9408', border: '1px solid #00FF9430' }}>
+                    <p className="font-medium mb-1" style={{ color: C.success }}>Preview resuelto:</p>
+                    <p className="whitespace-pre-wrap" style={{ color: C.text }}>{spintaxPreview}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Destinatarios */}
+              <div>
+                <label className="text-xs font-medium block mb-2" style={{ color: C.muted }}>Destinatarios</label>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {(['all', 'selected'] as const).map(m => (
+                    <button key={m} onClick={() => setBcTargetMode(m)}
+                      className="py-2 rounded-xl text-xs font-medium"
+                      style={{ background: bcTargetMode === m ? C.accent : C.bg, border: `1px solid ${bcTargetMode === m ? C.accent : C.border}`, color: bcTargetMode === m ? '#fff' : C.muted }}>
+                      {m === 'all' ? `Todos los grupos (${groups.length})` : 'Grupos específicos'}
+                    </button>
+                  ))}
+                </div>
+                {bcTargetMode === 'selected' && groups.length > 0 && (
+                  <div className="space-y-2 max-h-36 overflow-y-auto">
+                    {groups.map(g => (
+                      <button key={g.id} onClick={() => toggleBcGroup(g.whapi_group_id)}
+                        className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm"
+                        style={{ background: bcSelectedGroups.includes(g.whapi_group_id) ? '#00b0f615' : C.bg, border: `1px solid ${bcSelectedGroups.includes(g.whapi_group_id) ? C.accent : C.border}` }}>
+                        <span style={{ color: C.text }}>{g.name}</span>
+                        <div className="w-4 h-4 rounded flex items-center justify-center text-xs font-bold"
+                          style={{ background: bcSelectedGroups.includes(g.whapi_group_id) ? C.accent : C.border, color: '#fff' }}>
+                          {bcSelectedGroups.includes(g.whapi_group_id) ? '✓' : ''}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Programar */}
+              <div>
+                <label className="text-xs font-medium block mb-2" style={{ color: C.muted }}>Envío</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['now', 'later'] as const).map(m => (
+                    <button key={m} onClick={() => setBcScheduleMode(m)}
+                      className="py-2 rounded-xl text-xs font-medium"
+                      style={{ background: bcScheduleMode === m ? '#FFB80020' : C.bg, border: `1px solid ${bcScheduleMode === m ? C.warning : C.border}`, color: bcScheduleMode === m ? C.warning : C.muted }}>
+                      {m === 'now' ? '⚡ Ahora' : '🕐 Programar'}
+                    </button>
+                  ))}
+                </div>
+                {bcScheduleMode === 'later' && (
+                  <input type="datetime-local" value={bcScheduledAt} onChange={e => setBcScheduledAt(e.target.value)}
+                    className="w-full mt-2 rounded-xl px-3 py-2.5 text-sm"
+                    style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
+                )}
+              </div>
+
+              {/* Anti-ban notice */}
+              <div className="rounded-xl p-3 text-xs" style={{ background: '#FFB80010', border: '1px solid #FFB80030' }}>
+                <p className="font-medium mb-1" style={{ color: C.warning }}>⚠️ Anti-ban activo</p>
+                <p style={{ color: C.muted }}>Delay aleatorio 3–8s entre grupos · spintax aplicado automáticamente · máx 5 grupos/día recomendado.</p>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 flex gap-3" style={{ borderTop: `1px solid ${C.border}` }}>
+              <button onClick={() => setShowBroadcastModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm"
+                style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.muted }}>
+                Cancelar
+              </button>
+              <button onClick={() => handleSaveBroadcast(false)} disabled={savingBroadcast}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
+                style={{ background: C.card, border: `1px solid ${C.border}`, color: C.text, opacity: savingBroadcast ? 0.7 : 1 }}>
+                {savingBroadcast ? <Loader2 size={14} className="animate-spin" /> : <MessageSquare size={14} />}
+                {bcScheduleMode === 'later' ? 'Programar' : 'Guardar borrador'}
+              </button>
+              <button onClick={() => handleSaveBroadcast(true)} disabled={savingBroadcast}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
+                style={{ background: C.success, color: '#0A0A0F', opacity: savingBroadcast ? 0.7 : 1 }}>
+                {savingBroadcast ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                Enviar ahora
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+      
       {/* ══ MODAL: CONECTAR CANAL ══ */}
       {showConnectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
