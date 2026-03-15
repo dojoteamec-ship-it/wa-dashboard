@@ -230,7 +230,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
       const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}/icon`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 }),
+        body: JSON.stringify({ media: `data:image/jpeg;base64,${base64}` }),
       })
       const rd = await r.json()
       if (!r.ok) throw new Error('Error imagen: ' + JSON.stringify(rd))
