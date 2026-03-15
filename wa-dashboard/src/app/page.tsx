@@ -163,7 +163,7 @@ function KanshiLogo({ size = 32, className = '' }: { size?: number; className?: 
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'traficker' | 'sala' | 'config'
+type TabType = 'overview' | 'pipeline' | 'psico' | 'campaigns' | 'fuentes' | 'ventas' | 'traficker' | 'sala' | 'grupos' | 'config'
 
 const SIDEBAR_ITEMS: {
   key: TabType
@@ -178,6 +178,7 @@ const SIDEBAR_ITEMS: {
   { key: 'campaigns',  label: 'Campañas',  icon: <Send size={16}/> },
   { key: 'traficker',  label: 'Traficker', icon: <BarChart2 size={16}/> },
   { key: 'sala',       label: 'Sala Control', icon: <Zap size={16}/> },
+  { key: 'grupos',     label: 'Grupos',       icon: <MessageSquare size={16}/> },
 ]
 
 const STATUS_COLOR = (s: string) =>
@@ -1622,6 +1623,7 @@ export default function Dashboard() {
     ventas:     'Ventas',
     traficker:  'Traficker — Calidad de Lead',
     sala:       'Sala de Control',
+    grupos:     'Grupos WhatsApp',
     config:     'Configuración',
   }
   const activeProject = projects.find(p => p.id === activeProjectId) ?? null
@@ -1959,6 +1961,15 @@ export default function Dashboard() {
             activeProjectId={activeProjectId}
             projects={projects}
             leads={leads}
+            onToast={addToast}
+          />
+        )}
+
+        {/* ══ GRUPOS ══ */}
+        {activeTab === 'grupos' && (
+          <GruposTab
+            activeProjectId={activeProjectId}
+            projects={projects}
             onToast={addToast}
           />
         )}
