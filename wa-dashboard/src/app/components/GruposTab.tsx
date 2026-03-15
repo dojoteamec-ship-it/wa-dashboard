@@ -318,9 +318,9 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
       // Whapi espera JID: 593XXXXXXXXX@s.whatsapp.net
       const jid = member.id.includes('@') ? member.id : `${member.id}@s.whatsapp.net`
       const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}/participants`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, participants: [jid] }),
+        body: JSON.stringify({ action, participants: [jid.replace('@s.whatsapp.net', '')] }),
       })
       const rd = await r.json()
       if (!r.ok) throw new Error(`Error ${action}: ` + JSON.stringify(rd))
@@ -338,9 +338,9 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
       if (!cred) throw new Error('Sin credencial Whapi')
       const jid = `${contact.phone_number}@s.whatsapp.net`
       const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${group.whapi_group_id}/participants`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'promote', participants: [jid] }),
+        body: JSON.stringify({ action: 'promote', participants: [contact.phone_number.replace(/\D/g, '')] }),
       })
       const rd = await r.json()
       if (!r.ok) throw new Error(JSON.stringify(rd))
