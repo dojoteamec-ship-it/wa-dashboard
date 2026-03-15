@@ -188,7 +188,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
 
       // Update name in Whapi
       if (editName !== editGroup.name) {
-        await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}`, {
+        const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}`, {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${cred.WHAPI_TOKEN}`,
@@ -196,11 +196,13 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
           },
           body: JSON.stringify({ subject: editName }),
         })
+        const rd = await r.json()
+        console.log('Whapi name update:', r.status, rd)
       }
 
       // Update description in Whapi
       if (editDesc) {
-        await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}`, {
+        const r = await fetch(`${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}`, {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${cred.WHAPI_TOKEN}`,
@@ -208,6 +210,8 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
           },
           body: JSON.stringify({ desc: editDesc }),
         })
+        const rd = await r.json()
+        console.log('Whapi desc update:', r.status, rd)
       }
 
       // Update Supabase
@@ -232,7 +236,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     }
   }
 
-  // ── UPLOAD IMAGE ─────────────────────────────────────────────────────────────
+  // ── UPLOAD IMAGE — Promise-based FileReader ───────────────────────────────────
   async function handleImageUpload(file: File) {
     if (!editGroup) return
     setUploadingImage(true)
@@ -240,31 +244,32 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
       const cred = await getWhapiCred()
       if (!cred) throw new Error('Sin credencial Whapi')
 
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1]
-        const res = await fetch(
-          `${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}/icon`,
-          {
-            method: 'PUT',
-            headers: {
-              Authorization: `Bearer ${cred.WHAPI_TOKEN}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ image: base64 }),
-          }
-        )
-        const data = await res.json()
-        if (res.ok) {
-          onToast({ type: 'success', message: '✅ Imagen actualizada' })
-        } else {
-          throw new Error(data.message ?? 'Error al subir imagen')
+      // Wrap FileReader in a Promise so async/await works correctly
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = () => reject(new Error('Error leyendo archivo'))
+        reader.readAsDataURL(file)
+      })
+
+      const res = await fetch(
+        `${cred.WHAPI_BASE_URL}groups/${editGroup.whapi_group_id}/icon`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${cred.WHAPI_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ image: base64 }),
         }
-        setUploadingImage(false)
-      }
+      )
+      const data = await res.json()
+      console.log('Whapi image upload:', res.status, data)
+      if (!res.ok) throw new Error(data.message ?? 'Error Whapi: ' + JSON.stringify(data))
+      onToast({ type: 'success', message: '✅ Imagen actualizada en WhatsApp' })
     } catch (e: any) {
       onToast({ type: 'error', message: e.message })
+    } finally {
       setUploadingImage(false)
     }
   }
@@ -328,13 +333,11 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
       const cred = await getWhapiCred()
       if (!cred) throw new Error('Sin credencial Whapi')
 
-      // Revoke old link
       await fetch(`${cred.WHAPI_BASE_URL}groups/${g.whapi_group_id}/invite`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}` },
       })
 
-      // Get new link
       const res = await fetch(
         `${cred.WHAPI_BASE_URL}groups/${g.whapi_group_id}/invite`,
         { headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}` } }
@@ -361,7 +364,6 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     if (!editGroup) return
     setDeletingGroup(true)
     try {
-      // Delete from Supabase only (no Whapi delete — WhatsApp group stays)
       const { error } = await supabase
         .from('wa_groups')
         .delete()
@@ -480,7 +482,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     onToast({ type: 'success', message: 'Copiado' })
   }
 
-  const warmupPct  = Math.min((warmupDays / 14) * 100, 100)
+  const warmupPct   = Math.min((warmupDays / 14) * 100, 100)
   const warmupReady = warmupDays >= 14
 
   if (loading) return (
@@ -545,9 +547,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${warmupPct}%`,
-                background: warmupReady
-                  ? C.success
-                  : `linear-gradient(90deg, ${C.warning}, #ff9500)`,
+                background: warmupReady ? C.success : `linear-gradient(90deg, ${C.warning}, #ff9500)`,
               }}
             />
           </div>
@@ -566,10 +566,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
           CANALES WHAPI
         </h3>
         {channels.length === 0 ? (
-          <div
-            className="rounded-2xl p-8 text-center"
-            style={{ background: C.card, border: `1px dashed ${C.border}` }}
-          >
+          <div className="rounded-2xl p-8 text-center" style={{ background: C.card, border: `1px dashed ${C.border}` }}>
             <Smartphone size={32} className="mx-auto mb-3" style={{ color: C.muted }} />
             <p className="font-medium mb-4" style={{ color: C.text }}>Sin canales conectados</p>
             <button
@@ -668,7 +665,6 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                       >
                         {isFull ? 'LLENO' : g.is_active ? 'ACTIVO' : 'INACTIVO'}
                       </span>
-                      {/* EDIT BUTTON */}
                       <button
                         onClick={() => openEdit(g)}
                         className="rounded-lg p-1.5 transition-all"
@@ -712,11 +708,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                       <a href={g.invite_link} target="_blank" rel="noreferrer" title="Abrir">
                         <ExternalLink size={13} style={{ color: C.accent }} />
                       </a>
-                      <button
-                        onClick={() => handleRefreshInvite(g)}
-                        disabled={refreshingInvite}
-                        title="Renovar link"
-                      >
+                      <button onClick={() => handleRefreshInvite(g)} disabled={refreshingInvite} title="Renovar link">
                         <RotateCcw size={13} style={{ color: refreshingInvite ? C.muted : C.warning }} />
                       </button>
                     </div>
@@ -728,29 +720,20 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         )}
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          MODAL: EDITAR GRUPO
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ MODAL: EDITAR GRUPO ══ */}
       {editGroup && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.85)' }}
           onClick={e => { if (e.target === e.currentTarget) setEditGroup(null) }}
         >
-          <div
-            className="w-full max-w-lg rounded-2xl overflow-hidden"
-            style={{ background: '#111118', border: `1px solid ${C.border}` }}
-          >
-            {/* Modal header */}
-            <div
-              className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: `1px solid ${C.border}` }}
-            >
+          <div className="w-full max-w-lg rounded-2xl overflow-hidden" style={{ background: '#111118', border: `1px solid ${C.border}` }}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: `1px solid ${C.border}` }}>
               <div>
                 <p className="font-bold" style={{ color: C.text }}>{editGroup.name}</p>
-                <p className="text-xs" style={{ color: C.muted }}>
-                  {editGroup.group_type.toUpperCase()} · #{editGroup.sequence_number}
-                </p>
+                <p className="text-xs" style={{ color: C.muted }}>{editGroup.group_type.toUpperCase()} · #{editGroup.sequence_number}</p>
               </div>
               <button onClick={() => setEditGroup(null)}>
                 <X size={18} style={{ color: C.muted }} />
@@ -760,10 +743,10 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
             {/* Tabs */}
             <div className="flex" style={{ borderBottom: `1px solid ${C.border}` }}>
               {([
-                { key: 'info',    label: 'Info',     icon: <Edit2 size={13}/> },
-                { key: 'imagen',  label: 'Imagen',   icon: <Image size={13}/> },
-                { key: 'admins',  label: 'Admins',   icon: <UserCheck size={13}/> },
-                { key: 'permisos',label: 'Permisos', icon: <Lock size={13}/> },
+                { key: 'info',     label: 'Info',     icon: <Edit2 size={13}/> },
+                { key: 'imagen',   label: 'Imagen',   icon: <Image size={13}/> },
+                { key: 'admins',   label: 'Admins',   icon: <UserCheck size={13}/> },
+                { key: 'permisos', label: 'Permisos', icon: <Lock size={13}/> },
               ] as { key: EditTab; label: string; icon: React.ReactNode }[]).map(t => (
                 <button
                   key={t.key}
@@ -783,16 +766,14 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
               ))}
             </div>
 
-            {/* Tab content */}
+            {/* Content */}
             <div className="p-6 space-y-4">
 
-              {/* ── TAB INFO ── */}
+              {/* TAB INFO */}
               {editTab === 'info' && (
                 <>
                   <div>
-                    <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>
-                      Nombre del grupo
-                    </label>
+                    <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>Nombre del grupo</label>
                     <input
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
@@ -801,9 +782,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>
-                      Descripción (opcional)
-                    </label>
+                    <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>Descripción (opcional)</label>
                     <textarea
                       value={editDesc}
                       onChange={e => setEditDesc(e.target.value)}
@@ -817,16 +796,10 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                     <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>
                       Límite de miembros: <span style={{ color: C.accent }}>{editLimit}</span>
                     </label>
-                    <input
-                      type="range" min={100} max={950} step={50}
-                      value={editLimit}
-                      onChange={e => setEditLimit(Number(e.target.value))}
-                      className="w-full"
-                    />
+                    <input type="range" min={100} max={950} step={50} value={editLimit}
+                      onChange={e => setEditLimit(Number(e.target.value))} className="w-full" />
                     <div className="flex justify-between text-xs mt-1" style={{ color: C.muted }}>
-                      <span>100</span>
-                      <span style={{ color: C.warning }}>máx seguro: 950</span>
-                      <span>950</span>
+                      <span>100</span><span style={{ color: C.warning }}>máx seguro: 950</span><span>950</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -842,16 +815,10 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                   </div>
 
                   {/* Delete zone */}
-                  <div
-                    className="rounded-xl p-3"
-                    style={{ background: '#FF6B3510', border: '1px solid #FF6B3530' }}
-                  >
+                  <div className="rounded-xl p-3" style={{ background: '#FF6B3510', border: '1px solid #FF6B3530' }}>
                     {!showDeleteConfirm ? (
-                      <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="flex items-center gap-2 text-xs"
-                        style={{ color: C.danger }}
-                      >
+                      <button onClick={() => setShowDeleteConfirm(true)}
+                        className="flex items-center gap-2 text-xs" style={{ color: C.danger }}>
                         <Trash2 size={13} /> Eliminar grupo de KANSHI
                       </button>
                     ) : (
@@ -860,19 +827,14 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                           ¿Confirmas? El grupo en WhatsApp NO se borra, solo se elimina de KANSHI.
                         </p>
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => setShowDeleteConfirm(false)}
+                          <button onClick={() => setShowDeleteConfirm(false)}
                             className="flex-1 py-1.5 rounded-lg text-xs"
-                            style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.muted }}
-                          >
+                            style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.muted }}>
                             Cancelar
                           </button>
-                          <button
-                            onClick={handleDeleteGroup}
-                            disabled={deletingGroup}
+                          <button onClick={handleDeleteGroup} disabled={deletingGroup}
                             className="flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1"
-                            style={{ background: C.danger, color: '#fff' }}
-                          >
+                            style={{ background: C.danger, color: '#fff' }}>
                             {deletingGroup ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                             Eliminar
                           </button>
@@ -882,19 +844,14 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => setEditGroup(null)}
+                    <button onClick={() => setEditGroup(null)}
                       className="flex-1 py-2.5 rounded-xl text-sm"
-                      style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.muted }}
-                    >
+                      style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.muted }}>
                       Cancelar
                     </button>
-                    <button
-                      onClick={handleSaveInfo}
-                      disabled={savingEdit}
+                    <button onClick={handleSaveInfo} disabled={savingEdit}
                       className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
-                      style={{ background: C.accent, color: '#fff', opacity: savingEdit ? 0.7 : 1 }}
-                    >
+                      style={{ background: C.accent, color: '#fff', opacity: savingEdit ? 0.7 : 1 }}>
                       {savingEdit ? <Loader2 size={14} className="animate-spin" /> : null}
                       {savingEdit ? 'Guardando...' : 'Guardar cambios'}
                     </button>
@@ -902,7 +859,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                 </>
               )}
 
-              {/* ── TAB IMAGEN ── */}
+              {/* TAB IMAGEN */}
               {editTab === 'imagen' && (
                 <div className="space-y-4">
                   <div
@@ -931,19 +888,16 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                       if (file) handleImageUpload(file)
                     }}
                   />
-                  <div
-                    className="rounded-xl p-3 text-xs"
-                    style={{ background: '#00b0f615', border: '1px solid #00b0f630' }}
-                  >
+                  <div className="rounded-xl p-3 text-xs" style={{ background: '#00b0f615', border: '1px solid #00b0f630' }}>
                     <p style={{ color: C.muted }}>
                       La imagen se actualiza directamente en WhatsApp via Whapi API.
-                      Se aplica a todos los miembros del grupo en tiempo real.
+                      Revisa DevTools → Console para ver la respuesta si no funciona.
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* ── TAB ADMINS ── */}
+              {/* TAB ADMINS */}
               {editTab === 'admins' && (
                 <div className="space-y-3">
                   {loadingMembers ? (
@@ -953,11 +907,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                   ) : members.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-sm" style={{ color: C.muted }}>No se pudieron cargar los miembros</p>
-                      <button
-                        onClick={() => loadMembers(editGroup)}
-                        className="mt-2 text-xs"
-                        style={{ color: C.accent }}
-                      >
+                      <button onClick={() => loadMembers(editGroup)} className="mt-2 text-xs" style={{ color: C.accent }}>
                         Reintentar
                       </button>
                     </div>
@@ -968,32 +918,24 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                       </p>
                       <div className="space-y-2 max-h-64 overflow-y-auto">
                         {members.map(m => {
-                          const isAdmin = m.rank === 'admin' || m.rank === 'superadmin' || m.rank === 'creator'
+                          const isAdmin   = m.rank === 'admin' || m.rank === 'superadmin' || m.rank === 'creator'
                           const isCreator = m.rank === 'creator' || m.rank === 'superadmin'
                           return (
-                            <div
-                              key={m.id}
-                              className="flex items-center justify-between rounded-xl px-3 py-2"
-                              style={{ background: C.bg, border: `1px solid ${C.border}` }}
-                            >
+                            <div key={m.id} className="flex items-center justify-between rounded-xl px-3 py-2"
+                              style={{ background: C.bg, border: `1px solid ${C.border}` }}>
                               <div>
                                 <p className="text-xs font-mono" style={{ color: C.text }}>
                                   +{m.id.replace('@s.whatsapp.net', '')}
                                 </p>
-                                <p className="text-xs" style={{ color: isAdmin ? C.accent : C.muted }}>
-                                  {m.rank}
-                                </p>
+                                <p className="text-xs" style={{ color: isAdmin ? C.accent : C.muted }}>{m.rank}</p>
                               </div>
                               {!isCreator && (
-                                <button
-                                  onClick={() => handleToggleAdmin(m)}
-                                  className="text-xs px-2 py-1 rounded-lg"
+                                <button onClick={() => handleToggleAdmin(m)} className="text-xs px-2 py-1 rounded-lg"
                                   style={{
                                     background: isAdmin ? '#FF6B3520' : '#00FF9420',
                                     color: isAdmin ? C.danger : C.success,
                                     border: `1px solid ${isAdmin ? '#FF6B3540' : '#00FF9440'}`,
-                                  }}
-                                >
+                                  }}>
                                   {isAdmin ? 'Quitar admin' : 'Hacer admin'}
                                 </button>
                               )}
@@ -1006,20 +948,14 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                 </div>
               )}
 
-              {/* ── TAB PERMISOS ── */}
+              {/* TAB PERMISOS */}
               {editTab === 'permisos' && (
                 <div className="space-y-4">
-                  <div
-                    className="flex items-center justify-between rounded-xl p-4"
-                    style={{ background: C.bg, border: `1px solid ${C.border}` }}
-                  >
+                  <div className="flex items-center justify-between rounded-xl p-4"
+                    style={{ background: C.bg, border: `1px solid ${C.border}` }}>
                     <div>
-                      <p className="text-sm font-medium" style={{ color: C.text }}>
-                        Solo admins pueden enviar
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: C.muted }}>
-                        Los miembros solo pueden leer. Ideal para anuncios.
-                      </p>
+                      <p className="text-sm font-medium" style={{ color: C.text }}>Solo admins pueden enviar</p>
+                      <p className="text-xs mt-0.5" style={{ color: C.muted }}>Los miembros solo pueden leer. Ideal para anuncios.</p>
                     </div>
                     <button onClick={() => setOnlyAdminsSend(!onlyAdminsSend)}>
                       {onlyAdminsSend
@@ -1027,26 +963,16 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                         : <ToggleLeft size={28} style={{ color: C.muted }} />}
                     </button>
                   </div>
-
-                  <div
-                    className="rounded-xl p-3 text-xs"
-                    style={{ background: '#FFB80010', border: '1px solid #FFB80030' }}
-                  >
-                    <p className="font-medium mb-1" style={{ color: C.warning }}>
-                      ⚠️ Recomendación para lanzamientos
-                    </p>
+                  <div className="rounded-xl p-3 text-xs" style={{ background: '#FFB80010', border: '1px solid #FFB80030' }}>
+                    <p className="font-medium mb-1" style={{ color: C.warning }}>⚠️ Recomendación para lanzamientos</p>
                     <p style={{ color: C.muted }}>
-                      Activa "Solo admins" durante Lives y Clases para evitar spam y mantener
-                      el hilo limpio. Desactívalo para encuestas de participación.
+                      Activa "Solo admins" durante Lives y Clases para evitar spam.
+                      Desactívalo para encuestas de participación.
                     </p>
                   </div>
-
-                  <button
-                    onClick={handleSavePerms}
-                    disabled={savingPerms}
+                  <button onClick={handleSavePerms} disabled={savingPerms}
                     className="w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
-                    style={{ background: C.accent, color: '#fff', opacity: savingPerms ? 0.7 : 1 }}
-                  >
+                    style={{ background: C.accent, color: '#fff', opacity: savingPerms ? 0.7 : 1 }}>
                     {savingPerms ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
                     {savingPerms ? 'Guardando...' : 'Aplicar permisos'}
                   </button>
@@ -1058,15 +984,11 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════
-          MODAL: CONECTAR CANAL
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ MODAL: CONECTAR CANAL ══ */}
       {showConnectModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.8)' }}
-          onClick={e => { if (e.target === e.currentTarget) setShowConnectModal(false) }}
-        >
+          onClick={e => { if (e.target === e.currentTarget) setShowConnectModal(false) }}>
           <div className="w-full max-w-md rounded-2xl p-6 space-y-5" style={{ background: '#111118', border: `1px solid ${C.border}` }}>
             <h3 className="font-bold text-lg" style={{ color: C.text }}>Conectar canal Whapi</h3>
             <div className="space-y-3">
@@ -1114,15 +1036,11 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════
-          MODAL: CREAR GRUPO
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ MODAL: CREAR GRUPO ══ */}
       {showCreateGroup && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.8)' }}
-          onClick={e => { if (e.target === e.currentTarget) setShowCreateGroup(false) }}
-        >
+          onClick={e => { if (e.target === e.currentTarget) setShowCreateGroup(false) }}>
           <div className="w-full max-w-sm rounded-2xl p-6 space-y-5" style={{ background: '#111118', border: `1px solid ${C.border}` }}>
             <div>
               <h3 className="font-bold text-lg" style={{ color: C.text }}>Crear grupo</h3>
@@ -1133,8 +1051,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                 <label className="text-xs font-medium block mb-2" style={{ color: C.muted }}>Tipo</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['main','vip','broadcast'] as const).map(t => (
-                    <button key={t} onClick={() => setGroupType(t)}
-                      className="py-2 rounded-xl text-xs font-medium"
+                    <button key={t} onClick={() => setGroupType(t)} className="py-2 rounded-xl text-xs font-medium"
                       style={{
                         background: groupType === t ? C.accent : C.bg,
                         border: `1px solid ${groupType === t ? C.accent : C.border}`,
@@ -1160,10 +1077,10 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                   Se creará:{' '}
                   <strong style={{ color: C.text }}>
                     {groupType === 'main'
-                      ? `Growth Partner Club ${groups.filter(g=>g.group_type==='main').length + 1}`
+                      ? `Growth Partner Club ${groups.filter(g => g.group_type === 'main').length + 1}`
                       : groupType === 'vip'
-                      ? `GPC VIP ${groups.filter(g=>g.group_type==='vip').length + 1}`
-                      : `GPC Broadcast ${groups.filter(g=>g.group_type==='broadcast').length + 1}`}
+                      ? `GPC VIP ${groups.filter(g => g.group_type === 'vip').length + 1}`
+                      : `GPC Broadcast ${groups.filter(g => g.group_type === 'broadcast').length + 1}`}
                   </strong>
                 </p>
               </div>
