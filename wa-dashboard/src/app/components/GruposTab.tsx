@@ -1306,11 +1306,11 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-medium" style={{ color: C.muted }}>Mensaje</label>
-                  <span className="text-xs" style={{ color: C.muted }}>Usa {'{'}opción1|opción2{'}'} para spintax</span>
+                  <span className="text-xs" style={{ color: C.muted }}>Spintax: varía el texto entre grupos</span>
                 </div>
                 <textarea value={bcBody}
                   onChange={e => { setBcBody(e.target.value); setSpintaxPreview('') }}
-                  rows={5} placeholder={'Hola {Carlos|amigo|crack} 👋\nArrancan los Lives del Growth Partner Club.\n¡Te esperamos!'}
+                  rows={5} placeholder={'Hola a todos 👋\n\nRecordatorio: el Live arranca hoy a las 8PM.\n\n¡Los esperamos!'}
                   className="w-full rounded-xl px-3 py-2.5 text-sm resize-none font-mono"
                   style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
                 <div className="flex items-center justify-between mt-2">
