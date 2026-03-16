@@ -20,6 +20,7 @@ import GruposTab from '@/app/components/GruposTab'
 import { Sidebar as SidebarV2, SubTabKey } from '@/app/components/Sidebar'
 import { LaunchResumenPanel } from '@/app/components/LaunchResumenPanel'
 import { LaunchGuiaPanel } from '@/app/components/LaunchGuiaPanel'
+import { TestingPanel } from '@/app/components/TestingPanel'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -1725,6 +1726,11 @@ export default function Dashboard() {
         {/* ══ LANZAMIENTO · GUÍA ══ */}
         {activeSubTab==='lanzamiento.guia'&&(
           <LaunchGuiaPanel />
+        )}
+
+        {/* ══ SISTEMA · TESTING ══ */}
+        {activeSubTab==='sistema.testing'&&(
+          <TestingPanel />
         )}
 
         {/* ══ OVERVIEW (otras sub-tabs de lanzamiento + legacy) ══ */}
