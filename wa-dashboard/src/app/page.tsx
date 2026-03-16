@@ -19,6 +19,7 @@ import { format } from 'date-fns'
 import GruposTab from '@/app/components/GruposTab'
 import { Sidebar as SidebarV2, SubTabKey } from '@/app/components/Sidebar'
 import { LaunchResumenPanel } from '@/app/components/LaunchResumenPanel'
+import { LaunchGuiaPanel } from '@/app/components/LaunchGuiaPanel'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -1721,8 +1722,13 @@ export default function Dashboard() {
           />
         )}
 
+        {/* ══ LANZAMIENTO · GUÍA ══ */}
+        {activeSubTab==='lanzamiento.guia'&&(
+          <LaunchGuiaPanel />
+        )}
+
         {/* ══ OVERVIEW (otras sub-tabs de lanzamiento + legacy) ══ */}
-        {activeTab==='overview'&&activeSubTab!=='lanzamiento.resumen'&&<>
+        {activeTab==='overview'&&activeSubTab!=='lanzamiento.resumen'&&activeSubTab!=='lanzamiento.guia'&&<>
           {activeProjectId&&projects.find(p=>p.id===activeProjectId)&&(
             <ProjectTimeline project={projects.find(p=>p.id===activeProjectId)!}/>
           )}
