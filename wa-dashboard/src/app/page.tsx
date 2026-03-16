@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import GruposTab from '@/app/components/GruposTab'
+import { Sidebar as SidebarV2, SubTabKey } from '@/app/components/Sidebar'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -1452,6 +1453,7 @@ export default function Dashboard() {
   const [connected,setConnected] = useState(false)
   const [lastUpdate,setLastUpdate] = useState(new Date())
   const [activeTab,setActiveTab] = useState<TabType>('overview')
+  const [activeSubTab, setActiveSubTab] = useState<SubTabKey>('lanzamiento.resumen')
   const [toasts,setToasts] = useState<Toast[]>([])
   const [leadsPage,setLeadsPage] = useState(1)
   const [campaignsPage,setCampaignsPage] = useState(1)
@@ -1491,6 +1493,7 @@ export default function Dashboard() {
   }, [fetchUnreadAlerts, authenticated])
   
   useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeTab])
+  useEffect(()=>{ setActiveTab(subTabToLegacyTab(activeSubTab)) },[activeSubTab])
   useEffect(()=>{setLeadsPage(1);setCampaignsPage(1)},[activeProjectId])
   useEffect(()=>{const s=localStorage.getItem(AUTH_KEY);setAuthenticated(s==='true')},[])
 
@@ -1615,6 +1618,30 @@ export default function Dashboard() {
     </div>
   )
 
+ function subTabToLegacyTab(subTab: SubTabKey): TabType {
+    const map: Record<SubTabKey, TabType> = {
+      'lanzamiento.resumen':      'overview',
+      'lanzamiento.timeline':     'overview',
+      'lanzamiento.guia':         'overview',
+      'inteligencia.leads':       'psico',
+      'inteligencia.pipeline':    'pipeline',
+      'inteligencia.score':       'psico',
+      'inteligencia.psicologia':  'psico',
+      'trafico.metaads':          'traficker',
+      'trafico.fuentes':          'fuentes',
+      'trafico.landings':         'overview',
+      'nexo.agente':              'campaigns',
+      'nexo.campanias':           'campaigns',
+      'grupos.grupos':            'grupos',
+      'ventas.hotmart':           'ventas',
+      'ventas.revenue':           'ventas',
+      'sistema.config':           'config',
+      'sistema.reportes':         'overview',
+      'sistema.testing':          'overview',
+    }
+    return map[subTab] ?? 'overview'
+  }
+
  const TAB_TITLES: Record<TabType, string> = {
     overview:   'Overview',
     pipeline:   'Pipeline',
@@ -1630,20 +1657,21 @@ export default function Dashboard() {
   const activeProject = projects.find(p => p.id === activeProjectId) ?? null
 
   return(
-    <div className="flex h-screen overflow-hidden" style={{background:'#0A0A0F'}}>
+    <div className="flex h-screen overflow-hidden" style={{background:'var(--bg-base)'}}>
       <style>{`@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* ── SIDEBAR ── */}
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        activeProject={activeProject}
+      <SidebarV2
+        activeSubTab={activeSubTab}
+        onNavigate={setActiveSubTab}
+        projectName={activeProject?.name ?? 'SamurAI 2026'}
+        projectStatus={activeProject?.status === 'active' ? 'ACTIVO' : 'PLANIF.'}
+        daysToCaption={7}
         connected={connected}
-        onLogout={() => { localStorage.removeItem(AUTH_KEY); setAuthenticated(false) }}
-        onRefresh={fetchData}
-        lastUpdate={lastUpdate}
         unreadCount={unreadAlerts}
         onAlertsClick={() => setShowAlerts(true)}
+        onRefresh={fetchData}
+        onLogout={() => { localStorage.removeItem(AUTH_KEY); setAuthenticated(false) }}
       />
 
       {/* ── WORKSPACE ── */}
