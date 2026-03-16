@@ -1438,6 +1438,30 @@ function AlertsPanel({
 
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
 
+function subTabToLegacyTab(subTab: SubTabKey): TabType {
+  const map: Record<SubTabKey, TabType> = {
+    'lanzamiento.resumen':      'overview',
+    'lanzamiento.timeline':     'overview',
+    'lanzamiento.guia':         'overview',
+    'inteligencia.leads':       'psico',
+    'inteligencia.pipeline':    'pipeline',
+    'inteligencia.score':       'psico',
+    'inteligencia.psicologia':  'psico',
+    'trafico.metaads':          'traficker',
+    'trafico.fuentes':          'fuentes',
+    'trafico.landings':         'overview',
+    'nexo.agente':              'campaigns',
+    'nexo.campanias':           'campaigns',
+    'grupos.grupos':            'grupos',
+    'ventas.hotmart':           'ventas',
+    'ventas.revenue':           'ventas',
+    'sistema.config':           'config',
+    'sistema.reportes':         'overview',
+    'sistema.testing':          'overview',
+  }
+  return map[subTab] ?? 'overview'
+}
+
 export default function Dashboard() {
   const [authenticated,setAuthenticated] = useState<boolean|null>(null)
   const [kpi,setKpi] = useState<KPI|null>(null)
@@ -1618,29 +1642,6 @@ export default function Dashboard() {
     </div>
   )
 
- function subTabToLegacyTab(subTab: SubTabKey): TabType {
-    const map: Record<SubTabKey, TabType> = {
-      'lanzamiento.resumen':      'overview',
-      'lanzamiento.timeline':     'overview',
-      'lanzamiento.guia':         'overview',
-      'inteligencia.leads':       'psico',
-      'inteligencia.pipeline':    'pipeline',
-      'inteligencia.score':       'psico',
-      'inteligencia.psicologia':  'psico',
-      'trafico.metaads':          'traficker',
-      'trafico.fuentes':          'fuentes',
-      'trafico.landings':         'overview',
-      'nexo.agente':              'campaigns',
-      'nexo.campanias':           'campaigns',
-      'grupos.grupos':            'grupos',
-      'ventas.hotmart':           'ventas',
-      'ventas.revenue':           'ventas',
-      'sistema.config':           'config',
-      'sistema.reportes':         'overview',
-      'sistema.testing':          'overview',
-    }
-    return map[subTab] ?? 'overview'
-  }
 
  const TAB_TITLES: Record<TabType, string> = {
     overview:   'Overview',
