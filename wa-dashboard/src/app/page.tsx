@@ -18,6 +18,7 @@ import {
 import { format } from 'date-fns'
 import GruposTab from '@/app/components/GruposTab'
 import { Sidebar as SidebarV2, SubTabKey } from '@/app/components/Sidebar'
+import { LaunchResumenPanel } from '@/app/components/LaunchResumenPanel'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -1707,8 +1708,21 @@ export default function Dashboard() {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-[1400px] mx-auto space-y-6">
 
-        {/* ══ OVERVIEW ══ */}
-        {activeTab==='overview'&&<>
+        {/* ══ LANZAMIENTO · RESUMEN ══ */}
+        {activeSubTab==='lanzamiento.resumen'&&(
+          <LaunchResumenPanel
+            project={activeProject}
+            leads={leads}
+            kpi={kpi}
+            recentMsgs={recentMsgs}
+            connected={connected}
+            chartData={chartData}
+            activeProjectId={activeProjectId}
+          />
+        )}
+
+        {/* ══ OVERVIEW (otras sub-tabs de lanzamiento + legacy) ══ */}
+        {activeTab==='overview'&&activeSubTab!=='lanzamiento.resumen'&&<>
           {activeProjectId&&projects.find(p=>p.id===activeProjectId)&&(
             <ProjectTimeline project={projects.find(p=>p.id===activeProjectId)!}/>
           )}
