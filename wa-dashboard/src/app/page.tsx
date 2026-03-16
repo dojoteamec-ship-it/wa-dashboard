@@ -133,12 +133,12 @@ const urgColor  = (u: string) => u==='alta'?'#FF6B35':u==='media'?'#FFB800':'#4A
 const comColor  = (c: string) => c==='alto'?'#00FF94':c==='medio'?'#FFB800':'#4A4A6A'
 const scoreColor= (n: number) => n>=8?'#00FF94':n>=5?'#FFB800':'#FF6B35'
 const segIcon   = (s: string) => s==='caliente'
-  ? <Flame size={10} className="text-[#FF6B35]"/>
-  : s==='templado' ? <Thermometer size={10} className="text-[#FFB800]"/>
-  : <Snowflake size={10} style={{color:'#00b0f6'}}/>
+  ? <Flame size={10} className="text-[var(--danger)]"/>
+  : s==='templado' ? <Thermometer size={10} className="text-[var(--warning)]"/>
+  : <Snowflake size={10} style={{color:'var(--accent)'}}/>
 
 const statusColor = (s: string) =>
-  s==='completed'?'text-[#00FF94]':s==='running'?'text-[#00b0f6]':s==='scheduled'?'text-[#FFB800]':s==='paused'?'text-[#FFB800]':'text-[#4A4A6A]'
+  s==='completed'?'text-[var(--success)]':s==='running'?'text-[var(--accent)]':s==='scheduled'?'text-[var(--warning)]':s==='paused'?'text-[var(--warning)]':'text-[var(--text-muted)]'
 const statusLabel = (s: string) =>
   ({completed:'COMPLETADA',running:'EN CURSO',scheduled:'PROGRAMADA',draft:'BORRADOR',paused:'PAUSADA',cancelled:'CANCELADA'}[s]||s.toUpperCase())
 
@@ -184,7 +184,7 @@ const SIDEBAR_ITEMS: {
 ]
 
 const STATUS_COLOR = (s: string) =>
-  s === 'active' ? '#00FF94' : s === 'planning' ? '#FFB800' : '#4A4A6A'
+  s === 'active' ? 'var(--success)' : s === 'planning' ? 'var(--warning)' : 'var(--text-muted)'
 const STATUS_LABEL = (s: string) =>
   s === 'active' ? 'ACTIVO' : s === 'planning' ? 'PLANIF.' : 'CERRADO'
 
@@ -214,18 +214,18 @@ function Sidebar({
       className="flex flex-col flex-shrink-0 h-screen sticky top-0 z-40"
       style={{
         width: '220px',
-        background: '#0A0A0F',
-        borderRight: '1px solid #1E1E2E',
+        background: 'var(--bg-base)',
+        borderRight: '1px solid var(--border-default)',
       }}
     >
       {/* ── Logo ── */}
       <div
         className="flex items-center gap-3 px-5 py-5"
-        style={{ borderBottom: '1px solid #1E1E2E' }}
+        style={{ borderBottom: '1px solid var(--border-default)' }}
       >
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5 flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}
+          style={{ background: 'linear-gradient(135deg,var(--primary),#00a7e3)' }}
         >
           <KanshiLogo size={22} />
         </div>
@@ -233,7 +233,7 @@ function Sidebar({
           <p className="font-bold text-white tracking-[0.18em] text-[13px]" style={{ fontFamily: 'monospace' }}>
             KANSHI
           </p>
-          <p className="mono text-[9px] tracking-widest" style={{ color: '#00b0f6' }}>
+          <p className="mono text-xs tracking-widest" style={{ color: 'var(--accent)' }}>
             OS · GPC
           </p>
         </div>
@@ -251,25 +251,25 @@ function Sidebar({
               style={{
                 padding: '10px 14px',
                 background: isActive ? '#1a1a2e' : 'transparent',
-                borderLeft: isActive ? '2px solid #00b0f6' : '2px solid transparent',
-                color: isActive ? '#E0E0F0' : '#4A4A6A',
+                borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
               }}
               onMouseEnter={e => {
                 if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.background = '#111118'
-                  ;(e.currentTarget as HTMLElement).style.color = '#E0E0F0'
+                  (e.currentTarget as HTMLElement).style.background = 'var(--bg-card)'
+                  ;(e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'
                 }
               }}
               onMouseLeave={e => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.background = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.color = '#4A4A6A'
+                  ;(e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
                 }
               }}
             >
               <span
                 style={{
-                  color: isActive ? '#00b0f6' : 'currentColor',
+                  color: isActive ? 'var(--accent)' : 'currentColor',
                   flexShrink: 0,
                   transition: 'color 0.15s',
                 }}
@@ -291,7 +291,7 @@ function Sidebar({
         })}
 
         {/* ── Separador ── */}
-        <div className="my-3" style={{ height: '1px', background: '#1E1E2E' }} />
+        <div className="my-3" style={{ height: '1px', background: 'var(--border-default)' }} />
 
         {/* Config */}
         {(['config'] as const).map(key => {
@@ -304,23 +304,23 @@ function Sidebar({
               style={{
                 padding: '10px 14px',
                 background: isActive ? '#1a1a2e' : 'transparent',
-                borderLeft: isActive ? '2px solid #00b0f6' : '2px solid transparent',
-                color: isActive ? '#E0E0F0' : '#4A4A6A',
+                borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
               }}
               onMouseEnter={e => {
                 if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.background = '#111118'
-                  ;(e.currentTarget as HTMLElement).style.color = '#E0E0F0'
+                  (e.currentTarget as HTMLElement).style.background = 'var(--bg-card)'
+                  ;(e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'
                 }
               }}
               onMouseLeave={e => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.background = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.color = '#4A4A6A'
+                  ;(e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
                 }
               }}
             >
-              <span style={{ color: isActive ? '#00b0f6' : 'currentColor', flexShrink: 0 }}>
+              <span style={{ color: isActive ? 'var(--accent)' : 'currentColor', flexShrink: 0 }}>
                 <Settings size={16} />
               </span>
               <span className="font-medium" style={{ fontSize: '15px' }}>Config</span>
@@ -332,14 +332,14 @@ function Sidebar({
         <button
           onClick={onAlertsClick}
           className="w-full flex items-center gap-3 rounded-xl transition-all duration-150 text-left relative"
-          style={{ padding: '10px 14px', background: 'transparent', borderLeft: '2px solid transparent', color: '#4A4A6A' }}
+          style={{ padding: '10px 14px', background: 'transparent', borderLeft: '2px solid transparent', color: 'var(--text-muted)' }}
           onMouseEnter={e => {
-            ;(e.currentTarget as HTMLElement).style.background = '#111118'
-            ;(e.currentTarget as HTMLElement).style.color = '#E0E0F0'
+            ;(e.currentTarget as HTMLElement).style.background = 'var(--bg-card)'
+            ;(e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'
           }}
           onMouseLeave={e => {
             ;(e.currentTarget as HTMLElement).style.background = 'transparent'
-            ;(e.currentTarget as HTMLElement).style.color = '#4A4A6A'
+            ;(e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
           }}
         >
           <span style={{ color: 'currentColor', flexShrink: 0 }}>
@@ -351,8 +351,8 @@ function Sidebar({
               className="ml-auto mono font-bold"
               style={{
                 fontSize: '9px',
-                color: '#0A0A0F',
-                background: '#FF6B35',
+                color: 'var(--bg-base)',
+                background: 'var(--danger)',
                 borderRadius: '999px',
                 padding: '1px 6px',
                 minWidth: '18px',
@@ -367,10 +367,10 @@ function Sidebar({
       </nav>
 
       {/* ── Footer: proyecto activo ── */}
-      <div style={{ borderTop: '1px solid #1E1E2E' }}>
+      <div style={{ borderTop: '1px solid var(--border-default)' }}>
         {activeProject ? (
           <div className="px-4 py-4">
-            <p className="mono tracking-widest mb-2" style={{ fontSize: '9px', color: '#4A4A6A' }}>
+            <p className="mono tracking-widest mb-2" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
               PROYECTO ACTIVO
             </p>
             <div className="flex items-center gap-2.5">
@@ -386,7 +386,7 @@ function Sidebar({
               <div className="min-w-0 flex-1">
                 <p
                   className="font-semibold truncate"
-                  style={{ fontSize: '13px', color: '#E0E0F0', lineHeight: 1.2 }}
+                  style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.2 }}
                 >
                   {activeProject.name}
                 </p>
@@ -405,7 +405,7 @@ function Sidebar({
           </div>
         ) : (
           <div className="px-4 py-4">
-            <p className="mono tracking-widest mb-1" style={{ fontSize: '9px', color: '#4A4A6A' }}>
+            <p className="mono tracking-widest mb-1" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
               SIN PROYECTO
             </p>
             <p style={{ fontSize: '12px', color: '#2E2E4E' }}>Selecciona uno arriba</p>
@@ -415,19 +415,19 @@ function Sidebar({
         {/* ── Controles sistema ── */}
         <div
           className="px-4 py-3 flex items-center justify-between"
-          style={{ borderTop: '1px solid #1E1E2E' }}
+          style={{ borderTop: '1px solid var(--border-default)' }}
         >
           {/* Status live */}
           <div className="flex items-center gap-1.5">
             {connected ? (
               <>
-                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00b0f6' }} />
-                <span className="mono" style={{ fontSize: '10px', color: '#00b0f6' }}>LIVE</span>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
+                <span className="mono" style={{ fontSize: '10px', color: 'var(--accent)' }}>LIVE</span>
               </>
             ) : (
               <>
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#4A4A6A' }} />
-                <span className="mono" style={{ fontSize: '10px', color: '#4A4A6A' }}>OFFLINE</span>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--text-muted)' }} />
+                <span className="mono" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>OFFLINE</span>
               </>
             )}
           </div>
@@ -436,22 +436,22 @@ function Sidebar({
             <button
               onClick={onRefresh}
               className="p-1.5 rounded-lg transition-colors"
-              style={{ border: '1px solid #1E1E2E' }}
+              style={{ border: '1px solid var(--border-default)' }}
               title="Actualizar datos"
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#00b0f6')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#1E1E2E')}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-default)')}
             >
-              <RefreshCw size={11} style={{ color: '#4A4A6A' }} />
+              <RefreshCw size={11} style={{ color: 'var(--text-muted)' }} />
             </button>
             <button
               onClick={onLogout}
               className="p-1.5 rounded-lg transition-colors"
-              style={{ border: '1px solid #1E1E2E' }}
+              style={{ border: '1px solid var(--border-default)' }}
               title="Cerrar sesión"
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#FF6B35')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#1E1E2E')}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--danger)')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-default)')}
             >
-              <LogOut size={11} style={{ color: '#4A4A6A' }} />
+              <LogOut size={11} style={{ color: 'var(--text-muted)' }} />
             </button>
           </div>
         </div>
@@ -489,39 +489,39 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: '#090c4c' }}>
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #00b0f6 0%, transparent 70%)' }}/>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #0014ad 0%, transparent 70%)' }}/>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }}/>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)' }}/>
       </div>
-      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#00b0f6 1px, transparent 1px), linear-gradient(90deg, #00b0f6 1px, transparent 1px)', backgroundSize: '40px 40px' }}/>
+      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px)', backgroundSize: '40px 40px' }}/>
       <div className={`relative z-10 w-full max-w-sm mx-4 rounded-2xl border p-8 transition-all ${shaking ? 'animate-bounce' : ''}`}
-        style={{ background: 'rgba(9,12,76,0.8)', backdropFilter: 'blur(24px)', borderColor: error ? '#FF6B35' : 'rgba(0,176,246,0.3)', boxShadow: error ? '0 0 40px rgba(255,107,53,0.2)' : '0 0 60px rgba(0,176,246,0.15)' }}>
+        style={{ background: 'rgba(9,12,76,0.8)', backdropFilter: 'blur(24px)', borderColor: error ? 'var(--danger)' : 'rgba(0,176,246,0.3)', boxShadow: error ? '0 0 40px rgba(255,107,53,0.2)' : '0 0 60px rgba(0,176,246,0.15)' }}>
         <div className="flex flex-col items-center mb-8">
           <div className="mb-5 p-4 rounded-2xl" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}><KanshiLogo size={56} /></div>
           <h1 className="text-2xl font-bold tracking-[0.2em] text-white mb-1" style={{ fontFamily: 'monospace' }}>KANSHI</h1>
-          <p className="mono text-[10px] tracking-widest" style={{ color: '#00b0f6' }}>MONITORING SYSTEM · GPC</p>
+          <p className="mono text-xs tracking-widest" style={{ color: 'var(--accent)' }}>MONITORING SYSTEM · GPC</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mono text-[10px] tracking-widest block mb-2" style={{ color: '#00b0f6' }}>ACCESO</label>
+            <label className="mono text-xs tracking-widest block mb-2" style={{ color: 'var(--accent)' }}>ACCESO</label>
             <div className="relative">
-              <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#4A4A6A' }}/>
+              <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}/>
               <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="Contraseña del equipo" autoFocus
-                className="w-full rounded-xl px-4 py-3 pl-10 pr-10 text-sm text-white outline-none placeholder:text-[#4A4A6A]"
-                style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${error ? '#FF6B35' : 'rgba(0,176,246,0.3)'}` }}/>
-              <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: showPwd ? '#00b0f6' : '#4A4A6A' }}>
+                className="w-full rounded-xl px-4 py-3 pl-10 pr-10 text-sm text-white outline-none placeholder:text-[var(--text-muted)]"
+                style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${error ? 'var(--danger)' : 'rgba(0,176,246,0.3)'}` }}/>
+              <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: showPwd ? 'var(--accent)' : 'var(--text-muted)' }}>
                 {showPwd ? <Eye size={13}/> : <EyeOff size={13}/>}
               </button>
             </div>
-            {error && <p className="mono text-[10px] text-[#FF6B35] mt-2 tracking-widest">✕ ACCESO DENEGADO</p>}
+            {error && <p className="mono text-xs text-[var(--danger)] mt-2 tracking-widest">✕ ACCESO DENEGADO</p>}
           </div>
           <button type="submit" disabled={!password}
             className="w-full rounded-xl py-3 font-bold mono text-[12px] tracking-widest text-white transition-all disabled:opacity-30 hover:scale-[1.02] active:scale-[0.98]"
-            style={{ background: 'linear-gradient(135deg, #0014ad, #00b0f6)', boxShadow: '0 4px 20px rgba(0,176,246,0.3)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', boxShadow: '0 4px 20px rgba(0,176,246,0.3)' }}>
             INGRESAR AL SISTEMA
           </button>
         </form>
-        <p className="mono text-[9px] text-center mt-6 tracking-widest" style={{ color: '#2E3E6E' }}>SANTIAGO JIMÉNEZ · GROWTH PARTNER · 2026</p>
+        <p className="mono text-xs text-center mt-6 tracking-widest" style={{ color: '#2E3E6E' }}>SANTIAGO JIMÉNEZ · GROWTH PARTNER · 2026</p>
       </div>
     </div>
   )
@@ -533,7 +533,7 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   if (!query || !text) return text
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
   if (idx === -1) return text
-  return <>{text.slice(0, idx)}<span style={{color:'#00b0f6',fontWeight:'bold'}}>{text.slice(idx, idx+query.length)}</span>{text.slice(idx+query.length)}</>
+  return <>{text.slice(0, idx)}<span style={{color:'var(--accent)',fontWeight:'bold'}}>{text.slice(idx, idx+query.length)}</span>{text.slice(idx+query.length)}</>
 }
 
 function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead) => void }) {
@@ -569,28 +569,28 @@ function GlobalSearch({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lea
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors" style={{background:'#111118',width:'220px'}}>
-        <Search size={12} className="text-[#4A4A6A] flex-shrink-0"/>
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border-default)] hover:border-[#2E2E4E] transition-colors" style={{background:'var(--bg-card)',width:'220px'}}>
+        <Search size={12} className="text-[var(--text-muted)] flex-shrink-0"/>
         <input ref={inputRef} value={query} onChange={e=>{setQuery(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)}
-          placeholder="Buscar lead... ⌘K" className="flex-1 bg-transparent text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
-        {query && <button onClick={()=>{setQuery('');setOpen(false)}} className="text-[#4A4A6A] hover:text-[#E0E0F0]"><X size={10}/></button>}
+          placeholder="Buscar lead... ⌘K" className="flex-1 bg-transparent text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"/>
+        {query && <button onClick={()=>{setQuery('');setOpen(false)}} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={10}/></button>}
       </div>
       {open && results.length > 0 && (
-        <div className="absolute top-[calc(100%+8px)] left-0 w-[320px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
+        <div className="absolute top-[calc(100%+8px)] left-0 w-[320px] rounded-xl border border-[var(--border-default)] overflow-hidden z-[200]"
           style={{background:'#0D0D14',boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
-          <div className="px-4 py-2 border-b border-[#1E1E2E]">
-            <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{results.length} RESULTADO{results.length>1?'S':''}</span>
+          <div className="px-4 py-2 border-b border-[var(--border-default)]">
+            <span className="mono text-xs text-[var(--text-muted)] tracking-widest">{results.length} RESULTADO{results.length>1?'S':''}</span>
           </div>
-          <div className="divide-y divide-[#1E1E2E]">
+          <div className="divide-y divide-[var(--border-default)]">
             {results.map((lead,i) => (
               <button key={i} onClick={()=>{onSelect(lead);setOpen(false);setQuery('')}}
-                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left">
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--border-default)] transition-colors text-left">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:`${segColor(lead.segmento)}20`}}>
                   <User size={11} style={{color:segColor(lead.segmento)}}/>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-[#E0E0F0] truncate">{highlightMatch(lead.name||lead.phone_number,query)}</p>
-                  <p className="mono text-[9px] text-[#4A4A6A] truncate">{lead.phone_number}</p>
+                  <p className="text-xs font-medium text-[var(--text-primary)] truncate">{highlightMatch(lead.name||lead.phone_number,query)}</p>
+                  <p className="mono text-xs text-[var(--text-muted)] truncate">{lead.phone_number}</p>
                 </div>
                 <div className="flex-shrink-0"><StagePill stage={lead.agent_stage}/></div>
               </button>
@@ -617,10 +617,10 @@ function ProjectTimeline({ project }: { project: Project }) {
 
   const allDates = [captStart,captEnd,...classDates,cartOpen,cartClose].filter((d):d is Date=>d!==null)
   if (allDates.length===0) return (
-    <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
+    <div className="rounded-2xl border border-[var(--border-default)] p-5" style={{background:'var(--bg-card)'}}>
       <div className="flex items-center gap-3">
-        <Calendar size={14} style={{color:'#4A4A6A'}}/>
-        <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">{project.name} — Sin fechas configuradas. Edita el proyecto para agregar el calendario.</p>
+        <Calendar size={14} style={{color:'var(--text-muted)'}}/>
+        <p className="mono text-xs text-[var(--text-muted)] tracking-widest">{project.name} — Sin fechas configuradas. Edita el proyecto para agregar el calendario.</p>
       </div>
     </div>
   )
@@ -632,12 +632,12 @@ function ProjectTimeline({ project }: { project: Project }) {
   const todayPct = Math.min(100,Math.max(0,(daysDiff(minDate,today)/totalSpan)*100))
 
   const getPhase = () => {
-    if (cartClose&&today>cartClose) return {label:'LANZAMIENTO CERRADO',color:'#4A4A6A'}
-    if (cartOpen&&today>=cartOpen)  return {label:'CARRITO ABIERTO',color:'#00FF94'}
-    if (classDates.length>0&&today>=classDates[0]) return {label:'EN LIVES/CLASES',color:'#FFB800'}
-    if (captEnd&&today>captEnd)    return {label:'CAPTACIÓN TERMINADA',color:'#FF6B35'}
-    if (captStart&&today>=captStart) return {label:'EN CAPTACIÓN',color:'#00b0f6'}
-    return {label:'PRE-LANZAMIENTO',color:'#4A4A6A'}
+    if (cartClose&&today>cartClose) return {label:'LANZAMIENTO CERRADO',color:'var(--text-muted)'}
+    if (cartOpen&&today>=cartOpen)  return {label:'CARRITO ABIERTO',color:'var(--success)'}
+    if (classDates.length>0&&today>=classDates[0]) return {label:'EN LIVES/CLASES',color:'var(--warning)'}
+    if (captEnd&&today>captEnd)    return {label:'CAPTACIÓN TERMINADA',color:'var(--danger)'}
+    if (captStart&&today>=captStart) return {label:'EN CAPTACIÓN',color:'var(--accent)'}
+    return {label:'PRE-LANZAMIENTO',color:'var(--text-muted)'}
   }
   const phase = getPhase()
 
@@ -655,50 +655,50 @@ function ProjectTimeline({ project }: { project: Project }) {
   const fmtDate = (d:Date) => d.toLocaleDateString('es-EC',{day:'2-digit',month:'short'}).toUpperCase()
 
   const milestones = [
-    captStart ?{label:'INICIO CAPTACIÓN',date:captStart, color:'#00b0f6'}:null,
-    captEnd   ?{label:'FIN CAPTACIÓN',   date:captEnd,   color:'#FFB800'}:null,
+    captStart ?{label:'INICIO CAPTACIÓN',date:captStart, color:'var(--accent)'}:null,
+    captEnd   ?{label:'FIN CAPTACIÓN',   date:captEnd,   color:'var(--warning)'}:null,
     ...classDates.map((d,i)=>({label:i===0?'PRIMER LIVE':`LIVE ${i+1}`,date:d,color:'#C084FC'})),
-    cartOpen  ?{label:'CARRITO ABRE',    date:cartOpen,  color:'#00FF94'}:null,
-    cartClose ?{label:'CARRITO CIERRA',  date:cartClose, color:'#FF6B35'}:null,
+    cartOpen  ?{label:'CARRITO ABRE',    date:cartOpen,  color:'var(--success)'}:null,
+    cartClose ?{label:'CARRITO CIERRA',  date:cartClose, color:'var(--danger)'}:null,
   ].filter(Boolean) as {label:string;date:Date;color:string}[]
 
   return (
-    <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
-      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between flex-wrap gap-3">
+    <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{background:'var(--bg-card)'}}>
+      <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-            style={{background:`${project.color||'#00b0f6'}20`,border:`1px solid ${project.color||'#00b0f6'}30`}}>
+            style={{background:`${project.color||'var(--accent)'}20`,border:`1px solid ${project.color||'var(--accent)'}30`}}>
             {project.emoji||'🚀'}
           </div>
           <div>
-            <p className="font-semibold text-[#E0E0F0] text-sm">{project.name}</p>
+            <p className="font-semibold text-[var(--text-primary)] text-sm">{project.name}</p>
             {project.product_name && (
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">
                 {project.product_name}{project.product_price?` · $${project.product_price.toLocaleString()}`:''}
               </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="mono text-[10px] px-3 py-1.5 rounded-full font-bold tracking-widest"
+          <span className="mono text-xs px-3 py-1.5 rounded-full font-bold tracking-widest"
             style={{color:phase.color,background:`${phase.color}18`,border:`1px solid ${phase.color}30`}}>
             {phase.label}
           </span>
           {nextMilestone && (
-            <span className="mono text-[10px] text-[#4A4A6A] tracking-widest">
-              <span style={{color:'#00b0f6'}}>{daysDiff(today,nextMilestone.date)}</span> días para {nextMilestone.label.toLowerCase()}
+            <span className="mono text-xs text-[var(--text-muted)] tracking-widest">
+              <span style={{color:'var(--accent)'}}>{daysDiff(today,nextMilestone.date)}</span> días para {nextMilestone.label.toLowerCase()}
             </span>
           )}
         </div>
       </div>
 
       <div className="px-6 pt-5 pb-6">
-        <div className="relative h-1.5 rounded-full mb-8" style={{background:'#1E1E2E'}}>
-          <div className="absolute h-full rounded-full" style={{width:`${todayPct}%`,background:'linear-gradient(90deg,#0014ad,#00b0f6)'}}/>
+        <div className="relative h-1.5 rounded-full mb-8" style={{background:'var(--border-default)'}}>
+          <div className="absolute h-full rounded-full" style={{width:`${todayPct}%`,background:'linear-gradient(90deg,var(--primary),var(--accent))'}}/>
           {todayPct>=0&&todayPct<=100&&(
             <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center" style={{left:`${todayPct}%`}}>
-              <div className="w-3 h-3 rounded-full border-2 border-[#00b0f6] z-10" style={{background:'#0A0A0F',boxShadow:'0 0 8px #00b0f6'}}/>
-              <span className="mono text-[8px] text-[#00b0f6] mt-6 whitespace-nowrap tracking-widest">HOY</span>
+              <div className="w-3 h-3 rounded-full border-2 border-[var(--accent)] z-10" style={{background:'var(--bg-base)',boxShadow:'0 0 8px var(--accent)'}}/>
+              <span className="mono text-[8px] text-[var(--accent)] mt-6 whitespace-nowrap tracking-widest">HOY</span>
             </div>
           )}
           {milestones.map((m,i)=>{
@@ -707,11 +707,11 @@ function ProjectTimeline({ project }: { project: Project }) {
             return (
               <div key={i} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center group" style={{left:`${p}%`}}>
                 <div className="w-3 h-3 rounded-full border-2 z-10 transition-all"
-                  style={{borderColor:isPast?'#2A2A4A':m.color,background:isPast?'#1E1E2E':m.color,boxShadow:isPast?'none':`0 0 6px ${m.color}80`}}/>
-                <div className="absolute bottom-6 bg-[#0D0D14] border border-[#1E1E2E] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap"
+                  style={{borderColor:isPast?'#2A2A4A':m.color,background:isPast?'var(--border-default)':m.color,boxShadow:isPast?'none':`0 0 6px ${m.color}80`}}/>
+                <div className="absolute bottom-6 bg-[#0D0D14] border border-[var(--border-default)] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap"
                   style={{boxShadow:'0 4px 16px rgba(0,0,0,0.6)'}}>
-                  <p className="mono text-[9px] font-bold tracking-widest" style={{color:m.color}}>{m.label}</p>
-                  <p className="mono text-[9px] text-[#4A4A6A]">{fmtDate(m.date)}</p>
+                  <p className="mono text-xs font-bold tracking-widest" style={{color:m.color}}>{m.label}</p>
+                  <p className="mono text-xs text-[var(--text-muted)]">{fmtDate(m.date)}</p>
                 </div>
               </div>
             )
@@ -724,8 +724,8 @@ function ProjectTimeline({ project }: { project: Project }) {
             const isPast=m.date<=today; const daysTo=daysDiff(today,m.date)
             return (
               <div key={i} className="absolute flex flex-col items-center" style={{left:`${p}%`, transform: p > 85 ? 'translateX(-100%)' : p < 15 ? 'translateX(0%)' : 'translateX(-50%)'}}>
-                <span className="mono text-[9px] font-bold tracking-widest" style={{color:isPast?'#2A2A4A':m.color}}>{fmtDate(m.date)}</span>
-                <span className="mono text-[8px] mt-0.5" style={{color:'#4A4A6A'}}>
+                <span className="mono text-xs font-bold tracking-widest" style={{color:isPast?'#2A2A4A':m.color}}>{fmtDate(m.date)}</span>
+                <span className="mono text-[8px] mt-0.5" style={{color:'var(--text-muted)'}}>
                   {isPast?`hace ${Math.abs(daysTo)}d`:daysTo===0?'HOY':`en ${daysTo}d`}
                 </span>
               </div>
@@ -737,31 +737,31 @@ function ProjectTimeline({ project }: { project: Project }) {
         <div className="flex gap-4 flex-wrap mt-2">
           {captStart&&captEnd&&(
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{background:'#00b0f6'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
-                CAPTACIÓN · {fmtDate(captStart)} → {fmtDate(captEnd)}<span style={{color:'#00b0f6'}}> ({daysDiff(captStart,captEnd)}d)</span>
+              <div className="w-2 h-2 rounded-full" style={{background:'var(--accent)'}}/>
+              <span className="mono text-xs text-[var(--text-muted)] tracking-widest">
+                CAPTACIÓN · {fmtDate(captStart)} → {fmtDate(captEnd)}<span style={{color:'var(--accent)'}}> ({daysDiff(captStart,captEnd)}d)</span>
               </span>
             </div>
           )}
           {classDates.length>0&&(
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{background:'#C084FC'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">LIVES · {classDates.length} clase{classDates.length>1?'s':''}</span>
+              <span className="mono text-xs text-[var(--text-muted)] tracking-widest">LIVES · {classDates.length} clase{classDates.length>1?'s':''}</span>
             </div>
           )}
           {cartOpen&&cartClose&&(
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{background:'#00FF94'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
-                CARRITO · {fmtDate(cartOpen)} → {fmtDate(cartClose)}<span style={{color:'#00FF94'}}> ({daysDiff(cartOpen,cartClose)}d)</span>
+              <div className="w-2 h-2 rounded-full" style={{background:'var(--success)'}}/>
+              <span className="mono text-xs text-[var(--text-muted)] tracking-widest">
+                CARRITO · {fmtDate(cartOpen)} → {fmtDate(cartClose)}<span style={{color:'var(--success)'}}> ({daysDiff(cartOpen,cartClose)}d)</span>
               </span>
             </div>
           )}
           {project.sales_goal&&(
             <div className="flex items-center gap-1.5">
-              <DollarSign size={9} style={{color:'#FFB800'}}/>
-              <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
-                META · <span style={{color:'#FFB800'}}>{project.sales_goal} ventas</span>
+              <DollarSign size={9} style={{color:'var(--warning)'}}/>
+              <span className="mono text-xs text-[var(--text-muted)] tracking-widest">
+                META · <span style={{color:'var(--warning)'}}>{project.sales_goal} ventas</span>
                 {project.product_price?` · $${(project.sales_goal*project.product_price).toLocaleString()}`:''}
               </span>
             </div>
@@ -782,7 +782,7 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const activeProject = projects.find(p => p.id === activeProjectId)
-  const psc = (s: string) => s==='active'?'#00FF94':s==='planning'?'#FFB800':'#4A4A6A'
+  const psc = (s: string) => s==='active'?'var(--success)':s==='planning'?'var(--warning)':'var(--text-muted)'
   const psl = (s: string) => s==='active'?'ACTIVO':s==='planning'?'PLANIF.':'CERRADO'
 
   useEffect(() => {
@@ -794,10 +794,10 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors"
-        style={{background:'#111118',minWidth:'180px',maxWidth:'220px'}}>
-        <Rocket size={11} style={{color: activeProject ? psc(activeProject.status) : '#4A4A6A', flexShrink:0}}/>
-        <span className="mono text-[11px] flex-1 text-left truncate" style={{color:activeProject?'#E0E0F0':'#4A4A6A'}}>
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border-default)] hover:border-[#2E2E4E] transition-colors"
+        style={{background:'var(--bg-card)',minWidth:'180px',maxWidth:'220px'}}>
+        <Rocket size={11} style={{color: activeProject ? psc(activeProject.status) : 'var(--text-muted)', flexShrink:0}}/>
+        <span className="mono text-[11px] flex-1 text-left truncate" style={{color:activeProject?'var(--text-primary)':'var(--text-muted)'}}>
           {activeProject?activeProject.name:'SIN PROYECTO'}
         </span>
         {activeProject&&(
@@ -806,45 +806,45 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
             {psl(activeProject.status)}
           </span>
         )}
-        <ChevronRight size={10} className="text-[#4A4A6A] flex-shrink-0 transition-transform" style={{transform:open?'rotate(90deg)':'rotate(0deg)'}}/>
+        <ChevronRight size={10} className="text-[var(--text-muted)] flex-shrink-0 transition-transform" style={{transform:open?'rotate(90deg)':'rotate(0deg)'}}/>
       </button>
 
       {open&&(
-        <div className="absolute top-[calc(100%+8px)] left-0 w-[280px] rounded-xl border border-[#1E1E2E] overflow-hidden z-[200]"
+        <div className="absolute top-[calc(100%+8px)] left-0 w-[280px] rounded-xl border border-[var(--border-default)] overflow-hidden z-[200]"
           style={{background:'#0D0D14',boxShadow:'0 16px 48px rgba(0,0,0,0.6)'}}>
-          <div className="px-4 py-2 border-b border-[#1E1E2E]">
-            <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">PROYECTOS DISPONIBLES</span>
+          <div className="px-4 py-2 border-b border-[var(--border-default)]">
+            <span className="mono text-xs text-[var(--text-muted)] tracking-widest">PROYECTOS DISPONIBLES</span>
           </div>
           {projects.length===0?(
             <div className="px-4 py-5 text-center">
               <Rocket size={16} className="text-[#2A2A3A] mx-auto mb-2"/>
-              <p className="mono text-[10px] text-[#4A4A6A] mb-1">Sin proyectos creados</p>
+              <p className="mono text-xs text-[var(--text-muted)] mb-1">Sin proyectos creados</p>
             </div>
           ):(
             <div className="py-1">
               <button onClick={()=>{onChange(null);setOpen(false)}}
-                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center border border-[#1E1E2E]"><Star size={10} className="text-[#4A4A6A]"/></div>
-                <span className="mono text-[10px] text-[#4A4A6A] flex-1">TODOS LOS DATOS</span>
-                {activeProjectId===null&&<CheckCircle size={10} style={{color:'#00b0f6'}}/>}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--border-default)] transition-colors text-left">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center border border-[var(--border-default)]"><Star size={10} className="text-[var(--text-muted)]"/></div>
+                <span className="mono text-xs text-[var(--text-muted)] flex-1">TODOS LOS DATOS</span>
+                {activeProjectId===null&&<CheckCircle size={10} style={{color:'var(--accent)'}}/>}
               </button>
               {projects.map(p=>(
                 <button key={p.id} onClick={()=>{onChange(p.id);setOpen(false)}}
-                  className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1E1E2E] transition-colors text-left">
+                  className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--border-default)] transition-colors text-left">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:`${psc(p.status)}20`}}>
                     <Rocket size={10} style={{color:psc(p.status)}}/>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="mono text-[11px] text-[#E0E0F0] truncate">{p.name}</p>
-                    {p.product_name&&<p className="mono text-[9px] text-[#4A4A6A] truncate">{p.product_name}</p>}
+                    <p className="mono text-[11px] text-[var(--text-primary)] truncate">{p.name}</p>
+                    {p.product_name&&<p className="mono text-xs text-[var(--text-muted)] truncate">{p.product_name}</p>}
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{color:psc(p.status),background:`${psc(p.status)}15`}}>{psl(p.status)}</span>
-                    {p.id===activeProjectId&&<CheckCircle size={9} style={{color:'#00b0f6'}}/>}
+                    {p.id===activeProjectId&&<CheckCircle size={9} style={{color:'var(--accent)'}}/>}
                     {p.status==='planning'&&(
                       <button onClick={e=>{e.stopPropagation();onActivate(p.id);setOpen(false)}}
                         className="mono text-[8px] px-2 py-0.5 rounded-full font-bold hover:opacity-80 transition-opacity"
-                        style={{background:'#00FF9420',color:'#00FF94',border:'1px solid #00FF9440'}}>
+                        style={{background:'var(--success)20',color:'var(--success)',border:'1px solid var(--success)40'}}>
                         ACTIVAR
                       </button>
                     )}
@@ -853,12 +853,12 @@ function ProjectSelector({ projects, activeProjectId, onChange, onNewProject, on
               ))}
             </div>
           )}
-          <div className="border-t border-[#1E1E2E] p-2">
+          <div className="border-t border-[var(--border-default)] p-2">
             <button onClick={()=>{setOpen(false);onNewProject()}}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:opacity-90 transition-all"
-              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+              style={{background:'linear-gradient(135deg,var(--primary),#00a7e3)'}}>
               <Plus size={11} className="text-white"/>
-              <span className="mono text-[10px] text-white font-bold tracking-widest">NUEVO PROYECTO</span>
+              <span className="mono text-xs text-white font-bold tracking-widest">NUEVO PROYECTO</span>
             </button>
           </div>
         </div>
@@ -874,25 +874,25 @@ function MetricBar({ label, current, goal, color, prefix='', suffix='' }: {
 }) {
   const pct = goal > 0 ? Math.min(Math.round((current / goal) * 100), 100) : 0
   const over = goal > 0 && current >= goal
-  const barColor = over ? '#00FF94' : color
+  const barColor = over ? 'var(--success)' : color
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="mono text-[10px] tracking-widest text-[#4A4A6A]">{label}</span>
+        <span className="mono text-xs tracking-widest text-[var(--text-muted)]">{label}</span>
         <div className="flex items-center gap-2">
           <span className="mono text-[11px] font-bold" style={{color: barColor}}>
             {prefix}{current.toLocaleString()}{suffix}
           </span>
-          <span className="mono text-[10px] text-[#4A4A6A]">/ {prefix}{goal.toLocaleString()}{suffix}</span>
-          <span className="mono text-[10px] px-1.5 py-0.5 rounded-full"
+          <span className="mono text-xs text-[var(--text-muted)]">/ {prefix}{goal.toLocaleString()}{suffix}</span>
+          <span className="mono text-xs px-1.5 py-0.5 rounded-full"
             style={{background:`${barColor}18`, color: barColor}}>
             {pct}%
           </span>
         </div>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{background:'#1E1E2E'}}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{background:'var(--border-default)'}}>
         <div className="h-full rounded-full transition-all duration-700"
-          style={{width:`${pct}%`, background: over ? '#00FF94' : `linear-gradient(90deg,${color}80,${color})`}}/>
+          style={{width:`${pct}%`, background: over ? 'var(--success)' : `linear-gradient(90deg,${color}80,${color})`}}/>
       </div>
     </div>
   )
@@ -902,7 +902,7 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
   const hasMetas = (project.leads_goal??0) > 0 || (project.sales_goal??0) > 0
   if (!hasMetas) return null
 
-  const projectColor = project.color || '#00b0f6'
+  const projectColor = project.color || 'var(--accent)'
   const salesGoal    = project.sales_goal ?? 0
   const leadsGoal    = project.leads_goal ?? 0
   const price        = project.product_price ?? 0
@@ -925,12 +925,12 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
   }
 
   const diasColor = diasRestantes === null ? projectColor
-    : diasRestantes <= 0  ? '#FF6B35'
-    : diasRestantes <= 3  ? '#FFB800'
+    : diasRestantes <= 0  ? 'var(--danger)'
+    : diasRestantes <= 3  ? 'var(--warning)'
     : projectColor
 
   return (
-    <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
+    <div className="rounded-xl border border-[var(--border-default)] overflow-hidden" style={{background:'var(--bg-card)'}}>
       <div className="h-0.5" style={{background:`linear-gradient(90deg,${projectColor},${projectColor}20)`}}/>
       <div className="p-5">
         <div className="flex items-center justify-between mb-5">
@@ -940,8 +940,8 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
               {project.emoji || '🚀'}
             </div>
             <div>
-              <p className="mono text-[9px] tracking-widest text-[#4A4A6A] mb-0.5">MÉTRICAS VS METAS</p>
-              <p className="text-sm font-semibold text-[#E0E0F0]">{project.product_name || project.name}</p>
+              <p className="mono text-xs tracking-widest text-[var(--text-muted)] mb-0.5">MÉTRICAS VS METAS</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{project.product_name || project.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -949,15 +949,15 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"
                 style={{borderColor:`${diasColor}50`,background:`${diasColor}10`}}>
                 <Clock size={10} style={{color:diasColor}}/>
-                <span className="mono text-[10px] font-bold" style={{color:diasColor}}>
+                <span className="mono text-xs font-bold" style={{color:diasColor}}>
                   CAPTACIÓN · {diasLabel}
                 </span>
               </div>
             )}
             {salesGoal > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#1E1E2E]">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-default)]">
                 <Target size={10} style={{color:projectColor}}/>
-                <span className="mono text-[10px] text-[#4A4A6A]">
+                <span className="mono text-xs text-[var(--text-muted)]">
                   META: <span style={{color:projectColor}}>{salesGoal} ventas</span>
                 </span>
               </div>
@@ -970,7 +970,7 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
             <MetricBar label="LEADS CAPTADOS" current={leadsCount} goal={leadsGoal} color={projectColor}/>
           )}
           {salesGoal > 0 && (
-            <MetricBar label="VENTAS" current={currentSales} goal={salesGoal} color="#00FF94"/>
+            <MetricBar label="VENTAS" current={currentSales} goal={salesGoal} color="var(--success)"/>
           )}
           {salesGoal > 0 && price > 0 && (
             <MetricBar label="REVENUE" current={currentRevenue} goal={revenueGoal} color="#C084FC" prefix="$"/>
@@ -979,31 +979,31 @@ function ProjectMetrics({ project, leadsCount }: { project: Project; leadsCount:
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {leadsGoal > 0 && (
-            <div className="rounded-xl border border-[#1E1E2E] px-4 py-3" style={{background:'#0A0A0F'}}>
-              <p className="mono text-[9px] tracking-widest text-[#4A4A6A] mb-1.5">LEADS / META</p>
+            <div className="rounded-xl border border-[var(--border-default)] px-4 py-3" style={{background:'var(--bg-base)'}}>
+              <p className="mono text-xs tracking-widest text-[var(--text-muted)] mb-1.5">LEADS / META</p>
               <p className="mono text-xl font-bold leading-none" style={{color:projectColor}}>
-                {leadsCount}<span className="text-[#4A4A6A] text-xs font-normal ml-1">/ {leadsGoal}</span>
+                {leadsCount}<span className="text-[var(--text-muted)] text-xs font-normal ml-1">/ {leadsGoal}</span>
               </p>
             </div>
           )}
           {salesGoal > 0 && price > 0 && (
-            <div className="rounded-xl border border-[#1E1E2E] px-4 py-3" style={{background:'#0A0A0F'}}>
-              <p className="mono text-[9px] tracking-widest text-[#4A4A6A] mb-1.5">REVENUE PROYECTADO</p>
+            <div className="rounded-xl border border-[var(--border-default)] px-4 py-3" style={{background:'var(--bg-base)'}}>
+              <p className="mono text-xs tracking-widest text-[var(--text-muted)] mb-1.5">REVENUE PROYECTADO</p>
               <p className="mono text-xl font-bold leading-none text-[#C084FC]">
                 ${revenueGoal.toLocaleString()}
               </p>
             </div>
           )}
           {cpl !== null && (
-            <div className="rounded-xl border border-[#1E1E2E] px-4 py-3" style={{background:'#0A0A0F'}}>
-              <p className="mono text-[9px] tracking-widest text-[#4A4A6A] mb-1.5">CPL ESTIMADO</p>
-              <p className="mono text-xl font-bold leading-none text-[#FFB800]">${cpl}</p>
+            <div className="rounded-xl border border-[var(--border-default)] px-4 py-3" style={{background:'var(--bg-base)'}}>
+              <p className="mono text-xs tracking-widest text-[var(--text-muted)] mb-1.5">CPL ESTIMADO</p>
+              <p className="mono text-xl font-bold leading-none text-[var(--warning)]">${cpl}</p>
             </div>
           )}
           {adBudget > 0 && (
-            <div className="rounded-xl border border-[#1E1E2E] px-4 py-3" style={{background:'#0A0A0F'}}>
-              <p className="mono text-[9px] tracking-widest text-[#4A4A6A] mb-1.5">PRESUPUESTO ADS</p>
-              <p className="mono text-xl font-bold leading-none text-[#FF6B35]">
+            <div className="rounded-xl border border-[var(--border-default)] px-4 py-3" style={{background:'var(--bg-base)'}}>
+              <p className="mono text-xs tracking-widest text-[var(--text-muted)] mb-1.5">PRESUPUESTO ADS</p>
+              <p className="mono text-xl font-bold leading-none text-[var(--danger)]">
                 ${adBudget.toLocaleString()}
               </p>
             </div>
@@ -1022,9 +1022,9 @@ function WInput({ label,value,onChange,placeholder,type='text' }: {
 }) {
   return (
     <div>
-      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
+      <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">{label}</label>
       <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-        className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"/>
+        className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]"/>
     </div>
   )
 }
@@ -1077,33 +1077,33 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
-      <div className="relative w-full max-w-xl rounded-2xl border border-[#1E1E2E] overflow-hidden"
+      <div className="relative w-full max-w-xl rounded-2xl border border-[var(--border-default)] overflow-hidden"
         style={{background:'#0D0D14',maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,0.7)'}}>
-        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between sticky top-0 z-10" style={{background:'rgba(13,13,20,0.98)'}}>
+        <div className="px-6 py-5 border-b border-[var(--border-default)] flex items-center justify-between sticky top-0 z-10" style={{background:'rgba(13,13,20,0.98)'}}>
           <div>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVO PROYECTO — PASO {step} DE 4</p>
-            <p className="font-semibold text-[#E0E0F0] text-sm mt-0.5">
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">NUEVO PROYECTO — PASO {step} DE 4</p>
+            <p className="font-semibold text-[var(--text-primary)] text-sm mt-0.5">
               {step===1?'Identidad del lanzamiento':step===2?'Metas del lanzamiento':step===3?'Fechas del calendario':'Contexto para el agente SAM'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
-            <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+          <button onClick={onClose} className="p-2 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group">
+            <X size={12} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/>
           </button>
         </div>
-        <div className="h-0.5 bg-[#1E1E2E]">
-          <div className="h-full transition-all duration-500" style={{width:`${(step/4)*100}%`,background:'linear-gradient(90deg,#0014ad,#00a7e3)'}}/>
+        <div className="h-0.5 bg-[var(--border-default)]">
+          <div className="h-full transition-all duration-500" style={{width:`${(step/4)*100}%`,background:'linear-gradient(90deg,var(--primary),#00a7e3)'}}/>
         </div>
-        <div className="flex items-center justify-between px-6 py-3 border-b border-[#1E1E2E]">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-[var(--border-default)]">
           {WIZARD_STEPS.map((s,i)=>(
             <div key={s.num} className="flex items-center gap-2">
               <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center mono text-[9px] font-bold transition-all"
-                  style={{background:step>s.num?'#00FF94':step===s.num?'linear-gradient(135deg,#0014ad,#00a7e3)':'#1E1E2E',color:step>=s.num?'white':'#4A4A6A'}}>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center mono text-xs font-bold transition-all"
+                  style={{background:step>s.num?'var(--success)':step===s.num?'linear-gradient(135deg,var(--primary),#00a7e3)':'var(--border-default)',color:step>=s.num?'white':'var(--text-muted)'}}>
                   {step>s.num?'✓':s.num}
                 </div>
-                <span className="mono text-[9px] tracking-widest hidden sm:block" style={{color:step===s.num?'#E0E0F0':'#4A4A6A'}}>{s.label.toUpperCase()}</span>
+                <span className="mono text-xs tracking-widest hidden sm:block" style={{color:step===s.num?'var(--text-primary)':'var(--text-muted)'}}>{s.label.toUpperCase()}</span>
               </div>
-              {i<WIZARD_STEPS.length-1&&<div className="w-6 h-px mx-1" style={{background:step>s.num?'#00FF94':'#1E1E2E'}}/>}
+              {i<WIZARD_STEPS.length-1&&<div className="w-6 h-px mx-1" style={{background:step>s.num?'var(--success)':'var(--border-default)'}}/>}
             </div>
           ))}
         </div>
@@ -1113,16 +1113,16 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
             <WInput label="NOMBRE DEL PROYECTO *" value={data.name} onChange={set('name')} placeholder="ej. SamurAI Abril 2026"/>
             <WInput label="NOMBRE DEL PRODUCTO" value={data.product_name} onChange={set('product_name')} placeholder="ej. SamurAI — Curso de IA"/>
             <WInput label="PRECIO DEL PRODUCTO (USD)" value={data.product_price} onChange={set('product_price')} type="number" placeholder="ej. 297"/>
-            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
-              <Info size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
-              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">El nombre del proyecto aparecerá en el selector del header.</p>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[var(--border-default)]" style={{background:'var(--bg-card)'}}>
+              <Info size={12} style={{color:'var(--accent)',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">El nombre del proyecto aparecerá en el selector del header.</p>
             </div>
           </>}
 
           {step===2&&<>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
-              <Target size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
-              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">Todas las metas son opcionales pero KANSHI las usará para mostrar avance vs objetivo.</p>
+              <Target size={12} style={{color:'var(--accent)',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">Todas las metas son opcionales pero KANSHI las usará para mostrar avance vs objetivo.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <WInput label="META DE VENTAS (unidades)" value={data.sales_goal} onChange={set('sales_goal')} type="number" placeholder="ej. 30"/>
@@ -1130,54 +1130,54 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
             </div>
             <WInput label="PRESUPUESTO DE ADS (USD)" value={data.ad_budget} onChange={set('ad_budget')} type="number" placeholder="ej. 1500"/>
             {data.sales_goal&&data.product_price&&(
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
-                <span className="mono text-[10px] text-[#4A4A6A]">REVENUE PROYECTADO</span>
-                <span className="mono text-sm font-bold" style={{color:'#00FF94'}}>${(parseFloat(data.sales_goal)*parseFloat(data.product_price)).toLocaleString('en-US')} USD</span>
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--border-default)]" style={{background:'var(--bg-card)'}}>
+                <span className="mono text-xs text-[var(--text-muted)]">REVENUE PROYECTADO</span>
+                <span className="mono text-sm font-bold" style={{color:'var(--success)'}}>${(parseFloat(data.sales_goal)*parseFloat(data.product_price)).toLocaleString('en-US')} USD</span>
               </div>
             )}
           </>}
 
           {step===3&&<>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
-              <Calendar size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
-              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">Las fechas permiten que SAM entienda en qué fase del lanzamiento está.</p>
+              <Calendar size={12} style={{color:'var(--accent)',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">Las fechas permiten que SAM entienda en qué fase del lanzamiento está.</p>
             </div>
             <div>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CAPTACIÓN DE LEADS</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">CAPTACIÓN DE LEADS</p>
               <div className="grid grid-cols-2 gap-4">
                 <WInput label="INICIO CAPTACIÓN" value={data.captation_start} onChange={set('captation_start')} type="date"/>
                 <WInput label="FIN CAPTACIÓN" value={data.captation_end} onChange={set('captation_end')} type="date"/>
               </div>
             </div>
             <div>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">CARRITO</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">CARRITO</p>
               <div className="grid grid-cols-2 gap-4">
                 <WInput label="APERTURA CARRITO" value={data.cart_open} onChange={set('cart_open')} type="datetime-local"/>
                 <WInput label="CIERRE CARRITO" value={data.cart_close} onChange={set('cart_close')} type="datetime-local"/>
               </div>
             </div>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">FECHAS DE CLASES / LIVES (una por línea)</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">FECHAS DE CLASES / LIVES (una por línea)</label>
               <textarea value={data.class_dates} onChange={set('class_dates')}
                 placeholder={'2026-04-07\n2026-04-09\n2026-04-11'} rows={4}
-                className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"/>
+                className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none resize-none transition-colors placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]"/>
             </div>
           </>}
 
           {step===4&&<>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.3)',background:'rgba(0,176,246,0.05)'}}>
-              <Brain size={12} style={{color:'#00b0f6',flexShrink:0,marginTop:1}}/>
-              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">Este texto se inyectará en el prompt de SAM para que conozca el producto y el avatar.</p>
+              <Brain size={12} style={{color:'var(--accent)',flexShrink:0,marginTop:1}}/>
+              <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">Este texto se inyectará en el prompt de SAM para que conozca el producto y el avatar.</p>
             </div>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">CONTEXTO DEL AGENTE (opcional)</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">CONTEXTO DEL AGENTE (opcional)</label>
               <textarea value={data.agent_context} onChange={set('agent_context')}
                 placeholder="ej. SamurAI es un curso de 6 semanas para emprendedores latinoamericanos..." rows={8}
-                className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none resize-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"/>
+                className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none resize-none transition-colors placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]"/>
             </div>
-            <div className="mono text-[9px] text-[#4A4A6A] text-right">{data.agent_context.length} caracteres</div>
-            <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-2" style={{background:'#111118'}}>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">RESUMEN DEL PROYECTO</p>
+            <div className="mono text-xs text-[var(--text-muted)] text-right">{data.agent_context.length} caracteres</div>
+            <div className="rounded-xl border border-[var(--border-default)] p-4 space-y-2" style={{background:'var(--bg-card)'}}>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">RESUMEN DEL PROYECTO</p>
               <SummaryRow label="Nombre" value={data.name||'—'}/>
               {data.product_name&&<SummaryRow label="Producto" value={data.product_name}/>}
               {data.product_price&&<SummaryRow label="Precio" value={`$${data.product_price} USD`}/>}
@@ -1186,24 +1186,24 @@ function ProjectWizard({ onClose,onCreated }: { onClose:()=>void; onCreated:(p:P
               {data.cart_open&&<SummaryRow label="Apertura carrito" value={data.cart_open.replace('T',' ')}/>}
             </div>
           </>}
-          {error&&<div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3"><p className="text-xs text-[#FF6B35]">{error}</p></div>}
+          {error&&<div className="rounded-xl border border-[var(--danger)] bg-[var(--danger)10] p-3"><p className="text-xs text-[var(--danger)]">{error}</p></div>}
         </div>
 
-        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
+        <div className="px-6 py-4 border-t border-[var(--border-default)] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
           <button onClick={()=>step>1?setStep(step-1):onClose()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border-default)] mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all">
             <ChevronLeft size={12}/> {step===1?'CANCELAR':'ANTERIOR'}
           </button>
           {step<4?(
             <button onClick={()=>setStep(step+1)} disabled={step===1&&!canStep1}
               className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+              style={{background:'linear-gradient(135deg,var(--primary),#00a7e3)'}}>
               SIGUIENTE <ChevronRight size={12}/>
             </button>
           ):(
             <button onClick={handleCreate} disabled={!canStep1||saving}
               className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+              style={{background:'linear-gradient(135deg,var(--primary),#00a7e3)'}}>
               {saving?<><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> CREANDO...</>:<><Rocket size={12}/> CREAR PROYECTO</>}
             </button>
           )}
@@ -1281,8 +1281,8 @@ function AlertsPanel({
   }
 
   const alertConfig = {
-    score_75: { label: 'READY LEAD',    color: '#FF6B35', bg: '#FF6B3515', icon: '🔥', desc: 'Score ≥ 75' },
-    score_90: { label: 'BUYER PROFILE', color: '#00FF94', bg: '#00FF9415', icon: '⚡', desc: 'Score ≥ 90' },
+    score_75: { label: 'READY LEAD',    color: 'var(--danger)', bg: 'var(--danger)15', icon: '🔥', desc: 'Score ≥ 75' },
+    score_90: { label: 'BUYER PROFILE', color: 'var(--success)', bg: 'var(--success)15', icon: '⚡', desc: 'Score ≥ 90' },
     sale:     { label: 'VENTA',         color: '#C084FC', bg: '#C084FC15', icon: '💰', desc: 'Venta confirmada' },
   }
 
@@ -1291,18 +1291,18 @@ function AlertsPanel({
   return (
     <div className="fixed inset-0 z-[350] flex justify-end" onClick={onClose}>
       <div
-        className="w-full max-w-md h-full border-l border-[#1E1E2E] flex flex-col"
+        className="w-full max-w-md h-full border-l border-[var(--border-default)] flex flex-col"
         style={{ background: '#0D0D14', boxShadow: '-24px 0 80px rgba(0,0,0,0.7)', animation: 'slideInRight 0.2s ease' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between flex-shrink-0"
+        <div className="px-6 py-5 border-b border-[var(--border-default)] flex items-center justify-between flex-shrink-0"
           style={{ background: 'rgba(13,13,20,0.97)' }}>
           <div className="flex items-center gap-3">
-            <Bell size={16} style={{ color: '#FF6B35' }} />
+            <Bell size={16} style={{ color: 'var(--danger)' }} />
             <div>
-              <p className="font-bold text-[#E0E0F0] text-sm">Alertas del Equipo</p>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+              <p className="font-bold text-[var(--text-primary)] text-sm">Alertas del Equipo</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">
                 {unreadCount > 0 ? `${unreadCount} SIN LEER` : 'TODO AL DÍA ✓'}
               </p>
             </div>
@@ -1311,13 +1311,13 @@ function AlertsPanel({
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="mono text-[9px] px-2 py-1 rounded-lg border border-[#1E1E2E] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all"
+                className="mono text-xs px-2 py-1 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all"
               >
                 MARCAR TODAS
               </button>
             )}
-            <button onClick={onClose} className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors">
-              <X size={12} style={{ color: '#4A4A6A' }} />
+            <button onClick={onClose} className="p-1.5 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors">
+              <X size={12} style={{ color: 'var(--text-muted)' }} />
             </button>
           </div>
         </div>
@@ -1326,18 +1326,18 @@ function AlertsPanel({
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0014ad' }} />
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--primary)' }} />
             </div>
           ) : alerts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <Bell size={24} style={{ color: '#2E2E4E' }} />
-              <p className="mono text-[11px] text-[#4A4A6A]">Sin alertas aún</p>
-              <p className="mono text-[9px] text-[#2E2E4E] text-center px-8">
+              <p className="mono text-[11px] text-[var(--text-muted)]">Sin alertas aún</p>
+              <p className="mono text-xs text-[#2E2E4E] text-center px-8">
                 Las alertas aparecen cuando un lead cruza score 75/90 o se confirma una venta
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[#1E1E2E]">
+            <div className="divide-y divide-[var(--border-default)]">
               {alerts.map(alert => {
                 const cfg = alertConfig[alert.alert_type]
                 const isUnread = !alert.read_at
@@ -1345,7 +1345,7 @@ function AlertsPanel({
                   <div
                     key={alert.id}
                     className="px-5 py-4 transition-colors"
-                    style={{ background: isUnread ? '#111118' : 'transparent' }}
+                    style={{ background: isUnread ? 'var(--bg-card)' : 'transparent' }}
                   >
                     {/* Top row */}
                     <div className="flex items-start justify-between gap-3 mb-2">
@@ -1357,13 +1357,13 @@ function AlertsPanel({
                         />
                         {/* Badge tipo */}
                         <span
-                          className="mono text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                          className="mono text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
                           style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}30` }}
                         >
                           {cfg.icon} {cfg.label}
                         </span>
                         {/* Nombre lead */}
-                        <span className="text-xs font-medium text-[#E0E0F0] truncate">
+                        <span className="text-xs font-medium text-[var(--text-primary)] truncate">
                           {alert.lead_name || alert.lead_phone || '—'}
                         </span>
                       </div>
@@ -1383,19 +1383,19 @@ function AlertsPanel({
                     {/* Metadata row */}
                     <div className="flex items-center gap-3 mb-3 pl-5">
                       {alert.lead_phone && (
-                        <span className="mono text-[9px] text-[#4A4A6A]">{alert.lead_phone}</span>
+                        <span className="mono text-xs text-[var(--text-muted)]">{alert.lead_phone}</span>
                       )}
                       {alert.metadata?.utm_source && (
-                        <span className="mono text-[9px] px-1.5 py-0.5 rounded border border-[#1E1E2E] text-[#4A4A6A]">
+                        <span className="mono text-xs px-1.5 py-0.5 rounded border border-[var(--border-default)] text-[var(--text-muted)]">
                           {alert.metadata.utm_source}
                         </span>
                       )}
                       {alert.metadata?.utm_campaign && (
-                        <span className="mono text-[9px] text-[#4A4A6A] truncate max-w-[120px]">
+                        <span className="mono text-xs text-[var(--text-muted)] truncate max-w-[120px]">
                           {alert.metadata.utm_campaign}
                         </span>
                       )}
-                      <span className="mono text-[9px] text-[#2E2E4E] ml-auto flex-shrink-0">
+                      <span className="mono text-xs text-[#2E2E4E] ml-auto flex-shrink-0">
                         {format(new Date(alert.created_at), 'dd/MM HH:mm')}
                       </span>
                     </div>
@@ -1408,10 +1408,10 @@ function AlertsPanel({
                             onLeadClick(alert.lead_phone!)
                             if (isUnread) markRead(alert.id)
                           }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mono text-[9px] font-bold transition-all"
-                          style={{ background: '#0014ad20', color: '#00b0f6', border: '1px solid #0014ad40' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = '#0014ad40')}
-                          onMouseLeave={e => (e.currentTarget.style.background = '#0014ad20')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mono text-xs font-bold transition-all"
+                          style={{ background: 'var(--primary)20', color: 'var(--accent)', border: '1px solid var(--primary)40' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary)40')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary)20')}
                         >
                           <Eye size={10} /> VER JOURNEY
                         </button>
@@ -1419,7 +1419,7 @@ function AlertsPanel({
                       {isUnread && (
                         <button
                           onClick={() => markRead(alert.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mono text-[9px] transition-all border border-[#1E1E2E] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E]"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mono text-xs transition-all border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E]"
                         >
                           <CheckCheck size={10} /> LEÍDA
                         </button>
@@ -1628,16 +1628,16 @@ export default function Dashboard() {
 
   if(authenticated===null) return(
     <div className="min-h-screen flex items-center justify-center" style={{background:'#090c4c'}}>
-      <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:'#00b0f6',borderTopColor:'transparent'}}/>
+      <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:'var(--accent)',borderTopColor:'transparent'}}/>
     </div>
   )
   if(!authenticated) return <LoginScreen onAuth={()=>setAuthenticated(true)}/>
   if(loading) return(
-    <div className="min-h-screen flex items-center justify-center" style={{background:'#0A0A0F'}}>
+    <div className="min-h-screen flex items-center justify-center" style={{background:'var(--bg-base)'}}>
       <div className="text-center">
         <div className="mx-auto mb-5 flex justify-center"><KanshiLogo size={40}/></div>
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{borderColor:'#00b0f6',borderTopColor:'transparent'}}/>
-        <p className="mono text-[#4A4A6A] text-sm tracking-widest">CARGANDO DATOS</p>
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{borderColor:'var(--accent)',borderTopColor:'transparent'}}/>
+        <p className="mono text-[var(--text-muted)] text-sm tracking-widest">CARGANDO DATOS</p>
       </div>
     </div>
   )
@@ -1680,13 +1680,13 @@ export default function Dashboard() {
 
         {/* Workspace Header */}
         <header className="flex items-center justify-between px-7 py-4 flex-shrink-0"
-          style={{background:'rgba(10,10,15,0.97)',borderBottom:'1px solid #1E1E2E',backdropFilter:'blur(12px)'}}>
+          style={{background:'rgba(10,10,15,0.97)',borderBottom:'1px solid var(--border-default)',backdropFilter:'blur(12px)'}}>
           <div>
-            <h2 className="font-bold text-[#E0E0F0]" style={{fontSize:'20px',letterSpacing:'-0.01em'}}>
+            <h2 className="font-bold text-[var(--text-primary)]" style={{fontSize:'20px',letterSpacing:'-0.01em'}}>
               {TAB_TITLES[activeTab]}
             </h2>
             {activeProject && (
-              <p className="mono text-[10px] mt-0.5 tracking-widest" style={{color:'#4A4A6A'}}>
+              <p className="mono text-xs mt-0.5 tracking-widest" style={{color:'var(--text-muted)'}}>
                 {activeProject.emoji} {activeProject.name}
               </p>
             )}
@@ -1718,31 +1718,31 @@ export default function Dashboard() {
             )
           )}
           <Sec label="MENSAJES"><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <KCard icon={<MessageSquare size={14}/>} label="TOTAL" value={kpi?.totalMessages??0} color="#00FF94"/>
-            <KCard icon={<TrendingUp size={14}/>} label="ENTRANTES" value={kpi?.inbound??0} color="#00b0f6"/>
-            <KCard icon={<Send size={14}/>} label="SALIENTES" value={kpi?.outbound??0} color="#FF6B35"/>
-            <KCard icon={<Users size={14}/>} label="CONTACTOS" value={kpi?.uniqueContacts??0} color="#00FF94"/>
+            <KCard icon={<MessageSquare size={14}/>} label="TOTAL" value={kpi?.totalMessages??0} color="var(--success)"/>
+            <KCard icon={<TrendingUp size={14}/>} label="ENTRANTES" value={kpi?.inbound??0} color="var(--accent)"/>
+            <KCard icon={<Send size={14}/>} label="SALIENTES" value={kpi?.outbound??0} color="var(--danger)"/>
+            <KCard icon={<Users size={14}/>} label="CONTACTOS" value={kpi?.uniqueContacts??0} color="var(--success)"/>
           </div></Sec>
           <Sec label="INTELIGENCIA DE LEADS"><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <KCard icon={<Brain size={14}/>} label="PERFILES COMPLETOS" value={kpi?.profilingComplete??0} color="#C084FC"/>
-            <KCard icon={<Activity size={14}/>} label="TASA PERFILADO" value={`${kpi?.profilingRate??0}%`} color="#FFB800" isPercent/>
-            <KCard icon={<Star size={14}/>} label="ENGAGEMENT PROM." value={kpi?.avgEngagement??0} color="#00FF94"/>
-            <KCard icon={<Flame size={14}/>} label="LEADS CALIENTES" value={leads.filter(l=>l.segmento==='caliente').length} color="#FF6B35"/>
+            <KCard icon={<Activity size={14}/>} label="TASA PERFILADO" value={`${kpi?.profilingRate??0}%`} color="var(--warning)" isPercent/>
+            <KCard icon={<Star size={14}/>} label="ENGAGEMENT PROM." value={kpi?.avgEngagement??0} color="var(--success)"/>
+            <KCard icon={<Flame size={14}/>} label="LEADS CALIENTES" value={leads.filter(l=>l.segmento==='caliente').length} color="var(--danger)"/>
           </div></Sec>
           <KanshiScoreWidget leads={leads}/>
           <Sec label="CAMPAÑAS"><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <KCard icon={<Zap size={14}/>} label="ENVIADOS" value={kpi?.totalSent??0} color="#00FF94"/>
-            <KCard icon={<CheckCheck size={14}/>} label="TASA ENTREGA" value={`${kpi?.deliveryRate??0}%`} color="#00b0f6" isPercent/>
-            <KCard icon={<CheckCheck size={14}/>} label="TASA LECTURA" value={`${kpi?.readRate??0}%`} color="#FF6B35" isPercent/>
-            <KCard icon={<MessageSquare size={14}/>} label="TASA RESPUESTA" value={`${kpi?.replyRate??0}%`} color="#00FF94" isPercent/>
+            <KCard icon={<Zap size={14}/>} label="ENVIADOS" value={kpi?.totalSent??0} color="var(--success)"/>
+            <KCard icon={<CheckCheck size={14}/>} label="TASA ENTREGA" value={`${kpi?.deliveryRate??0}%`} color="var(--accent)" isPercent/>
+            <KCard icon={<CheckCheck size={14}/>} label="TASA LECTURA" value={`${kpi?.readRate??0}%`} color="var(--danger)" isPercent/>
+            <KCard icon={<MessageSquare size={14}/>} label="TASA RESPUESTA" value={`${kpi?.replyRate??0}%`} color="var(--success)" isPercent/>
           </div></Sec>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="lg:col-span-2 rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
+            <div className="lg:col-span-2 rounded-xl border border-[var(--border-default)] p-5" style={{background:'var(--bg-card)'}}>
               <div className="flex items-center justify-between mb-5">
-                <div><p className="mono text-[10px] text-[#4A4A6A] tracking-widest">ACTIVIDAD</p><p className="text-sm font-medium text-[#E0E0F0] mt-0.5">Mensajes últimas 24h</p></div>
+                <div><p className="mono text-xs text-[var(--text-muted)] tracking-widest">ACTIVIDAD</p><p className="text-sm font-medium text-[var(--text-primary)] mt-0.5">Mensajes últimas 24h</p></div>
                 <div className="flex gap-4">
-                  <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#00FF94]"/><span className="mono text-[10px] text-[#4A4A6A]">ENTRANTE</span></div>
-                  <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{background:'#00b0f6'}}/><span className="mono text-[10px] text-[#4A4A6A]">SALIENTE</span></div>
+                  <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[var(--success)]"/><span className="mono text-xs text-[var(--text-muted)]">ENTRANTE</span></div>
+                  <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{background:'var(--accent)'}}/><span className="mono text-xs text-[var(--text-muted)]">SALIENTE</span></div>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={220}>
@@ -1751,27 +1751,27 @@ export default function Dashboard() {
                     <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00FF94" stopOpacity={0.3}/><stop offset="95%" stopColor="#00FF94" stopOpacity={0}/></linearGradient>
                     <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00b0f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#00b0f6" stopOpacity={0}/></linearGradient>
                   </defs>
-                  <XAxis dataKey="hour" tick={{fill:'#4A4A6A',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false} interval={3}/>
-                  <YAxis tick={{fill:'#4A4A6A',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
-                  <Tooltip contentStyle={{background:'#1E1E2E',border:'none',borderRadius:'8px',fontSize:'11px'}}/>
+                  <XAxis dataKey="hour" tick={{fill:'var(--text-muted)',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false} interval={3}/>
+                  <YAxis tick={{fill:'var(--text-muted)',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
+                  <Tooltip contentStyle={{background:'var(--border-default)',border:'none',borderRadius:'8px',fontSize:'11px'}}/>
                   <Area type="monotone" dataKey="inbound" stroke="#00FF94" strokeWidth={1.5} fill="url(#gIn)"/>
                   <Area type="monotone" dataKey="outbound" stroke="#00b0f6" strokeWidth={1.5} fill="url(#gOut)"/>
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <div className="rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">ACTIVIDAD RECIENTE</p>
+            <div className="rounded-xl border border-[var(--border-default)] p-5" style={{background:'var(--bg-card)'}}>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-4">ACTIVIDAD RECIENTE</p>
               <div className="space-y-3">
-                {recentMsgs.length===0?<p className="text-[#4A4A6A] text-xs text-center mt-6">Sin mensajes</p>
+                {recentMsgs.length===0?<p className="text-[var(--text-muted)] text-xs text-center mt-6">Sin mensajes</p>
                 :recentMsgs.map((m,i)=>(
                   <div key={i} className="flex items-start gap-2.5">
-                    <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{background:m.direction==='inbound'?'#00FF94':'#00b0f6'}}/>
+                    <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{background:m.direction==='inbound'?'var(--success)':'var(--accent)'}}/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-[#E0E0F0] truncate">{m.contact_name||'Desconocido'}</p>
-                        <span className="mono text-[9px] text-[#4A4A6A] flex-shrink-0">{format(new Date(m.created_at),'HH:mm')}</span>
+                        <p className="text-xs font-medium text-[var(--text-primary)] truncate">{m.contact_name||'Desconocido'}</p>
+                        <span className="mono text-xs text-[var(--text-muted)] flex-shrink-0">{format(new Date(m.created_at),'HH:mm')}</span>
                       </div>
-                      <p className="text-[11px] text-[#4A4A6A] truncate">{m.body}</p>
+                      <p className="text-[11px] text-[var(--text-muted)] truncate">{m.body}</p>
                     </div>
                   </div>
                 ))}
@@ -1786,41 +1786,41 @@ export default function Dashboard() {
             {STAGES.map(stage=>{
               const sl=leads.filter(l=>l.agent_stage===stage.key); if(sl.length===0) return null
               return(
-                <div key={stage.key} className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
-                  <div className="px-5 py-3 border-b border-[#1E1E2E] flex items-center justify-between">
+                <div key={stage.key} className="rounded-xl border border-[var(--border-default)] overflow-hidden" style={{background:'var(--bg-card)'}}>
+                  <div className="px-5 py-3 border-b border-[var(--border-default)] flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-2 h-2 rounded-full" style={{background:stage.color}}/>
                       <span className="mono text-[11px] tracking-widest font-bold" style={{color:stage.color}}>{stage.label.toUpperCase()}</span>
                     </div>
-                    <span className="mono text-[10px] text-[#4A4A6A]">{sl.length} leads</span>
+                    <span className="mono text-xs text-[var(--text-muted)]">{sl.length} leads</span>
                   </div>
-                  <div className="divide-y divide-[#1E1E2E]">
+                  <div className="divide-y divide-[var(--border-default)]">
                     {sl.slice(0,5).map((lead,i)=>(
-                      <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
+                      <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-[var(--border-default)] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm text-[#E0E0F0] font-medium truncate">{lead.name||lead.phone_number}</p>
+                            <p className="text-sm text-[var(--text-primary)] font-medium truncate">{lead.name||lead.phone_number}</p>
                             {lead.segmento&&<div className="flex items-center gap-1">{segIcon(lead.segmento)}</div>}
                           </div>
-                          {lead.situacion_actual&&<p className="mono text-[10px] text-[#4A4A6A] truncate">{lead.situacion_actual}</p>}
+                          {lead.situacion_actual&&<p className="mono text-xs text-[var(--text-muted)] truncate">{lead.situacion_actual}</p>}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
                           {lead.engagement_score>0&&<span className="mono text-[11px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>★{lead.engagement_score}</span>}
                           {(lead.kanshi_score||0)>0&&(
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 font-bold mono text-[10px] flex-shrink-0"
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 font-bold mono text-xs flex-shrink-0"
                               style={{
-                                borderColor: lead.kanshi_segment==='listo'?'#00FF94':lead.kanshi_segment==='caliente'?'#FF6B35':lead.kanshi_segment==='templado'?'#FFB800':'#00b0f6',
-                                color:       lead.kanshi_segment==='listo'?'#00FF94':lead.kanshi_segment==='caliente'?'#FF6B35':lead.kanshi_segment==='templado'?'#FFB800':'#00b0f6',
-                                background:  lead.kanshi_segment==='listo'?'#00FF9415':lead.kanshi_segment==='caliente'?'#FF6B3515':lead.kanshi_segment==='templado'?'#FFB80015':'#00b0f615',
+                                borderColor: lead.kanshi_segment==='listo'?'var(--success)':lead.kanshi_segment==='caliente'?'var(--danger)':lead.kanshi_segment==='templado'?'var(--warning)':'var(--accent)',
+                                color:       lead.kanshi_segment==='listo'?'var(--success)':lead.kanshi_segment==='caliente'?'var(--danger)':lead.kanshi_segment==='templado'?'var(--warning)':'var(--accent)',
+                                background:  lead.kanshi_segment==='listo'?'var(--success)15':lead.kanshi_segment==='caliente'?'var(--danger)15':lead.kanshi_segment==='templado'?'var(--warning)15':'var(--accent)15',
                               }}>
                               {lead.kanshi_score}
                             </div>
                           )}
-                          <ChevronRight size={12} className="text-[#4A4A6A]"/>
+                          <ChevronRight size={12} className="text-[var(--text-muted)]"/>
                         </div>
                       </div>
                     ))}
-                    {sl.length>5&&<div className="px-5 py-2 text-center"><span className="mono text-[9px] text-[#4A4A6A]">+{sl.length-5} más en esta etapa</span></div>}
+                    {sl.length>5&&<div className="px-5 py-2 text-center"><span className="mono text-xs text-[var(--text-muted)]">+{sl.length-5} más en esta etapa</span></div>}
                   </div>
                 </div>
               )
@@ -1836,58 +1836,58 @@ export default function Dashboard() {
             <MiniDist title="NIVEL COMPROMISO" data={comDist} total={leads.length}/>
           </div>
           <Sec label="ENGAGEMENT SCORE — DISTRIBUCIÓN">
-            <div className="rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
+            <div className="rounded-xl border border-[var(--border-default)] p-5" style={{background:'var(--bg-card)'}}>
               <ResponsiveContainer width="100%" height={150}>
                 <BarChart data={[1,2,3,4,5,6,7,8,9,10].map(n=>({score:n,count:leads.filter(l=>Math.round(l.engagement_score)===n).length}))} margin={{top:5,right:0,left:-30,bottom:0}}>
-                  <XAxis dataKey="score" tick={{fill:'#4A4A6A',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
-                  <YAxis tick={{fill:'#4A4A6A',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
-                  <Tooltip contentStyle={{background:'#1E1E2E',border:'none',borderRadius:'8px',fontSize:'11px'}}/>
+                  <XAxis dataKey="score" tick={{fill:'var(--text-muted)',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:'var(--text-muted)',fontSize:9,fontFamily:'monospace'}} axisLine={false} tickLine={false}/>
+                  <Tooltip contentStyle={{background:'var(--border-default)',border:'none',borderRadius:'8px',fontSize:'11px'}}/>
                   <Bar dataKey="count" radius={[4,4,0,0]}>{[1,2,3,4,5,6,7,8,9,10].map((n,i)=><Cell key={i} fill={scoreColor(n)} fillOpacity={0.8}/>)}</Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Sec>
           <Sec label={`LEADS PERFILADOS — ${profiledLeads.length} TOTAL`}>
-            <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
+            <div className="rounded-xl border border-[var(--border-default)] overflow-hidden" style={{background:'var(--bg-card)'}}>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead><tr className="border-b border-[#1E1E2E]">
+                  <thead><tr className="border-b border-[var(--border-default)]">
                     {['CONTACTO','ETAPA','SEGMENTO','SCORE','COMPROMISO','URGENCIA','SITUACIÓN','DOLOR','LANDING'].map(h=>(
-                      <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left mono text-xs text-[var(--text-muted)] tracking-widest font-normal whitespace-nowrap">{h}</th>
                     ))}
                   </tr></thead>
                   <tbody>
                     {profiledLeads.length===0
-                      ?<tr><td colSpan={9} className="px-4 py-8 text-center text-[#4A4A6A] text-xs">Sin leads perfilados aún</td></tr>
+                      ?<tr><td colSpan={9} className="px-4 py-8 text-center text-[var(--text-muted)] text-xs">Sin leads perfilados aún</td></tr>
                       :paginatedLeads.map((lead,i)=>{
                         const lp = lead.landing_pages?.[0] ?? null
                         return (
-                      <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
+                      <tr key={i} className="border-b border-[var(--border-default)] hover:bg-[var(--border-default)] transition-colors cursor-pointer" onClick={()=>setSelectedLead(lead)}>
                         <td className="px-4 py-3"><div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[#1E1E2E] flex items-center justify-center"><User size={10} className="text-[#4A4A6A]"/></div>
-                          <div><p className="text-xs font-medium text-[#E0E0F0]">{lead.name||'—'}</p><p className="mono text-[9px] text-[#4A4A6A]">{lead.phone_number}</p></div>
+                          <div className="w-6 h-6 rounded-full bg-[var(--border-default)] flex items-center justify-center"><User size={10} className="text-[var(--text-muted)]"/></div>
+                          <div><p className="text-xs font-medium text-[var(--text-primary)]">{lead.name||'—'}</p><p className="mono text-xs text-[var(--text-muted)]">{lead.phone_number}</p></div>
                         </div></td>
                         <td className="px-4 py-3"><StagePill stage={lead.agent_stage}/></td>
-                        <td className="px-4 py-3"><div className="flex items-center gap-1">{segIcon(lead.segmento)}<span className="mono text-[10px]" style={{color:segColor(lead.segmento)}}>{lead.segmento||'—'}</span></div></td>
-                        <td className="px-4 py-3"><span className="mono text-[10px] font-bold px-1.5 py-0.5 rounded" style={{color:scoreColor(lead.engagement_score),background:`${scoreColor(lead.engagement_score)}15`}}>{lead.engagement_score||'—'}</span></td>
-                        <td className="px-4 py-3"><span className="mono text-[10px]" style={{color:comColor(lead.nivel_compromiso)}}>{lead.nivel_compromiso||'—'}</span></td>
-                        <td className="px-4 py-3"><span className="mono text-[10px]" style={{color:urgColor(lead.urgencia_financiera)}}>{lead.urgencia_financiera||'—'}</span></td>
-                        <td className="px-4 py-3 max-w-[180px]"><p className="text-[11px] text-[#E0E0F0] truncate">{lead.situacion_actual||'—'}</p></td>
-                        <td className="px-4 py-3 max-w-[200px]"><p className="text-[11px] text-[#4A4A6A] truncate">{lead.dolor_declarado||'—'}</p></td>
+                        <td className="px-4 py-3"><div className="flex items-center gap-1">{segIcon(lead.segmento)}<span className="mono text-xs" style={{color:segColor(lead.segmento)}}>{lead.segmento||'—'}</span></div></td>
+                        <td className="px-4 py-3"><span className="mono text-xs font-bold px-1.5 py-0.5 rounded" style={{color:scoreColor(lead.engagement_score),background:`${scoreColor(lead.engagement_score)}15`}}>{lead.engagement_score||'—'}</span></td>
+                        <td className="px-4 py-3"><span className="mono text-xs" style={{color:comColor(lead.nivel_compromiso)}}>{lead.nivel_compromiso||'—'}</span></td>
+                        <td className="px-4 py-3"><span className="mono text-xs" style={{color:urgColor(lead.urgencia_financiera)}}>{lead.urgencia_financiera||'—'}</span></td>
+                        <td className="px-4 py-3 max-w-[180px]"><p className="text-[11px] text-[var(--text-primary)] truncate">{lead.situacion_actual||'—'}</p></td>
+                        <td className="px-4 py-3 max-w-[200px]"><p className="text-[11px] text-[var(--text-muted)] truncate">{lead.dolor_declarado||'—'}</p></td>
                         <td className="px-4 py-3" onClick={e=>e.stopPropagation()}>
                           {(lead.kanshi_score||0)>=75
                             ? lp?.status==='active'
                               ? <a href={`/l/${lp.token}`} target="_blank" rel="noopener noreferrer"
-                                  className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-[9px] font-bold tracking-widest whitespace-nowrap transition-all hover:scale-105"
-                                  style={{background:'#00b0f615',color:'#00b0f6',border:'1px solid #00b0f630'}}>
+                                  className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-xs font-bold tracking-widest whitespace-nowrap transition-all hover:scale-105"
+                                  style={{background:'var(--accent)15',color:'var(--accent)',border:'1px solid var(--accent)30'}}>
                                   <Zap size={9}/> VER LANDING
                                 </a>
                               : lp?.status==='draft'
-                                ? <span className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-[9px] tracking-widest whitespace-nowrap"
-                                    style={{background:'#FFB80015',color:'#FFB800',border:'1px solid #FFB80030'}}>
+                                ? <span className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-xs tracking-widest whitespace-nowrap"
+                                    style={{background:'var(--warning)15',color:'var(--warning)',border:'1px solid var(--warning)30'}}>
                                     <RefreshCw size={9} className="animate-spin"/> GENERANDO
                                   </span>
-                                : <span className="mono text-[9px] text-[#4A4A6A]">PENDIENTE</span>
+                                : <span className="mono text-xs text-[var(--text-muted)]">PENDIENTE</span>
                             : null}
                         </td>
                       </tr>
@@ -1904,47 +1904,47 @@ export default function Dashboard() {
         {/* ══ CAMPAÑAS ══ */}
         {activeTab==='campaigns'&&<>
           <div className="flex items-center justify-between">
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CAMPAÑAS — {campaigns.length} TOTAL</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">CAMPAÑAS — {campaigns.length} TOTAL</p>
             <button onClick={()=>setShowCreator(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold mono text-[11px] tracking-widest transition-all hover:scale-105"
-              style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+              style={{background:'linear-gradient(135deg,var(--primary),#00a7e3)'}}>
               <Plus size={13}/> NUEVA CAMPAÑA
             </button>
           </div>
-          <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{background:'#111118'}}>
+          <div className="rounded-xl border border-[var(--border-default)] overflow-hidden" style={{background:'var(--bg-card)'}}>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead><tr className="border-b border-[#1E1E2E]">
+                <thead><tr className="border-b border-[var(--border-default)]">
                   {['CAMPAÑA','TEMPLATE','ESTADO','CONTACTOS','ENVIADOS','ENTREGADOS','LEÍDOS','RESPUESTAS','FECHA',''].map(h=>(
-                    <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left mono text-xs text-[var(--text-muted)] tracking-widest font-normal whitespace-nowrap">{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
                   {campaigns.length===0
-                    ?<tr><td colSpan={10} className="px-5 py-8 text-center text-[#4A4A6A] text-xs">Sin campañas — crea una nueva</td></tr>
+                    ?<tr><td colSpan={10} className="px-5 py-8 text-center text-[var(--text-muted)] text-xs">Sin campañas — crea una nueva</td></tr>
                     :paginatedCampaigns.map((c,i)=>(
-                    <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#1E1E2E] transition-colors">
-                      <td className="px-4 py-3 text-sm text-[#E0E0F0] font-medium">{c.name}</td>
-                      <td className="px-4 py-3"><span className="mono text-[10px] text-[#4A4A6A]">{c.template_name||'—'}</span></td>
-                      <td className="px-4 py-3"><span className={`mono text-[10px] tracking-widest ${statusColor(c.status)}`}>{statusLabel(c.status)}</span></td>
-                      <td className="px-4 py-3 mono text-sm text-[#E0E0F0]">{c.total_contacts||'—'}</td>
-                      <td className="px-4 py-3 mono text-sm text-[#E0E0F0]">{c.sent_count}</td>
-                      <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[#E0E0F0]">{c.delivered_count}</span>{c.sent_count>0&&<span className="mono text-[9px]" style={{color:'#00b0f6'}}>{Math.round((c.delivered_count/c.sent_count)*100)}%</span>}</div></td>
-                      <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[#E0E0F0]">{c.read_count}</span>{c.delivered_count>0&&<span className="mono text-[9px] text-[#FF6B35]">{Math.round((c.read_count/c.delivered_count)*100)}%</span>}</div></td>
-                      <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[#E0E0F0]">{c.reply_count}</span>{c.sent_count>0&&<span className="mono text-[9px] text-[#00FF94]">{Math.round((c.reply_count/c.sent_count)*100)}%</span>}</div></td>
-                      <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{c.scheduled_at?format(new Date(c.scheduled_at),'dd/MM HH:mm'):'—'}</td>
+                    <tr key={i} className="border-b border-[var(--border-default)] hover:bg-[var(--border-default)] transition-colors">
+                      <td className="px-4 py-3 text-sm text-[var(--text-primary)] font-medium">{c.name}</td>
+                      <td className="px-4 py-3"><span className="mono text-xs text-[var(--text-muted)]">{c.template_name||'—'}</span></td>
+                      <td className="px-4 py-3"><span className={`mono text-xs tracking-widest ${statusColor(c.status)}`}>{statusLabel(c.status)}</span></td>
+                      <td className="px-4 py-3 mono text-sm text-[var(--text-primary)]">{c.total_contacts||'—'}</td>
+                      <td className="px-4 py-3 mono text-sm text-[var(--text-primary)]">{c.sent_count}</td>
+                      <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[var(--text-primary)]">{c.delivered_count}</span>{c.sent_count>0&&<span className="mono text-xs" style={{color:'var(--accent)'}}>{Math.round((c.delivered_count/c.sent_count)*100)}%</span>}</div></td>
+                      <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[var(--text-primary)]">{c.read_count}</span>{c.delivered_count>0&&<span className="mono text-xs text-[var(--danger)]">{Math.round((c.read_count/c.delivered_count)*100)}%</span>}</div></td>
+                      <td className="px-4 py-3"><div className="flex items-center gap-1.5"><span className="mono text-sm text-[var(--text-primary)]">{c.reply_count}</span>{c.sent_count>0&&<span className="mono text-xs text-[var(--success)]">{Math.round((c.reply_count/c.sent_count)*100)}%</span>}</div></td>
+                      <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">{c.scheduled_at?format(new Date(c.scheduled_at),'dd/MM HH:mm'):'—'}</td>
                       <td className="px-4 py-3">
                         {(c.status==='scheduled'||c.status==='running')&&(
                           <div className="flex items-center gap-1">
                             {c.status==='running'&&(
                               <button onClick={()=>handleCampaignAction(c,'paused')} title="Pausar"
-                                className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FFB800] transition-colors group">
-                                <Pause size={10} className="text-[#4A4A6A] group-hover:text-[#FFB800]"/>
+                                className="p-1.5 rounded-lg border border-[var(--border-default)] hover:border-[var(--warning)] transition-colors group">
+                                <Pause size={10} className="text-[var(--text-muted)] group-hover:text-[var(--warning)]"/>
                               </button>
                             )}
                             <button onClick={()=>handleCampaignAction(c,'cancelled')} title="Cancelar"
-                              className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
-                              <Square size={10} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+                              className="p-1.5 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group">
+                              <Square size={10} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/>
                             </button>
                           </div>
                         )}
@@ -2028,8 +2028,8 @@ export default function Dashboard() {
 
        {/* Footer */}
         <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-2"><KanshiLogo size={14}/><p className="mono text-[10px] text-[#4A4A6A]">KANSHI v2.0 — SUPABASE REALTIME</p></div>
-          <p className="mono text-[10px] text-[#4A4A6A]">SANTIAGO JIMÉNEZ · GROWTH PARTNER © 2026</p>
+          <div className="flex items-center gap-2"><KanshiLogo size={14}/><p className="mono text-xs text-[var(--text-muted)]">KANSHI v2.0 — SUPABASE REALTIME</p></div>
+          <p className="mono text-xs text-[var(--text-muted)]">SANTIAGO JIMÉNEZ · GROWTH PARTNER © 2026</p>
         </div>
           </div>{/* /max-w wrapper */}
         </main>{/* /scrollable content */}
@@ -2186,14 +2186,14 @@ function HormoziConfigPanel({
     { key: 'social', label: 'PRUEBA SOCIAL', icon: '⭐' },
   ] as const
 
-  const inputCls = "w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A] transition-colors"
-  const labelCls = "mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2"
+  const inputCls = "w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-muted)] transition-colors"
+  const labelCls = "mono text-xs text-[var(--text-muted)] tracking-widest block mb-2"
 
   if (!project) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#1E1E2E] p-12 text-center">
+      <div className="rounded-2xl border border-dashed border-[var(--border-default)] p-12 text-center">
         <p className="text-3xl mb-3">🎯</p>
-        <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para configurar la oferta</p>
+        <p className="mono text-[11px] text-[var(--text-muted)]">Selecciona un proyecto para configurar la oferta</p>
       </div>
     )
   }
@@ -2205,27 +2205,27 @@ function HormoziConfigPanel({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg">🎯</span>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OFERTA HORMOZI — {(project.product_name || project.name).toUpperCase()}</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">OFERTA HORMOZI — {(project.product_name || project.name).toUpperCase()}</p>
           </div>
-          <p className="text-xs text-[#4A4A6A]">Configura los parámetros de tu oferta irresistible para la landing personalizada</p>
+          <p className="text-xs text-[var(--text-muted)]">Configura los parámetros de tu oferta irresistible para la landing personalizada</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold text-[#0A0A0F] disabled:opacity-40 transition-all hover:scale-105"
-          style={{ background: 'linear-gradient(135deg,#00FF94,#00b0f6)' }}>
+          className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold text-[var(--bg-base)] disabled:opacity-40 transition-all hover:scale-105"
+          style={{ background: 'linear-gradient(135deg,var(--success),var(--accent))' }}>
           {saving
-            ? <div className="w-3 h-3 border-2 border-[#0A0A0F] border-t-transparent rounded-full animate-spin"/>
+            ? <div className="w-3 h-3 border-2 border-[var(--bg-base)] border-t-transparent rounded-full animate-spin"/>
             : <CheckCircle size={12}/>}
           {saving ? 'GUARDANDO...' : 'GUARDAR OFERTA'}
         </button>
       </div>
 
       {/* Logo del producto */}
-      <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+      <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
         <div className="flex items-center gap-2">
-          <Rocket size={12} style={{ color: '#00b0f6' }}/>
-          <p className="mono text-[10px] tracking-widest text-[#4A4A6A]">IDENTIDAD DEL PRODUCTO</p>
+          <Rocket size={12} style={{ color: 'var(--accent)' }}/>
+          <p className="mono text-xs tracking-widest text-[var(--text-muted)]">IDENTIDAD DEL PRODUCTO</p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -2233,17 +2233,17 @@ function HormoziConfigPanel({
             <input value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
               placeholder="https://tu-dominio.com/logo.png"
               className={inputCls}/>
-            <p className="mono text-[9px] text-[#4A4A6A] mt-1.5">Se mostrará en el header de la landing (no el logo de KANSHI)</p>
+            <p className="mono text-xs text-[var(--text-muted)] mt-1.5">Se mostrará en el header de la landing (no el logo de KANSHI)</p>
           </div>
           <div>
             {logoUrl ? (
-              <div className="rounded-xl border border-[#1E1E2E] p-3 flex items-center justify-center h-full" style={{ background: '#0A0A0F' }}>
+              <div className="rounded-xl border border-[var(--border-default)] p-3 flex items-center justify-center h-full" style={{ background: 'var(--bg-base)' }}>
                 <img src={logoUrl} alt="preview" className="max-h-12 max-w-full object-contain"
                   onError={e => { (e.target as HTMLImageElement).style.display='none' }}/>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-[#1E1E2E] p-3 flex items-center justify-center h-full">
-                <p className="mono text-[9px] text-[#2E2E4E]">Preview logo aquí</p>
+              <div className="rounded-xl border border-dashed border-[var(--border-default)] p-3 flex items-center justify-center h-full">
+                <p className="mono text-xs text-[#2E2E4E]">Preview logo aquí</p>
               </div>
             )}
           </div>
@@ -2251,13 +2251,13 @@ function HormoziConfigPanel({
       </div>
 
       {/* Nav secciones */}
-      <div className="flex gap-1 p-1 rounded-2xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+      <div className="flex gap-1 p-1 rounded-2xl border border-[var(--border-default)]" style={{ background: 'var(--bg-card)' }}>
         {SECTIONS.map(s => (
           <button key={s.key} onClick={() => setActiveSection(s.key)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl transition-all mono text-[10px] tracking-widest"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl transition-all mono text-xs tracking-widest"
             style={{
-              background: activeSection === s.key ? '#0014ad' : 'transparent',
-              color: activeSection === s.key ? '#fff' : '#4A4A6A'
+              background: activeSection === s.key ? 'var(--primary)' : 'transparent',
+              color: activeSection === s.key ? '#fff' : 'var(--text-muted)'
             }}>
             <span>{s.icon}</span>{s.label}
           </button>
@@ -2267,8 +2267,8 @@ function HormoziConfigPanel({
       {/* SECCIÓN: LA OFERTA */}
       {activeSection === 'oferta' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">GRAN SLAM OFFER — ECUACIÓN DE VALOR</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">GRAN SLAM OFFER — ECUACIÓN DE VALOR</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>DREAM OUTCOME 🏆</label>
@@ -2304,16 +2304,16 @@ function HormoziConfigPanel({
           </div>
 
           {/* Offer Stack */}
-          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+          <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OFFER STACK — LO QUE SE LLEVAN</p>
-                <p className="text-xs mt-0.5" style={{ color: '#00FF94' }}>
+                <p className="mono text-xs text-[var(--text-muted)] tracking-widest">OFFER STACK — LO QUE SE LLEVAN</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--success)' }}>
                   Valor total percibido: <span className="font-bold">${totalValue.toLocaleString()}</span>
                 </p>
               </div>
               <button onClick={addOfferItem}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--border-default)] mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all">
                 <Plus size={10}/> AGREGAR
               </button>
             </div>
@@ -2327,7 +2327,7 @@ function HormoziConfigPanel({
                   </div>
                   <div className="w-28">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] text-xs">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">$</span>
                       <input value={item.value || ''} onChange={e => updateOfferItem(i, 'value', parseInt(e.target.value) || 0)}
                         placeholder="197" type="number"
                         className={inputCls + ' text-xs pl-6'}/>
@@ -2335,7 +2335,7 @@ function HormoziConfigPanel({
                   </div>
                   {offerStack.length > 1 && (
                     <button onClick={() => removeOfferItem(i)}
-                      className="p-2 rounded-xl border border-[#1E1E2E] text-[#4A4A6A] hover:text-[#FF6B35] hover:border-[#FF6B35] transition-all">
+                      className="p-2 rounded-xl border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--danger)] hover:border-[var(--danger)] transition-all">
                       <X size={10}/>
                     </button>
                   )}
@@ -2353,20 +2353,20 @@ function HormoziConfigPanel({
             <div key={plan.id}
               className="rounded-2xl border p-5 space-y-4"
               style={{
-                background: '#111118',
-                borderColor: plan.highlight ? '#0014ad' : '#1E1E2E'
+                background: 'var(--bg-card)',
+                borderColor: plan.highlight ? 'var(--primary)' : 'var(--border-default)'
               }}>
               <div className="flex items-center justify-between">
-                <p className="mono text-[10px] tracking-widest" style={{ color: plan.highlight ? '#00b0f6' : '#4A4A6A' }}>
+                <p className="mono text-xs tracking-widest" style={{ color: plan.highlight ? 'var(--accent)' : 'var(--text-muted)' }}>
                   PLAN {planIdx === 0 ? 'A — PRINCIPAL' : 'B — ALTERNATIVO'}
                 </p>
                 <button
                   onClick={() => setPlans(prev => prev.map((p, i) => ({ ...p, highlight: i === planIdx })))}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-[9px] transition-all"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg mono text-xs transition-all"
                   style={{
-                    background: plan.highlight ? '#00FF9420' : 'transparent',
-                    color: plan.highlight ? '#00FF94' : '#4A4A6A',
-                    border: `1px solid ${plan.highlight ? '#00FF9440' : '#1E1E2E'}`
+                    background: plan.highlight ? 'var(--success)20' : 'transparent',
+                    color: plan.highlight ? 'var(--success)' : 'var(--text-muted)',
+                    border: `1px solid ${plan.highlight ? 'var(--success)40' : 'var(--border-default)'}`
                   }}>
                   {plan.highlight ? '★ DESTACADO' : '☆ Destacar'}
                 </button>
@@ -2388,7 +2388,7 @@ function HormoziConfigPanel({
                   <div>
                     <label className={labelCls}>PRECIO TACHADO</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] text-xs">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">$</span>
                       <input value={plan.price_anchor || ''} onChange={e => updatePlan(planIdx, 'price_anchor', parseInt(e.target.value) || 0)}
                         placeholder="997" type="number"
                         className={inputCls + ' pl-6'}/>
@@ -2397,7 +2397,7 @@ function HormoziConfigPanel({
                   <div>
                     <label className={labelCls}>PRECIO REAL</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] text-xs">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">$</span>
                       <input value={plan.price_real || ''} onChange={e => updatePlan(planIdx, 'price_real', parseInt(e.target.value) || 0)}
                         placeholder="497" type="number"
                         className={inputCls + ' pl-6'}/>
@@ -2427,20 +2427,20 @@ function HormoziConfigPanel({
                   <div className="flex items-center justify-between mb-2">
                     <label className={labelCls + ' mb-0'}>QUÉ INCLUYE</label>
                     <button onClick={() => addPlanFeature(planIdx)}
-                      className="mono text-[9px] text-[#4A4A6A] hover:text-[#00b0f6] transition-colors flex items-center gap-1">
+                      className="mono text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors flex items-center gap-1">
                       <Plus size={9}/> add
                     </button>
                   </div>
                   <div className="space-y-1.5">
                     {plan.features.map((feat, featIdx) => (
                       <div key={featIdx} className="flex items-center gap-2">
-                        <span className="text-[#00FF94] text-xs flex-shrink-0">✓</span>
+                        <span className="text-[var(--success)] text-xs flex-shrink-0">✓</span>
                         <input value={feat} onChange={e => updatePlanFeature(planIdx, featIdx, e.target.value)}
                           placeholder="Módulo 1: Fundamentos IA"
-                          className="flex-1 bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-3 py-2 text-xs text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A] transition-colors"/>
+                          className="flex-1 bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-muted)] transition-colors"/>
                         {plan.features.length > 1 && (
                           <button onClick={() => removePlanFeature(planIdx, featIdx)}
-                            className="text-[#4A4A6A] hover:text-[#FF6B35] transition-colors">
+                            className="text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors">
                             <X size={9}/>
                           </button>
                         )}
@@ -2457,15 +2457,15 @@ function HormoziConfigPanel({
       {/* SECCIÓN: AUTOR & GARANTÍA */}
       {activeSection === 'autor' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">AUTOR DE LA CARTA PERSONAL</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">AUTOR DE LA CARTA PERSONAL</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>NOMBRE DEL AUTOR</label>
                 <input value={authorName} onChange={e => setAuthorName(e.target.value)}
                   placeholder="Andreti"
                   className={inputCls}/>
-                <p className="mono text-[9px] text-[#4A4A6A] mt-1.5">Claude firmará la carta con este nombre</p>
+                <p className="mono text-xs text-[var(--text-muted)] mt-1.5">Claude firmará la carta con este nombre</p>
               </div>
               <div>
                 <label className={labelCls}>TÍTULO / ROL</label>
@@ -2475,8 +2475,8 @@ function HormoziConfigPanel({
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">GARANTÍA</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">GARANTÍA</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>DÍAS DE GARANTÍA</label>
@@ -2497,22 +2497,22 @@ function HormoziConfigPanel({
 
       {/* SECCIÓN: PRUEBA SOCIAL */}
       {activeSection === 'social' && (
-        <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
+        <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
           <div className="flex items-center justify-between">
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">TESTIMONIOS</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">TESTIMONIOS</p>
             <button onClick={addTestimonial}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] transition-all">
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--border-default)] mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all">
               <Plus size={10}/> AGREGAR
             </button>
           </div>
           <div className="space-y-4">
             {testimonials.map((t, i) => (
-              <div key={i} className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#0A0A0F' }}>
+              <div key={i} className="rounded-xl border border-[var(--border-default)] p-4 space-y-3" style={{ background: 'var(--bg-base)' }}>
                 <div className="flex items-center justify-between">
-                  <p className="mono text-[9px] text-[#4A4A6A]">TESTIMONIO {i + 1}</p>
+                  <p className="mono text-xs text-[var(--text-muted)]">TESTIMONIO {i + 1}</p>
                   {testimonials.length > 1 && (
                     <button onClick={() => removeTestimonial(i)}
-                      className="text-[#4A4A6A] hover:text-[#FF6B35] transition-colors">
+                      className="text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors">
                       <X size={11}/>
                     </button>
                   )}
@@ -2534,7 +2534,7 @@ function HormoziConfigPanel({
                   <textarea value={t.text} onChange={e => updateTestimonial(i, 'text', e.target.value)}
                     placeholder="En 60 días generé mis primeros $2,000 siguiendo el método..."
                     rows={2}
-                    className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A] transition-colors resize-none"/>
+                    className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-muted)] transition-colors resize-none"/>
                 </div>
               </div>
             ))}
@@ -2543,8 +2543,8 @@ function HormoziConfigPanel({
       )}
 
       {/* Preview resumen */}
-      <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
-        <p className="mono text-[9px] text-[#2E2E4E] tracking-widest mb-3">RESUMEN DE OFERTA CONFIGURADA</p>
+      <div className="rounded-2xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-card)' }}>
+        <p className="mono text-xs text-[#2E2E4E] tracking-widest mb-3">RESUMEN DE OFERTA CONFIGURADA</p>
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Dream Outcome', value: dreamOutcome || '—' },
@@ -2555,8 +2555,8 @@ function HormoziConfigPanel({
             { label: 'Testimonios', value: testimonials.filter(t => t.name).length > 0 ? `${testimonials.filter(t => t.name).length} configurados` : '—' },
           ].map(item => (
             <div key={item.label}>
-              <p className="mono text-[9px] text-[#4A4A6A] mb-1">{item.label.toUpperCase()}</p>
-              <p className="text-xs text-[#E0E0F0] truncate">{item.value}</p>
+              <p className="mono text-xs text-[var(--text-muted)] mb-1">{item.label.toUpperCase()}</p>
+              <p className="text-xs text-[var(--text-primary)] truncate">{item.value}</p>
             </div>
           ))}
         </div>
@@ -2632,47 +2632,47 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
   return(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}/>
-      <div className="relative w-full max-w-2xl rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{background:'#0D0D14',maxHeight:'90vh',overflowY:'auto'}}>
-        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between sticky top-0 z-10" style={{background:'rgba(13,13,20,0.98)'}}>
+      <div className="relative w-full max-w-2xl rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{background:'#0D0D14',maxHeight:'90vh',overflowY:'auto'}}>
+        <div className="px-6 py-5 border-b border-[var(--border-default)] flex items-center justify-between sticky top-0 z-10" style={{background:'rgba(13,13,20,0.98)'}}>
           <div>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVA CAMPAÑA — PASO {step} DE 3</p>
-            <p className="font-semibold text-[#E0E0F0] text-sm mt-0.5">
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">NUEVA CAMPAÑA — PASO {step} DE 3</p>
+            <p className="font-semibold text-[var(--text-primary)] text-sm mt-0.5">
               {step===1?'Template y nombre':step===2?'Segmentación de audiencia':'Programación y confirmación'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group"><X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/></button>
+          <button onClick={onClose} className="p-2 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group"><X size={12} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/></button>
         </div>
-        <div className="h-0.5 bg-[#1E1E2E]">
-          <div className="h-full transition-all duration-500" style={{width:`${(step/3)*100}%`,background:'linear-gradient(90deg,#0014ad,#00a7e3)'}}/>
+        <div className="h-0.5 bg-[var(--border-default)]">
+          <div className="h-full transition-all duration-500" style={{width:`${(step/3)*100}%`,background:'linear-gradient(90deg,var(--primary),#00a7e3)'}}/>
         </div>
 
         <div className="p-6 space-y-5">
           {step===1&&<>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">NOMBRE DE LA CAMPAÑA</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">NOMBRE DE LA CAMPAÑA</label>
               <input value={campaignName} onChange={e=>setCampaignName(e.target.value)} placeholder="ej. Live 1 — Leads Calientes"
-                className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A]"/>
+                className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-muted)]"/>
             </div>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">SELECCIONAR TEMPLATE</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">SELECCIONAR TEMPLATE</label>
               {templates.length===0
-                ?<div className="rounded-xl border border-dashed border-[#1E1E2E] p-6 text-center"><p className="text-[#4A4A6A] text-xs">No hay templates aprobados</p></div>
+                ?<div className="rounded-xl border border-dashed border-[var(--border-default)] p-6 text-center"><p className="text-[var(--text-muted)] text-xs">No hay templates aprobados</p></div>
                 :<div className="space-y-2">
                   {templates.map(t=>(
                     <div key={t.id} onClick={()=>{setSelectedTemplate(t);detectVars(t)}}
                       className="rounded-xl border p-4 cursor-pointer transition-all"
-                      style={{borderColor:selectedTemplate?.id===t.id?'#00b0f6':'#1E1E2E',background:selectedTemplate?.id===t.id?'rgba(0,176,246,0.05)':'#111118'}}>
+                      style={{borderColor:selectedTemplate?.id===t.id?'var(--accent)':'var(--border-default)',background:selectedTemplate?.id===t.id?'rgba(0,176,246,0.05)':'var(--bg-card)'}}>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{background:selectedTemplate?.id===t.id?'#00b0f6':'#2A2A3A'}}/>
-                          <span className="font-medium text-sm text-[#E0E0F0]">{t.display_name||t.name}</span>
+                          <div className="w-2 h-2 rounded-full" style={{background:selectedTemplate?.id===t.id?'var(--accent)':'#2A2A3A'}}/>
+                          <span className="font-medium text-sm text-[var(--text-primary)]">{t.display_name||t.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">{t.language}</span>
-                          <span className="mono text-[9px] px-2 py-0.5 rounded-full border text-[#00b0f6]" style={{borderColor:'rgba(0,176,246,0.4)'}}>{t.category||'MARKETING'}</span>
+                          <span className="mono text-xs px-2 py-0.5 rounded-full border border-[var(--border-default)] text-[var(--text-muted)]">{t.language}</span>
+                          <span className="mono text-xs px-2 py-0.5 rounded-full border text-[var(--accent)]" style={{borderColor:'rgba(0,176,246,0.4)'}}>{t.category||'MARKETING'}</span>
                         </div>
                       </div>
-                      <p className="mono text-[9px] text-[#4A4A6A]">{t.name}</p>
+                      <p className="mono text-xs text-[var(--text-muted)]">{t.name}</p>
                       {t.body_text&&<p className="text-[11px] text-[#6A6A8A] mt-2 leading-relaxed line-clamp-2">{t.body_text}</p>}
                     </div>
                   ))}
@@ -2681,44 +2681,44 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
             </div>
             {selectedTemplate&&templateVars.length>0&&(
               <div>
-                <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">VARIABLES — {templateVars.length} detectada{templateVars.length>1?'s':''}</label>
+                <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">VARIABLES — {templateVars.length} detectada{templateVars.length>1?'s':''}</label>
                 <div className="space-y-2">
                   {templateVars.map((v,i)=>(
-                    <div key={i} className="rounded-xl border border-[#1E1E2E] p-3 space-y-2" style={{background:'#111118'}}>
+                    <div key={i} className="rounded-xl border border-[var(--border-default)] p-3 space-y-2" style={{background:'var(--bg-card)'}}>
                       <div className="flex items-center gap-2">
-                        <span className="mono text-[10px] px-2 py-0.5 rounded-full border text-[#00b0f6]" style={{borderColor:'rgba(0,176,246,0.4)'}}>{'{{'}{v.index}{'}}'}</span>
-                        <span className="mono text-[10px] text-[#4A4A6A]">Parámetro {v.index}</span>
+                        <span className="mono text-xs px-2 py-0.5 rounded-full border text-[var(--accent)]" style={{borderColor:'rgba(0,176,246,0.4)'}}>{'{{'}{v.index}{'}}'}</span>
+                        <span className="mono text-xs text-[var(--text-muted)]">Parámetro {v.index}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <p className="mono text-[9px] text-[#4A4A6A] mb-1">TIPO</p>
+                          <p className="mono text-xs text-[var(--text-muted)] mb-1">TIPO</p>
                           <div className="flex gap-2">
                             {(['field','fixed'] as const).map(t=>(
                               <button key={t} onClick={()=>{const nv=[...templateVars];nv[i]={...nv[i],type:t};setTemplateVars(nv)}}
-                                className="px-2 py-1 rounded-lg border mono text-[9px] transition-all"
-                                style={{borderColor:v.type===t?'#00b0f6':'#1E1E2E',color:v.type===t?'#00b0f6':'#4A4A6A',background:v.type===t?'rgba(0,176,246,0.1)':'transparent'}}>
+                                className="px-2 py-1 rounded-lg border mono text-xs transition-all"
+                                style={{borderColor:v.type===t?'var(--accent)':'var(--border-default)',color:v.type===t?'var(--accent)':'var(--text-muted)',background:v.type===t?'rgba(0,176,246,0.1)':'transparent'}}>
                                 {t==='field'?'CAMPO':'FIJO'}
                               </button>
                             ))}
                           </div>
                         </div>
                         <div>
-                          <p className="mono text-[9px] text-[#4A4A6A] mb-1">{v.type==='field'?'CAMPO DEL CONTACTO':'TEXTO FIJO'}</p>
+                          <p className="mono text-xs text-[var(--text-muted)] mb-1">{v.type==='field'?'CAMPO DEL CONTACTO':'TEXTO FIJO'}</p>
                           {v.type==='field'
                             ?<select value={v.value} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],value:e.target.value};setTemplateVars(nv)}}
-                                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none">
+                                className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] outline-none">
                                 {FIELD_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
                               </select>
                             :<input value={v.value} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],value:e.target.value};setTemplateVars(nv)}}
-                                placeholder="Texto fijo..." className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
+                                placeholder="Texto fijo..." className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"/>
                           }
                         </div>
                       </div>
                       {v.type==='field'&&(
                         <div>
-                          <p className="mono text-[9px] text-[#4A4A6A] mb-1">FALLBACK (si el campo está vacío)</p>
+                          <p className="mono text-xs text-[var(--text-muted)] mb-1">FALLBACK (si el campo está vacío)</p>
                           <input value={v.fallback} onChange={e=>{const nv=[...templateVars];nv[i]={...nv[i],fallback:e.target.value};setTemplateVars(nv)}}
-                            placeholder="ej. Amigo" className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1 text-xs text-[#E0E0F0] outline-none placeholder:text-[#4A4A6A]"/>
+                            placeholder="ej. Amigo" className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"/>
                         </div>
                       )}
                     </div>
@@ -2727,53 +2727,53 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
               </div>
             )}
             {selectedTemplate&&templateVars.length===0&&(
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1E1E2E]" style={{background:'#111118'}}>
-                <div className="w-1.5 h-1.5 rounded-full" style={{background:'#00b0f6'}}/>
-                <span className="mono text-[10px] text-[#4A4A6A]">Template sin variables — se envía directo sin parámetros</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--border-default)]" style={{background:'var(--bg-card)'}}>
+                <div className="w-1.5 h-1.5 rounded-full" style={{background:'var(--accent)'}}/>
+                <span className="mono text-xs text-[var(--text-muted)]">Template sin variables — se envía directo sin parámetros</span>
               </div>
             )}
           </>}
 
           {step===2&&<>
             <div className="flex items-center justify-between p-3 rounded-xl border" style={{borderColor:'rgba(0,176,246,0.4)',background:'rgba(0,176,246,0.05)'}}>
-              <div className="flex items-center gap-2"><Filter size={12} style={{color:'#00b0f6'}}/><span className="mono text-[10px] tracking-widest" style={{color:'#00b0f6'}}>AUDIENCIA SELECCIONADA</span></div>
-              <span className="mono text-lg font-bold" style={{color:'#00b0f6'}}>{filteredLeads.length} leads</span>
+              <div className="flex items-center gap-2"><Filter size={12} style={{color:'var(--accent)'}}/><span className="mono text-xs tracking-widest" style={{color:'var(--accent)'}}>AUDIENCIA SELECCIONADA</span></div>
+              <span className="mono text-lg font-bold" style={{color:'var(--accent)'}}>{filteredLeads.length} leads</span>
             </div>
             <FilterGroup label="SEGMENTO" options={['caliente','templado','frio']} selected={filterSegmento}
               onToggle={v=>toggleFilter(filterSegmento,setFilterSegmento,v)}
-              colors={{'caliente':'#FF6B35','templado':'#FFB800','frio':'#00b0f6'}}/>
+              colors={{'caliente':'var(--danger)','templado':'var(--warning)','frio':'var(--accent)'}}/>
             <FilterGroup label="ETAPA" options={STAGES.map(s=>s.key)} selected={filterStage}
               onToggle={v=>toggleFilter(filterStage,setFilterStage,v)}
               labels={Object.fromEntries(STAGES.map(s=>[s.key,s.label]))}/>
             <FilterGroup label="URGENCIA FINANCIERA" options={['alta','media','baja']} selected={filterUrgencia}
               onToggle={v=>toggleFilter(filterUrgencia,setFilterUrgencia,v)}
-              colors={{'alta':'#FF6B35','media':'#FFB800','baja':'#4A4A6A'}}/>
+              colors={{'alta':'var(--danger)','media':'var(--warning)','baja':'var(--text-muted)'}}/>
             <FilterGroup label="NIVEL COMPROMISO" options={['alto','medio','bajo']} selected={filterCompromiso}
               onToggle={v=>toggleFilter(filterCompromiso,setFilterCompromiso,v)}
-              colors={{'alto':'#00FF94','medio':'#FFB800','bajo':'#4A4A6A'}}/>
+              colors={{'alto':'var(--success)','medio':'var(--warning)','bajo':'var(--text-muted)'}}/>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">ENGAGEMENT SCORE MÍNIMO — {minScore===0?'Sin filtro':`>= ${minScore}`}</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">ENGAGEMENT SCORE MÍNIMO — {minScore===0?'Sin filtro':`>= ${minScore}`}</label>
               <input type="range" min={0} max={10} value={minScore} onChange={e=>setMinScore(Number(e.target.value))}
-                className="w-full h-1 bg-[#1E1E2E] rounded-full outline-none" style={{accentColor:'#00b0f6'}}/>
-              <div className="flex justify-between mt-1">{[0,2,4,6,8,10].map(n=><span key={n} className="mono text-[9px] text-[#4A4A6A]">{n}</span>)}</div>
+                className="w-full h-1 bg-[var(--border-default)] rounded-full outline-none" style={{accentColor:'var(--accent)'}}/>
+              <div className="flex justify-between mt-1">{[0,2,4,6,8,10].map(n=><span key={n} className="mono text-xs text-[var(--text-muted)]">{n}</span>)}</div>
             </div>
             {filteredLeads.length>0&&(
               <div>
-                <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-2">PREVIEW — primeros {Math.min(5,filteredLeads.length)} leads</p>
+                <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-2">PREVIEW — primeros {Math.min(5,filteredLeads.length)} leads</p>
                 <div className="space-y-1.5">
                   {filteredLeads.slice(0,5).map((l,i)=>(
-                    <div key={i} className="flex items-center justify-between rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
+                    <div key={i} className="flex items-center justify-between rounded-xl border border-[var(--border-default)] px-3 py-2" style={{background:'var(--bg-card)'}}>
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full" style={{background:segColor(l.segmento)}}/>
-                        <span className="text-xs text-[#E0E0F0]">{l.name||l.phone_number}</span>
+                        <span className="text-xs text-[var(--text-primary)]">{l.name||l.phone_number}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <StagePill stage={l.agent_stage}/>
-                        <span className="mono text-[10px] font-bold" style={{color:scoreColor(l.engagement_score)}}>{l.engagement_score||'—'}</span>
+                        <span className="mono text-xs font-bold" style={{color:scoreColor(l.engagement_score)}}>{l.engagement_score||'—'}</span>
                       </div>
                     </div>
                   ))}
-                  {filteredLeads.length>5&&<p className="mono text-[9px] text-[#4A4A6A] text-center">+{filteredLeads.length-5} más</p>}
+                  {filteredLeads.length>5&&<p className="mono text-xs text-[var(--text-muted)] text-center">+{filteredLeads.length-5} más</p>}
                 </div>
               </div>
             )}
@@ -2781,16 +2781,16 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
 
           {step===3&&<>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-3">CUÁNDO ENVIAR</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-3">CUÁNDO ENVIAR</label>
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={()=>setSendNow(true)} className="rounded-xl border p-4 text-left transition-all"
-                  style={{borderColor:sendNow?'#00b0f6':'#1E1E2E',background:sendNow?'rgba(0,176,246,0.05)':'transparent'}}>
-                  <div className="flex items-center gap-2 mb-1"><Rocket size={12} style={{color:sendNow?'#00b0f6':'#4A4A6A'}}/><span className="mono text-[10px] tracking-widest" style={{color:sendNow?'#00b0f6':'#4A4A6A'}}>AHORA MISMO</span></div>
+                  style={{borderColor:sendNow?'var(--accent)':'var(--border-default)',background:sendNow?'rgba(0,176,246,0.05)':'transparent'}}>
+                  <div className="flex items-center gap-2 mb-1"><Rocket size={12} style={{color:sendNow?'var(--accent)':'var(--text-muted)'}}/><span className="mono text-xs tracking-widest" style={{color:sendNow?'var(--accent)':'var(--text-muted)'}}>AHORA MISMO</span></div>
                   <p className="text-xs text-[#6A6A8A]">El scheduler lo enviará en el próximo ciclo de 5 min</p>
                 </button>
                 <button onClick={()=>setSendNow(false)} className="rounded-xl border p-4 text-left transition-all"
-                  style={{borderColor:!sendNow?'#00b0f6':'#1E1E2E',background:!sendNow?'rgba(0,176,246,0.05)':'transparent'}}>
-                  <div className="flex items-center gap-2 mb-1"><Calendar size={12} style={{color:!sendNow?'#00b0f6':'#4A4A6A'}}/><span className="mono text-[10px] tracking-widest" style={{color:!sendNow?'#00b0f6':'#4A4A6A'}}>PROGRAMAR</span></div>
+                  style={{borderColor:!sendNow?'var(--accent)':'var(--border-default)',background:!sendNow?'rgba(0,176,246,0.05)':'transparent'}}>
+                  <div className="flex items-center gap-2 mb-1"><Calendar size={12} style={{color:!sendNow?'var(--accent)':'var(--text-muted)'}}/><span className="mono text-xs tracking-widest" style={{color:!sendNow?'var(--accent)':'var(--text-muted)'}}>PROGRAMAR</span></div>
                   <p className="text-xs text-[#6A6A8A]">Elige fecha y hora específica</p>
                 </button>
               </div>
@@ -2798,43 +2798,43 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
             {!sendNow&&(
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">FECHA</label>
+                  <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">FECHA</label>
                   <input type="date" value={scheduledDate} onChange={e=>setScheduledDate(e.target.value)}
-                    className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors"/>
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors"/>
                 </div>
                 <div>
-                  <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">HORA</label>
+                  <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">HORA</label>
                   <input type="time" value={scheduledTime} onChange={e=>setScheduledTime(e.target.value)}
-                    className="w-full bg-[#111118] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors"/>
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors"/>
                 </div>
               </div>
             )}
-            <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{background:'#111118'}}>
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">RESUMEN DE CAMPAÑA</p>
+            <div className="rounded-xl border border-[var(--border-default)] p-4 space-y-3" style={{background:'var(--bg-card)'}}>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">RESUMEN DE CAMPAÑA</p>
               <SummaryRow label="Nombre" value={campaignName}/>
               <SummaryRow label="Template" value={selectedTemplate?.name||'—'}/>
               <SummaryRow label="Idioma" value={selectedTemplate?.language||'—'}/>
               <SummaryRow label="Contactos" value={`${filteredLeads.length} leads seleccionados`} highlight/>
               <SummaryRow label="Envío" value={sendNow?'Inmediato (próx. ciclo ~5min)':`${scheduledDate} a las ${scheduledTime}`}/>
             </div>
-            {error&&<div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] p-3"><p className="text-xs text-[#FF6B35]">{error}</p></div>}
+            {error&&<div className="rounded-xl border border-[var(--danger)] bg-[var(--danger)10] p-3"><p className="text-xs text-[var(--danger)]">{error}</p></div>}
           </>}
         </div>
 
-        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
+        <div className="px-6 py-4 border-t border-[var(--border-default)] flex items-center justify-between sticky bottom-0" style={{background:'rgba(13,13,20,0.98)'}}>
           <button onClick={()=>step>1?setStep(step-1):onClose()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border-default)] mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all">
             <ChevronLeft size={12}/> {step===1?'CANCELAR':'ANTERIOR'}
           </button>
           {step<3
             ?<button onClick={()=>setStep(step+1)} disabled={step===1?!canNext1:!canNext2}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+                style={{background:'linear-gradient(135deg,var(--primary),#00a7e3)'}}>
                 SIGUIENTE <ChevronRight size={12}/>
               </button>
             :<button onClick={handleCreate} disabled={!canConfirm||saving}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{background:'linear-gradient(135deg,#0014ad,#00a7e3)'}}>
+                style={{background:'linear-gradient(135deg,var(--primary),#00a7e3)'}}>
                 {saving?<><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> CREANDO...</>:<><Rocket size={12}/> CREAR CAMPAÑA</>}
               </button>
           }
@@ -2847,10 +2847,10 @@ function CampaignCreator({ leads,templates,onClose,onCreated }:CreatorProps) {
 // ─── KANSHI SCORE WIDGET ──────────────────────────────────────────────────────
 
 const KANSHI_SEGMENTS = [
-  { key: 'frio',     label: 'Frío',     color: '#00b0f6', range: '0–25'  },
-  { key: 'templado', label: 'Templado', color: '#FFB800', range: '26–50' },
-  { key: 'caliente', label: 'Caliente', color: '#FF6B35', range: '51–75' },
-  { key: 'listo',    label: 'Listo',    color: '#00FF94', range: '76–100'},
+  { key: 'frio',     label: 'Frío',     color: 'var(--accent)', range: '0–25'  },
+  { key: 'templado', label: 'Templado', color: 'var(--warning)', range: '26–50' },
+  { key: 'caliente', label: 'Caliente', color: 'var(--danger)', range: '51–75' },
+  { key: 'listo',    label: 'Listo',    color: 'var(--success)', range: '76–100'},
 ]
 
 function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
@@ -2868,24 +2868,24 @@ function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
   const total = leads.length
   const donutData = segCounts.map(s => ({ name: s.label, value: s.count, color: s.color }))
 
-  const gaugeColor = avgScore >= 76 ? '#00FF94'
-    : avgScore >= 51 ? '#FF6B35'
-    : avgScore >= 26 ? '#FFB800'
-    : '#00b0f6'
+  const gaugeColor = avgScore >= 76 ? 'var(--success)'
+    : avgScore >= 51 ? 'var(--danger)'
+    : avgScore >= 26 ? 'var(--warning)'
+    : 'var(--accent)'
 
   const listos = leads.filter(l => (l.kanshi_segment || 'frio') === 'listo').length
 
   return (
-    <div className="rounded-xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
+    <div className="rounded-xl border border-[var(--border-default)] p-5" style={{ background: 'var(--bg-card)' }}>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">KANSHI SCORE</p>
-          <p className="text-sm font-medium text-[#E0E0F0] mt-0.5">Calificación de leads 0–100</p>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">KANSHI SCORE</p>
+          <p className="text-sm font-medium text-[var(--text-primary)] mt-0.5">Calificación de leads 0–100</p>
         </div>
         {listos > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#00FF9440] bg-[#00FF9410]">
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-[#00FF94]"/>
-            <span className="mono text-[10px] font-bold text-[#00FF94]">{listos} LISTOS</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--success)40] bg-[var(--success)10]">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-[var(--success)]"/>
+            <span className="mono text-xs font-bold text-[var(--success)]">{listos} LISTOS</span>
           </div>
         )}
       </div>
@@ -2895,7 +2895,7 @@ function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
         <div className="flex flex-col items-center flex-shrink-0">
           <div className="relative w-24 h-24 flex items-center justify-center">
             <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90">
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#1E1E2E" strokeWidth="10"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="var(--border-default)" strokeWidth="10"/>
               <circle cx="50" cy="50" r="38" fill="none" stroke={gaugeColor} strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 38}`}
@@ -2904,10 +2904,10 @@ function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
             </svg>
             <div className="text-center z-10">
               <p className="mono text-2xl font-bold leading-none" style={{ color: gaugeColor }}>{avgScore}</p>
-              <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mt-0.5">PROM</p>
+              <p className="mono text-[8px] text-[var(--text-muted)] tracking-widest mt-0.5">PROM</p>
             </div>
           </div>
-          <p className="mono text-[9px] text-[#4A4A6A] mt-2">{scored.length} evaluados</p>
+          <p className="mono text-xs text-[var(--text-muted)] mt-2">{scored.length} evaluados</p>
         </div>
 
         {/* Donut + leyenda */}
@@ -2922,7 +2922,7 @@ function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
             </ResponsiveContainer>
           ) : (
             <div className="w-[100px] h-[100px] flex items-center justify-center">
-              <div className="w-[72px] h-[72px] rounded-full border-[10px] border-[#1E1E2E]"/>
+              <div className="w-[72px] h-[72px] rounded-full border-[10px] border-[var(--border-default)]"/>
             </div>
           )}
 
@@ -2931,12 +2931,12 @@ function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
               <div key={seg.key} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color }}/>
-                  <span className="mono text-[10px] text-[#E0E0F0]">{seg.label}</span>
-                  <span className="mono text-[9px] text-[#4A4A6A]">{seg.range}</span>
+                  <span className="mono text-xs text-[var(--text-primary)]">{seg.label}</span>
+                  <span className="mono text-xs text-[var(--text-muted)]">{seg.range}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="mono text-[11px] font-bold" style={{ color: seg.color }}>{seg.count}</span>
-                  <span className="mono text-[9px] text-[#4A4A6A] w-8 text-right">
+                  <span className="mono text-xs text-[var(--text-muted)] w-8 text-right">
                     {total > 0 ? `${Math.round((seg.count / total) * 100)}%` : '0%'}
                   </span>
                 </div>
@@ -2954,8 +2954,8 @@ function KanshiScoreWidget({ leads }: { leads: Lead[] }) {
 function SummaryRow({label,value,highlight}:{label:string;value:string;highlight?:boolean}) {
   return(
     <div className="flex items-center justify-between">
-      <span className="mono text-[10px] text-[#4A4A6A]">{label}</span>
-      <span className="mono text-[11px]" style={{color:highlight?'#00b0f6':'#E0E0F0',fontWeight:highlight?'bold':'normal'}}>{value}</span>
+      <span className="mono text-xs text-[var(--text-muted)]">{label}</span>
+      <span className="mono text-[11px]" style={{color:highlight?'var(--accent)':'var(--text-primary)',fontWeight:highlight?'bold':'normal'}}>{value}</span>
     </div>
   )
 }
@@ -2964,15 +2964,15 @@ interface FGProps {label:string;options:string[];selected:string[];onToggle:(v:s
 function FilterGroup({label,options,selected,onToggle,colors={},labels={}}:FGProps) {
   return(
     <div>
-      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
+      <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map(o=>{
-          const active=selected.includes(o); const color=colors[o]||'#4A4A6A'
+          const active=selected.includes(o); const color=colors[o]||'var(--text-muted)'
           const lbl=labels[o]||o.charAt(0).toUpperCase()+o.slice(1)
           return(
             <button key={o} onClick={()=>onToggle(o)}
-              className="px-3 py-1.5 rounded-full border mono text-[10px] transition-all"
-              style={{borderColor:active?color:`${color}40`,background:active?`${color}20`:'transparent',color:active?color:'#4A4A6A'}}>
+              className="px-3 py-1.5 rounded-full border mono text-xs transition-all"
+              style={{borderColor:active?color:`${color}40`,background:active?`${color}20`:'transparent',color:active?color:'var(--text-muted)'}}>
               {lbl}
             </button>
           )
@@ -2983,32 +2983,32 @@ function FilterGroup({label,options,selected,onToggle,colors={},labels={}}:FGPro
 }
 
 function Sec({label,children}:{label:string;children:React.ReactNode}){
-  return <div><p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-3">{label}</p>{children}</div>
+  return <div><p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">{label}</p>{children}</div>
 }
 
 function KCard({icon,label,value,color,isPercent}:{icon:React.ReactNode;label:string;value:number|string;color:string;isPercent?:boolean}){
   return(
-    <div className="rounded-xl border border-[#1E1E2E] p-4 hover:border-[#2E2E4E] transition-all" style={{background:'#111118'}}>
+    <div className="rounded-xl border border-[var(--border-default)] p-4 hover:border-[#2E2E4E] transition-all" style={{background:'var(--bg-card)'}}>
       <div className="flex items-center justify-between mb-3">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{background:`${color}18`,color}}>{icon}</div>
         {isPercent&&<div className="w-1.5 h-1.5 rounded-full" style={{background:color}}/>}
       </div>
       <p className="mono text-[28px] font-bold leading-none" style={{color}}>{value}</p>
-      <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-2">{label}</p>
+      <p className="mono text-xs text-[var(--text-muted)] tracking-widest mt-2">{label}</p>
     </div>
   )
 }
 
 function StagePill({stage}:{stage:string}){
-  const s=STAGE_MAP[stage]||{label:stage,color:'#4A4A6A'}
-  return <span className="mono text-[9px] tracking-widest px-2 py-0.5 rounded-full border" style={{color:s.color,borderColor:`${s.color}40`,background:`${s.color}10`}}>{s.label.toUpperCase()}</span>
+  const s=STAGE_MAP[stage]||{label:stage,color:'var(--text-muted)'}
+  return <span className="mono text-xs tracking-widest px-2 py-0.5 rounded-full border" style={{color:s.color,borderColor:`${s.color}40`,background:`${s.color}10`}}>{s.label.toUpperCase()}</span>
 }
 
 function MiniDist({title,data,total}:{title:string;data:{name:string;value:number;color:string}[];total:number}){
   return(
-    <div className="rounded-xl border border-[#1E1E2E] p-5" style={{background:'#111118'}}>
-      <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">{title}</p>
-      {data.length===0?<p className="text-[#4A4A6A] text-xs text-center mt-6">Sin datos</p>:<>
+    <div className="rounded-xl border border-[var(--border-default)] p-5" style={{background:'var(--bg-card)'}}>
+      <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-4">{title}</p>
+      {data.length===0?<p className="text-[var(--text-muted)] text-xs text-center mt-6">Sin datos</p>:<>
         <div className="flex items-center justify-center mb-4">
           <ResponsiveContainer width={120} height={120}>
             <PieChart><Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3}>
@@ -3018,10 +3018,10 @@ function MiniDist({title,data,total}:{title:string;data:{name:string;value:numbe
         </div>
         <div className="space-y-2">{data.map((d,i)=>(
           <div key={i} className="flex items-center justify-between">
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{background:d.color}}/><span className="mono text-[10px] text-[#E0E0F0]">{d.name}</span></div>
+            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{background:d.color}}/><span className="mono text-xs text-[var(--text-primary)]">{d.name}</span></div>
             <div className="flex items-center gap-2">
-              <span className="mono text-[10px]" style={{color:d.color}}>{d.value}</span>
-              <span className="mono text-[9px] text-[#4A4A6A]">{total>0?`${Math.round((d.value/total)*100)}%`:'0%'}</span>
+              <span className="mono text-xs" style={{color:d.color}}>{d.value}</span>
+              <span className="mono text-xs text-[var(--text-muted)]">{total>0?`${Math.round((d.value/total)*100)}%`:'0%'}</span>
             </div>
           </div>
         ))}</div>
@@ -3031,64 +3031,64 @@ function MiniDist({title,data,total}:{title:string;data:{name:string;value:numbe
 }
 
 function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
-  const stage=STAGE_MAP[lead.agent_stage]||{label:lead.agent_stage,color:'#4A4A6A'}
+  const stage=STAGE_MAP[lead.agent_stage]||{label:lead.agent_stage,color:'var(--text-muted)'}
   return(
     <div className="fixed inset-0 z-[100] flex">
       <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose}/>
-      <div className="w-[460px] border-l border-[#1E1E2E] overflow-y-auto flex-shrink-0" style={{background:'#0D0D14'}}>
-        <div className="sticky top-0 z-10 px-6 py-4 border-b border-[#1E1E2E] flex items-center justify-between" style={{background:'rgba(13,13,20,0.97)'}}>
+      <div className="w-[460px] border-l border-[var(--border-default)] overflow-y-auto flex-shrink-0" style={{background:'#0D0D14'}}>
+        <div className="sticky top-0 z-10 px-6 py-4 border-b border-[var(--border-default)] flex items-center justify-between" style={{background:'rgba(13,13,20,0.97)'}}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:`${stage.color}20`}}><User size={16} style={{color:stage.color}}/></div>
-            <div><p className="font-semibold text-[#E0E0F0] text-sm">{lead.name||'Sin nombre'}</p><p className="mono text-[10px] text-[#4A4A6A]">{lead.phone_number}</p></div>
+            <div><p className="font-semibold text-[var(--text-primary)] text-sm">{lead.name||'Sin nombre'}</p><p className="mono text-xs text-[var(--text-muted)]">{lead.phone_number}</p></div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group"><X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/></button>
+          <button onClick={onClose} className="p-2 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group"><X size={12} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/></button>
         </div>
         <div className="p-6 space-y-5">
           <div className="flex items-center gap-3 flex-wrap">
             <StagePill stage={lead.agent_stage}/>
-            {lead.segmento&&<div className="flex items-center gap-1 px-2 py-0.5 rounded-full border" style={{borderColor:`${segColor(lead.segmento)}40`,background:`${segColor(lead.segmento)}10`}}>{segIcon(lead.segmento)}<span className="mono text-[10px]" style={{color:segColor(lead.segmento)}}>{lead.segmento}</span></div>}
-            {lead.engagement_score>0&&<div className="flex items-center gap-1"><Star size={10} style={{color:scoreColor(lead.engagement_score)}}/><span className="mono text-[10px] font-bold" style={{color:scoreColor(lead.engagement_score)}}>{lead.engagement_score}/10</span></div>}
+            {lead.segmento&&<div className="flex items-center gap-1 px-2 py-0.5 rounded-full border" style={{borderColor:`${segColor(lead.segmento)}40`,background:`${segColor(lead.segmento)}10`}}>{segIcon(lead.segmento)}<span className="mono text-xs" style={{color:segColor(lead.segmento)}}>{lead.segmento}</span></div>}
+            {lead.engagement_score>0&&<div className="flex items-center gap-1"><Star size={10} style={{color:scoreColor(lead.engagement_score)}}/><span className="mono text-xs font-bold" style={{color:scoreColor(lead.engagement_score)}}>{lead.engagement_score}/10</span></div>}
           </div>
           <div className="space-y-2">
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">PERFIL PSICOGRÁFICO</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">PERFIL PSICOGRÁFICO</p>
             <PField label="SITUACIÓN ACTUAL" value={lead.situacion_actual} icon={<User size={11}/>}/>
-            <PField label="DOLOR DECLARADO" value={lead.dolor_declarado} icon={<AlertCircle size={11}/>} color="#FF6B35"/>
+            <PField label="DOLOR DECLARADO" value={lead.dolor_declarado} icon={<AlertCircle size={11}/>} color="var(--danger)"/>
             <PField label="DOLOR PROFUNDO" value={lead.dolor_profundo} icon={<Heart size={11}/>} color="#C084FC"/>
-            <PField label="SUEÑO DECLARADO" value={lead.sueno_declarado} icon={<Star size={11}/>} color="#00FF94"/>
-            <PField label="OBJECIÓN PROBABLE" value={lead.objecion_probable} icon={<AlertCircle size={11}/>} color="#FFB800"/>
-            <PField label="ESTILO DE DECISIÓN" value={lead.estilo_decision} icon={<Brain size={11}/>} color="#00b0f6"/>
+            <PField label="SUEÑO DECLARADO" value={lead.sueno_declarado} icon={<Star size={11}/>} color="var(--success)"/>
+            <PField label="OBJECIÓN PROBABLE" value={lead.objecion_probable} icon={<AlertCircle size={11}/>} color="var(--warning)"/>
+            <PField label="ESTILO DE DECISIÓN" value={lead.estilo_decision} icon={<Brain size={11}/>} color="var(--accent)"/>
           </div>
           <div className="space-y-2">
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">MÉTRICAS</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">MÉTRICAS</p>
             <div className="grid grid-cols-2 gap-2">
               <MPin label="URGENCIA" value={lead.urgencia_financiera} color={urgColor(lead.urgencia_financiera)}/>
               <MPin label="COMPROMISO" value={lead.nivel_compromiso} color={comColor(lead.nivel_compromiso)}/>
-              <MPin label="PREGUNTAS" value={lead.preguntas_respondidas?.toString()} color="#4A4A6A"/>
-              <MPin label="ACTUALIZADO" value={lead.updated_at?format(new Date(lead.updated_at),'dd/MM HH:mm'):'—'} color="#4A4A6A"/>
+              <MPin label="PREGUNTAS" value={lead.preguntas_respondidas?.toString()} color="var(--text-muted)"/>
+              <MPin label="ACTUALIZADO" value={lead.updated_at?format(new Date(lead.updated_at),'dd/MM HH:mm'):'—'} color="var(--text-muted)"/>
             </div>
           </div>
           {(lead.kanshi_score||0)>0&&(
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">KANSHI SCORE</p>
+                <p className="mono text-xs text-[var(--text-muted)] tracking-widest">KANSHI SCORE</p>
                 <span className="mono text-sm font-bold"
-                  style={{color:lead.kanshi_segment==='listo'?'#00FF94':lead.kanshi_segment==='caliente'?'#FF6B35':lead.kanshi_segment==='templado'?'#FFB800':'#00b0f6'}}>
+                  style={{color:lead.kanshi_segment==='listo'?'var(--success)':lead.kanshi_segment==='caliente'?'var(--danger)':lead.kanshi_segment==='templado'?'var(--warning)':'var(--accent)'}}>
                   {lead.kanshi_score}/100
                 </span>
               </div>
-              <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{background:'#111118'}}>
+              <div className="rounded-xl border border-[var(--border-default)] p-4 space-y-3" style={{background:'var(--bg-card)'}}>
                 {[
                   {label:'FIT DEL PERFIL',    value: (lead as any).score_fit        ?? 0, max:25, color:'#C084FC'},
-                  {label:'ENGAGEMENT ACTIVO', value: (lead as any).score_engagement ?? 0, max:35, color:'#00b0f6'},
-                  {label:'INTENCIÓN DECLARADA',value:(lead as any).score_intencion  ?? 0, max:25, color:'#FF6B35'},
-                  {label:'CALIDAD DE FUENTE', value: (lead as any).score_fuente     ?? 0, max:15, color:'#FFB800'},
+                  {label:'ENGAGEMENT ACTIVO', value: (lead as any).score_engagement ?? 0, max:35, color:'var(--accent)'},
+                  {label:'INTENCIÓN DECLARADA',value:(lead as any).score_intencion  ?? 0, max:25, color:'var(--danger)'},
+                  {label:'CALIDAD DE FUENTE', value: (lead as any).score_fuente     ?? 0, max:15, color:'var(--warning)'},
                 ].map(dim=>(
                   <div key={dim.label}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{dim.label}</span>
-                      <span className="mono text-[10px] font-bold" style={{color:dim.color}}>{dim.value}<span className="text-[#4A4A6A] font-normal">/{dim.max}</span></span>
+                      <span className="mono text-xs text-[var(--text-muted)] tracking-widest">{dim.label}</span>
+                      <span className="mono text-xs font-bold" style={{color:dim.color}}>{dim.value}<span className="text-[var(--text-muted)] font-normal">/{dim.max}</span></span>
                     </div>
-                    <div className="h-1.5 rounded-full" style={{background:'#1E1E2E'}}>
+                    <div className="h-1.5 rounded-full" style={{background:'var(--border-default)'}}>
                       <div className="h-full rounded-full transition-all duration-700"
                         style={{width:`${Math.round((dim.value/dim.max)*100)}%`,background:dim.color,opacity:0.8}}/>
                     </div>
@@ -3098,8 +3098,8 @@ function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
             </div>
           )}
           {lead.resumen_perfil&&<div className="space-y-2">
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">RESUMEN</p>
-            <div className="rounded-xl border border-[#1E1E2E] p-4" style={{background:'#111118'}}><p className="text-xs text-[#E0E0F0] leading-relaxed">{lead.resumen_perfil}</p></div>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">RESUMEN</p>
+            <div className="rounded-xl border border-[var(--border-default)] p-4" style={{background:'var(--bg-card)'}}><p className="text-xs text-[var(--text-primary)] leading-relaxed">{lead.resumen_perfil}</p></div>
           </div>}
         </div>
       </div>
@@ -3107,20 +3107,20 @@ function LeadPanel({lead,onClose}:{lead:Lead;onClose:()=>void}){
   )
 }
 
-function PField({label,value,icon,color='#E0E0F0'}:{label:string;value:string;icon:React.ReactNode;color?:string}){
+function PField({label,value,icon,color='var(--text-primary)'}:{label:string;value:string;icon:React.ReactNode;color?:string}){
   if(!value) return null
   return(
-    <div className="rounded-xl border border-[#1E1E2E] p-3" style={{background:'#111118'}}>
-      <div className="flex items-center gap-1.5 mb-1.5"><span style={{color}}>{icon}</span><span className="mono text-[9px] tracking-widest" style={{color:`${color}99`}}>{label}</span></div>
-      <p className="text-xs text-[#E0E0F0] leading-relaxed">{value}</p>
+    <div className="rounded-xl border border-[var(--border-default)] p-3" style={{background:'var(--bg-card)'}}>
+      <div className="flex items-center gap-1.5 mb-1.5"><span style={{color}}>{icon}</span><span className="mono text-xs tracking-widest" style={{color:`${color}99`}}>{label}</span></div>
+      <p className="text-xs text-[var(--text-primary)] leading-relaxed">{value}</p>
     </div>
   )
 }
 
 function MPin({label,value,color}:{label:string;value:string|undefined;color:string}){
   return(
-    <div className="rounded-xl border border-[#1E1E2E] px-3 py-2" style={{background:'#111118'}}>
-      <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-0.5">{label}</p>
+    <div className="rounded-xl border border-[var(--border-default)] px-3 py-2" style={{background:'var(--bg-card)'}}>
+      <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-0.5">{label}</p>
       <p className="mono text-xs font-bold" style={{color}}>{value||'—'}</p>
     </div>
   )
@@ -3143,25 +3143,25 @@ function Pagination({total,page,pageSize,onPage}:{total:number;page:number;pageS
     pages.push(totalPages)
   }
   return(
-    <div className="flex items-center justify-between px-4 py-3 border-t border-[#1E1E2E]">
-      <span className="mono text-[10px] text-[#4A4A6A]">{from}–{to} de {total}</span>
+    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-default)]">
+      <span className="mono text-xs text-[var(--text-muted)]">{from}–{to} de {total}</span>
       <div className="flex items-center gap-1">
         <button onClick={()=>onPage(page-1)} disabled={page===1}
-          className="p-1.5 rounded-lg border border-[#1E1E2E] disabled:opacity-30 hover:border-[#00b0f6] transition-colors group disabled:cursor-not-allowed">
-          <ChevronLeft size={11} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
+          className="p-1.5 rounded-lg border border-[var(--border-default)] disabled:opacity-30 hover:border-[var(--accent)] transition-colors group disabled:cursor-not-allowed">
+          <ChevronLeft size={11} className="text-[var(--text-muted)] group-hover:text-[var(--accent)]"/>
         </button>
         {pages.map((p,i)=>
           p==='…'
-            ?<span key={`e-${i}`} className="mono text-[10px] text-[#4A4A6A] px-1">…</span>
+            ?<span key={`e-${i}`} className="mono text-xs text-[var(--text-muted)] px-1">…</span>
             :<button key={p} onClick={()=>onPage(p as number)}
-                className="min-w-[28px] h-7 rounded-lg border mono text-[10px] transition-all"
-                style={{borderColor:page===p?'#00b0f6':'#1E1E2E',background:page===p?'rgba(0,176,246,0.12)':'transparent',color:page===p?'#00b0f6':'#4A4A6A'}}>
+                className="min-w-[28px] h-7 rounded-lg border mono text-xs transition-all"
+                style={{borderColor:page===p?'var(--accent)':'var(--border-default)',background:page===p?'rgba(0,176,246,0.12)':'transparent',color:page===p?'var(--accent)':'var(--text-muted)'}}>
                 {p}
               </button>
         )}
         <button onClick={()=>onPage(page+1)} disabled={page===totalPages}
-          className="p-1.5 rounded-lg border border-[#1E1E2E] disabled:opacity-30 hover:border-[#00b0f6] transition-colors group disabled:cursor-not-allowed">
-          <ChevronRight size={11} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
+          className="p-1.5 rounded-lg border border-[var(--border-default)] disabled:opacity-30 hover:border-[var(--accent)] transition-colors group disabled:cursor-not-allowed">
+          <ChevronRight size={11} className="text-[var(--text-muted)] group-hover:text-[var(--accent)]"/>
         </button>
       </div>
     </div>
@@ -3172,21 +3172,21 @@ function Pagination({total,page,pageSize,onPage}:{total:number;page:number;pageS
 
 function ToastContainer({toasts,onRemove}:{toasts:Toast[];onRemove:(id:string)=>void}){
   const icons:Record<Toast['type'],React.ReactNode>={
-    success:<CheckCircle size={13} style={{color:'#00FF94'}}/>,
-    error:<AlertCircle size={13} style={{color:'#FF6B35'}}/>,
-    warning:<AlertCircle size={13} style={{color:'#FFB800'}}/>,
-    info:<Info size={13} style={{color:'#00b0f6'}}/>,
+    success:<CheckCircle size={13} style={{color:'var(--success)'}}/>,
+    error:<AlertCircle size={13} style={{color:'var(--danger)'}}/>,
+    warning:<AlertCircle size={13} style={{color:'var(--warning)'}}/>,
+    info:<Info size={13} style={{color:'var(--accent)'}}/>,
   }
-  const borders:Record<Toast['type'],string>={success:'#00FF94',error:'#FF6B35',warning:'#FFB800',info:'#00b0f6'}
+  const borders:Record<Toast['type'],string>={success:'var(--success)',error:'var(--danger)',warning:'var(--warning)',info:'var(--accent)'}
   if(toasts.length===0) return null
   return(
     <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
       {toasts.map(t=>(
         <div key={t.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border pointer-events-auto"
-          style={{background:'#111118',borderColor:`${borders[t.type]}40`,boxShadow:`0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`,minWidth:'260px',maxWidth:'380px',animation:'slideInRight 0.25s ease'}}>
+          style={{background:'var(--bg-card)',borderColor:`${borders[t.type]}40`,boxShadow:`0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${borders[t.type]}20`,minWidth:'260px',maxWidth:'380px',animation:'slideInRight 0.25s ease'}}>
           {icons[t.type]}
-          <span className="text-xs text-[#E0E0F0] flex-1 leading-snug">{t.message}</span>
-          <button onClick={()=>onRemove(t.id)} className="text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors flex-shrink-0 ml-1"><X size={11}/></button>
+          <span className="text-xs text-[var(--text-primary)] flex-1 leading-snug">{t.message}</span>
+          <button onClick={()=>onRemove(t.id)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0 ml-1"><X size={11}/></button>
         </div>
       ))}
     </div>
@@ -3258,15 +3258,15 @@ function CredentialCard({ cred, onToast, onRefresh, qrColor, tierLabel }: {
   }
 
   return (
-    <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+    <div className="rounded-xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
-            <MessageSquare size={14} style={{ color: '#00b0f6' }}/>
+            <MessageSquare size={14} style={{ color: 'var(--accent)' }}/>
           </div>
           <div>
-            <p className="font-semibold text-[#E0E0F0] text-sm">{cred.name}</p>
-            <p className="mono text-[10px] text-[#4A4A6A]">
+            <p className="font-semibold text-[var(--text-primary)] text-sm">{cred.name}</p>
+            <p className="mono text-xs text-[var(--text-muted)]">
               {cred.credentials.display_phone_number || `ID: ${cred.credentials.phone_number_id?.slice(0,8)}...`}
             </p>
           </div>
@@ -3276,27 +3276,27 @@ function CredentialCard({ cred, onToast, onRefresh, qrColor, tierLabel }: {
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
               style={{ background: `${qrColor(cred.credentials.quality_rating)}15`, border: `1px solid ${qrColor(cred.credentials.quality_rating)}40` }}>
               <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: qrColor(cred.credentials.quality_rating) }}/>
-              <span className="mono text-[10px] font-bold tracking-widest" style={{ color: qrColor(cred.credentials.quality_rating) }}>
+              <span className="mono text-xs font-bold tracking-widest" style={{ color: qrColor(cred.credentials.quality_rating) }}>
                 {cred.credentials.quality_rating}
               </span>
             </div>
           )}
           {cred.credentials.messaging_limit_tier && (
-            <span className="mono text-[10px] text-[#4A4A6A] px-2 py-1 rounded-lg border border-[#1E1E2E]">
+            <span className="mono text-xs text-[var(--text-muted)] px-2 py-1 rounded-lg border border-[var(--border-default)]">
               {tierLabel(cred.credentials.messaging_limit_tier)}
             </span>
           )}
           {cred.credentials.last_verified && (
-            <span className="mono text-[9px] text-[#2E2E4E]">
+            <span className="mono text-xs text-[#2E2E4E]">
               verificado {format(new Date(cred.credentials.last_verified), 'dd/MM HH:mm')}
             </span>
           )}
           <button
             onClick={handleVerify}
             disabled={verifying}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:border-[#00b0f6] hover:text-[#00b0f6] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-default)] mono text-xs text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
             {verifying
-              ? <><div className="w-3 h-3 border border-[#00b0f6] border-t-transparent rounded-full animate-spin"/> VERIFICANDO</>
+              ? <><div className="w-3 h-3 border border-[var(--accent)] border-t-transparent rounded-full animate-spin"/> VERIFICANDO</>
               : <><Activity size={11}/> VERIFICAR</>
             }
           </button>
@@ -3334,21 +3334,21 @@ function ProjectCredentialRow({ project, credentials, onToast, onUpdate }: {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg" style={{ background: '#0A0A0F' }}>
+    <div className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg" style={{ background: 'var(--bg-base)' }}>
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-base">{project.emoji || '🚀'}</span>
         <div className="min-w-0">
-          <p className="text-xs font-medium text-[#E0E0F0] truncate">{project.name}</p>
-          <p className="mono text-[10px] text-[#4A4A6A]">{project.status.toUpperCase()}</p>
+          <p className="text-xs font-medium text-[var(--text-primary)] truncate">{project.name}</p>
+          <p className="mono text-xs text-[var(--text-muted)]">{project.status.toUpperCase()}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        {saving && <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>}
+        {saving && <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}/>}
         <select
           value={value}
           onChange={e => handleChange(e.target.value)}
-          className="mono text-[10px] rounded-lg px-2 py-1.5 border outline-none text-[#E0E0F0]"
-          style={{ background: '#111118', borderColor: '#1E1E2E', minWidth: '180px' }}>
+          className="mono text-xs rounded-lg px-2 py-1.5 border outline-none text-[var(--text-primary)]"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)', minWidth: '180px' }}>
           <option value="">— Sin asignar —</option>
           {credentials.map(c => (
             <option key={c.id} value={c.id}>
@@ -3389,7 +3389,7 @@ function CredentialsVault({
   useEffect(() => { fetchCredentials() }, [fetchCredentials])
 
   const qrColor = (r?: string) =>
-    r === 'GREEN' ? '#00FF94' : r === 'YELLOW' ? '#FFB800' : r === 'RED' ? '#FF6B35' : '#4A4A6A'
+    r === 'GREEN' ? 'var(--success)' : r === 'YELLOW' ? 'var(--warning)' : r === 'RED' ? 'var(--danger)' : 'var(--text-muted)'
   const tierLabel = (t?: string) =>
     ({ TIER_50:'50/día', TIER_250:'250/día', TIER_1K:'1K/día', TIER_10K:'10K/día', TIER_100K:'100K/día' }[t||''] || t || '—')
 
@@ -3401,28 +3401,28 @@ function CredentialsVault({
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CREDENCIALES — WHATSAPP BUSINESS</p>
-          <p className="text-xs text-[#4A4A6A] mt-0.5">{credentials.length} número{credentials.length!==1?'s':''} registrado{credentials.length!==1?'s':''}</p>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">CREDENCIALES — WHATSAPP BUSINESS</p>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">{credentials.length} número{credentials.length!==1?'s':''} registrado{credentials.length!==1?'s':''}</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold mono text-[11px] tracking-widest transition-all hover:scale-105"
-          style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+          style={{ background: 'linear-gradient(135deg,var(--primary),#00a7e3)' }}>
           <Plus size={13}/> AGREGAR NÚMERO
         </button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
+          <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}/>
         </div>
       ) : credentials.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#1E1E2E] p-12 text-center">
-          <div className="w-12 h-12 rounded-xl border border-[#1E1E2E] flex items-center justify-center mx-auto mb-4">
-            <MessageSquare size={20} className="text-[#4A4A6A]"/>
+        <div className="rounded-xl border border-dashed border-[var(--border-default)] p-12 text-center">
+          <div className="w-12 h-12 rounded-xl border border-[var(--border-default)] flex items-center justify-center mx-auto mb-4">
+            <MessageSquare size={20} className="text-[var(--text-muted)]"/>
           </div>
-          <p className="text-sm text-[#4A4A6A] mb-1">Sin números registrados</p>
-          <p className="mono text-[10px] text-[#2E2E4E] tracking-widest">Agrega tu Phone ID, Token y WABA ID de Meta</p>
+          <p className="text-sm text-[var(--text-muted)] mb-1">Sin números registrados</p>
+          <p className="mono text-xs text-[#2E2E4E] tracking-widest">Agrega tu Phone ID, Token y WABA ID de Meta</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -3445,10 +3445,10 @@ function CredentialsVault({
       
       {/* ── F5: ASIGNAR NÚMERO A PROYECTO ── */}
       {projects.length > 0 && credentials.length > 0 && (
-        <div className="rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#111118' }}>
+        <div className="rounded-xl border border-[var(--border-default)] p-4 space-y-3" style={{ background: 'var(--bg-card)' }}>
           <div className="flex items-center gap-2">
-            <Rocket size={12} style={{ color: '#00b0f6' }}/>
-            <p className="mono text-[10px] tracking-widest text-[#4A4A6A]">ASIGNAR NÚMERO A PROYECTO</p>
+            <Rocket size={12} style={{ color: 'var(--accent)' }}/>
+            <p className="mono text-xs tracking-widest text-[var(--text-muted)]">ASIGNAR NÚMERO A PROYECTO</p>
           </div>
           <div className="space-y-2">
             {projects.map(proj => (
@@ -3484,17 +3484,17 @@ function CInput({ label, value, onChange, placeholder, type='text', masked=false
   const [show, setShow] = useState(false)
   return (
     <div>
-      <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">{label}</label>
+      <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">{label}</label>
       <div className="relative">
         <input
           type={masked ? (show ? 'text' : 'password') : type}
           value={value} onChange={onChange} placeholder={placeholder}
-          className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none transition-colors placeholder:text-[#4A4A6A] focus:border-[#0014ad]"
+          className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]"
           style={{ paddingRight: masked ? '40px' : undefined }}
         />
         {masked && (
           <button type="button" onClick={() => setShow(s => !s)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4A4A6A] hover:text-[#E0E0F0] transition-colors">
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
             {show ? <EyeOff size={13}/> : <Eye size={13}/>}
           </button>
         )}
@@ -3545,22 +3545,22 @@ function AddCredentialModal({
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose}/>
-      <div className="relative w-full max-w-md rounded-2xl border border-[#1E1E2E] overflow-hidden"
+      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-default)] overflow-hidden"
         style={{ background: '#0D0D14', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
-        <div className="px-6 py-5 border-b border-[#1E1E2E] flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-[var(--border-default)] flex items-center justify-between">
           <div>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVO NÚMERO WHATSAPP</p>
-            <p className="font-semibold text-[#E0E0F0] text-sm mt-0.5">Credenciales de Meta Business</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">NUEVO NÚMERO WHATSAPP</p>
+            <p className="font-semibold text-[var(--text-primary)] text-sm mt-0.5">Credenciales de Meta Business</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group">
-            <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+          <button onClick={onClose} className="p-2 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group">
+            <X size={12} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/>
           </button>
         </div>
         <div className="p-6 space-y-4">
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
             style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
-            <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-            <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+            <Info size={12} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }}/>
+            <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">
               Encontrarás estos datos en Meta Business Manager → WhatsApp → Configuración del número
             </p>
           </div>
@@ -3569,20 +3569,20 @@ function AddCredentialModal({
           <CInput label="WABA ID (WhatsApp Business Account)" value={wabaId} onChange={e=>setWabaId(e.target.value)} placeholder="ej. 987654321098765"/>
           <CInput label="ACCESS TOKEN *" value={token} onChange={e=>setToken(e.target.value)} placeholder="EAAxxxxxxx..." masked/>
           {error && (
-            <div className="rounded-xl border border-[#FF6B35] bg-[#FF6B3510] px-4 py-3">
-              <p className="text-xs text-[#FF6B35]">{error}</p>
+            <div className="rounded-xl border border-[var(--danger)] bg-[var(--danger)10] px-4 py-3">
+              <p className="text-xs text-[var(--danger)]">{error}</p>
             </div>
           )}
         </div>
-        <div className="px-6 py-4 border-t border-[#1E1E2E] flex items-center justify-between"
+        <div className="px-6 py-4 border-t border-[var(--border-default)] flex items-center justify-between"
           style={{ background: 'rgba(13,13,20,0.98)' }}>
           <button onClick={onClose}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border-default)] mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all">
             <X size={12}/> CANCELAR
           </button>
           <button onClick={handleSave} disabled={!canSave || saving}
             className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+            style={{ background: 'linear-gradient(135deg,var(--primary),#00a7e3)' }}>
             {saving
               ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> GUARDANDO...</>
               : <><CheckCircle size={12}/> GUARDAR CREDENCIAL</>
@@ -3645,10 +3645,10 @@ const STAGE_LABELS: Record<string, string> = {
 }
 
 const STATUS_CFG = {
-  approved:   { label: 'APROBADO',  bg: 'rgba(0,255,148,0.1)',  border: 'rgba(0,255,148,0.3)',  color: '#00FF94' },
-  pending:    { label: 'PENDIENTE', bg: 'rgba(255,184,0,0.1)',  border: 'rgba(255,184,0,0.3)',  color: '#FFB800' },
-  rejected:   { label: 'RECHAZADO', bg: 'rgba(255,107,53,0.1)', border: 'rgba(255,107,53,0.3)', color: '#FF6B35' },
-  inactive:   { label: 'INACTIVO',  bg: 'rgba(74,74,106,0.15)', border: 'rgba(74,74,106,0.4)', color: '#4A4A6A' },
+  approved:   { label: 'APROBADO',  bg: 'rgba(0,255,148,0.1)',  border: 'rgba(0,255,148,0.3)',  color: 'var(--success)' },
+  pending:    { label: 'PENDIENTE', bg: 'rgba(255,184,0,0.1)',  border: 'rgba(255,184,0,0.3)',  color: 'var(--warning)' },
+  rejected:   { label: 'RECHAZADO', bg: 'rgba(255,107,53,0.1)', border: 'rgba(255,107,53,0.3)', color: 'var(--danger)' },
+  inactive:   { label: 'INACTIVO',  bg: 'rgba(74,74,106,0.15)', border: 'rgba(74,74,106,0.4)', color: 'var(--text-muted)' },
 }
 
 function templateStatus(t: SamTemplate) {
@@ -3767,7 +3767,7 @@ function NexoTemplatesPanel({
 
   return (
     <div className="rounded-2xl border overflow-hidden"
-      style={{ background: '#111118', borderColor: 'rgba(0,176,246,0.2)' }}>
+      style={{ background: 'var(--bg-card)', borderColor: 'rgba(0,176,246,0.2)' }}>
 
       {/* Header */}
       <div className="px-5 py-4 border-b flex items-center justify-between"
@@ -3778,8 +3778,8 @@ function NexoTemplatesPanel({
             🤖
           </div>
           <div>
-            <p className="text-sm font-semibold" style={{ color: '#E0E0F0' }}>NEXO — Templates Meta</p>
-            <p className="mono text-[10px] tracking-widest mt-0.5" style={{ color: '#4A4A6A' }}>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>NEXO — Templates Meta</p>
+            <p className="mono text-xs tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>
               SINCRONIZACIÓN AUTOMÁTICA · WHATSAPP BUSINESS API
             </p>
           </div>
@@ -3789,12 +3789,12 @@ function NexoTemplatesPanel({
           {templates.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-full text-[11px] font-mono"
-                style={{ background: 'rgba(0,255,148,0.1)', color: '#00FF94', border: '1px solid rgba(0,255,148,0.3)' }}>
+                style={{ background: 'rgba(0,255,148,0.1)', color: 'var(--success)', border: '1px solid rgba(0,255,148,0.3)' }}>
                 {approvedCount} aprobados
               </span>
               {pendingCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-mono"
-                  style={{ background: 'rgba(255,184,0,0.1)', color: '#FFB800', border: '1px solid rgba(255,184,0,0.3)' }}>
+                  style={{ background: 'rgba(255,184,0,0.1)', color: 'var(--warning)', border: '1px solid rgba(255,184,0,0.3)' }}>
                   {pendingCount} pendientes
                 </span>
               )}
@@ -3808,7 +3808,7 @@ function NexoTemplatesPanel({
             style={{
               background: syncing ? 'rgba(0,176,246,0.1)' : 'rgba(0,176,246,0.15)',
               border: '1px solid rgba(0,176,246,0.4)',
-              color: '#00b0f6',
+              color: 'var(--accent)',
             }}
           >
             <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
@@ -3820,23 +3820,23 @@ function NexoTemplatesPanel({
       {/* Content */}
       <div className="p-5">
         {!activeProjectId ? (
-          <p className="text-center text-sm py-8" style={{ color: '#4A4A6A' }}>
+          <p className="text-center text-sm py-8" style={{ color: 'var(--text-muted)' }}>
             Selecciona un proyecto para ver sus templates
           </p>
         ) : loading ? (
           <div className="flex items-center justify-center py-10 gap-3">
-            <RefreshCw size={14} className="animate-spin" style={{ color: '#4A4A6A' }} />
-            <p className="text-sm" style={{ color: '#4A4A6A' }}>Cargando templates...</p>
+            <RefreshCw size={14} className="animate-spin" style={{ color: 'var(--text-muted)' }} />
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Cargando templates...</p>
           </div>
         ) : templates.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-3xl mb-3">📋</p>
-            <p className="text-sm font-medium mb-1" style={{ color: '#E0E0F0' }}>Sin templates sincronizados</p>
-            <p className="text-xs mb-4" style={{ color: '#4A4A6A' }}>
+            <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>Sin templates sincronizados</p>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
               Haz clic en "Sync desde Meta" para importar tus templates aprobados
             </p>
             <p className="text-xs px-4 py-3 rounded-xl inline-block"
-              style={{ background: 'rgba(255,184,0,0.07)', border: '1px solid rgba(255,184,0,0.2)', color: '#FFB800' }}>
+              style={{ background: 'rgba(255,184,0,0.07)', border: '1px solid rgba(255,184,0,0.2)', color: 'var(--warning)' }}>
               ⚠️ Asegúrate de tener el WABA ID y Access Token configurados en Credenciales
             </p>
           </div>
@@ -3846,12 +3846,12 @@ function NexoTemplatesPanel({
               <div key={stage}>
                 {/* Stage header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-wider"
-                    style={{ background: '#1A1A2E', color: '#4A4A6A', border: '1px solid #1E1E2E' }}>
+                  <div className="h-px flex-1" style={{ background: 'var(--border-default)' }} />
+                  <span className="px-2 py-0.5 rounded text-xs font-mono tracking-wider"
+                    style={{ background: '#1A1A2E', color: 'var(--text-muted)', border: '1px solid var(--border-default)' }}>
                     {STAGE_LABELS[stage] || stage.toUpperCase()}
                   </span>
-                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
+                  <div className="h-px flex-1" style={{ background: 'var(--border-default)' }} />
                 </div>
 
                 {/* Templates del stage */}
@@ -3864,22 +3864,22 @@ function NexoTemplatesPanel({
 
                     return (
                       <div key={t.id} className="rounded-xl border overflow-hidden"
-                        style={{ background: '#0D0D14', borderColor: '#1E1E2E' }}>
+                        style={{ background: '#0D0D14', borderColor: 'var(--border-default)' }}>
 
                         {/* Template row */}
                         <div className="px-4 py-3 flex items-center gap-3">
                           {/* Status badge */}
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono flex-shrink-0"
+                          <span className="px-2 py-0.5 rounded text-xs font-mono flex-shrink-0"
                             style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}>
                             {cfg.label}
                           </span>
 
                           {/* Name */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate" style={{ color: '#E0E0F0' }}>
+                            <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                               {t.meta_template_name}
                             </p>
-                            <p className="text-[11px] mono" style={{ color: '#4A4A6A' }}>
+                            <p className="text-[11px] mono" style={{ color: 'var(--text-muted)' }}>
                               {t.language.toUpperCase()} · {t.scenario}
                             </p>
                           </div>
@@ -3890,7 +3890,7 @@ function NexoTemplatesPanel({
                             <button
                               onClick={() => setExpandedId(isExpanded ? null : t.id)}
                               className="p-1.5 rounded-lg transition-all"
-                              style={{ color: '#4A4A6A', background: isExpanded ? '#1A1A2E' : 'transparent' }}
+                              style={{ color: 'var(--text-muted)', background: isExpanded ? '#1A1A2E' : 'transparent' }}
                               title="Ver contenido"
                             >
                               <Eye size={13} />
@@ -3901,7 +3901,7 @@ function NexoTemplatesPanel({
                               <button
                                 onClick={() => startEdit(t)}
                                 className="p-1.5 rounded-lg transition-all"
-                                style={{ color: '#4A4A6A' }}
+                                style={{ color: 'var(--text-muted)' }}
                                 title="Editar stage"
                               >
                                 <Settings size={13} />
@@ -3910,7 +3910,7 @@ function NexoTemplatesPanel({
                               <button
                                 onClick={() => saveEdit(t.id)}
                                 className="p-1.5 rounded-lg transition-all"
-                                style={{ color: '#00FF94' }}
+                                style={{ color: 'var(--success)' }}
                                 title="Guardar"
                               >
                                 <CheckCircle size={13} />
@@ -3921,7 +3921,7 @@ function NexoTemplatesPanel({
                             <button
                               onClick={() => toggleActive(t)}
                               className="p-1.5 rounded-lg transition-all"
-                              style={{ color: t.is_active ? '#00FF94' : '#4A4A6A' }}
+                              style={{ color: t.is_active ? 'var(--success)' : 'var(--text-muted)' }}
                               title={t.is_active ? 'Desactivar' : 'Activar'}
                             >
                               {t.is_active ? <CheckCheck size={13} /> : <Pause size={13} />}
@@ -3932,14 +3932,14 @@ function NexoTemplatesPanel({
                         {/* Edit row */}
                         {isEditing && (
                           <div className="px-4 pb-3 flex items-center gap-3 border-t"
-                            style={{ borderColor: '#1E1E2E' }}>
+                            style={{ borderColor: 'var(--border-default)' }}>
                             <div className="flex-1">
-                              <p className="text-[10px] mono mb-1" style={{ color: '#4A4A6A' }}>STAGE</p>
+                              <p className="text-xs mono mb-1" style={{ color: 'var(--text-muted)' }}>STAGE</p>
                               <select
                                 value={editStage}
                                 onChange={e => setEditStage(e.target.value)}
                                 className="w-full text-xs px-2 py-1.5 rounded-lg outline-none"
-                                style={{ background: '#1A1A2E', border: '1px solid #1E1E2E', color: '#E0E0F0' }}
+                                style={{ background: '#1A1A2E', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
                               >
                                 {STAGE_OPTIONS.map(s => (
                                   <option key={s} value={s}>{STAGE_LABELS[s]} ({s})</option>
@@ -3947,12 +3947,12 @@ function NexoTemplatesPanel({
                               </select>
                             </div>
                             <div className="flex-1">
-                              <p className="text-[10px] mono mb-1" style={{ color: '#4A4A6A' }}>SCENARIO</p>
+                              <p className="text-xs mono mb-1" style={{ color: 'var(--text-muted)' }}>SCENARIO</p>
                               <select
                                 value={editScenario}
                                 onChange={e => setEditScenario(e.target.value)}
                                 className="w-full text-xs px-2 py-1.5 rounded-lg outline-none"
-                                style={{ background: '#1A1A2E', border: '1px solid #1E1E2E', color: '#E0E0F0' }}
+                                style={{ background: '#1A1A2E', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
                               >
                                 <option value="system_initiated">system_initiated</option>
                                 <option value="user_initiated">user_initiated</option>
@@ -3961,7 +3961,7 @@ function NexoTemplatesPanel({
                             <button
                               onClick={() => setEditingId(null)}
                               className="mt-4 p-1.5 rounded-lg"
-                              style={{ color: '#4A4A6A' }}
+                              style={{ color: 'var(--text-muted)' }}
                             >
                               <X size={13} />
                             </button>
@@ -3970,10 +3970,10 @@ function NexoTemplatesPanel({
 
                         {/* Expanded body */}
                         {isExpanded && t.content && (
-                          <div className="px-4 pb-3 border-t" style={{ borderColor: '#1E1E2E' }}>
-                            <p className="text-[10px] mono mb-2 mt-2" style={{ color: '#4A4A6A' }}>CONTENIDO</p>
+                          <div className="px-4 pb-3 border-t" style={{ borderColor: 'var(--border-default)' }}>
+                            <p className="text-xs mono mb-2 mt-2" style={{ color: 'var(--text-muted)' }}>CONTENIDO</p>
                             <p className="text-xs leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
-                              style={{ background: '#0A0A0F', color: '#A0A0C0', border: '1px solid #1E1E2E' }}>
+                              style={{ background: 'var(--bg-base)', color: '#A0A0C0', border: '1px solid var(--border-default)' }}>
                               {t.content}
                             </p>
                           </div>
@@ -3989,20 +3989,20 @@ function NexoTemplatesPanel({
             {templates.filter(t => !STAGE_OPTIONS.includes(t.stage)).length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono"
-                    style={{ background: '#1A1A2E', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)' }}>
+                  <div className="h-px flex-1" style={{ background: 'var(--border-default)' }} />
+                  <span className="px-2 py-0.5 rounded text-xs font-mono"
+                    style={{ background: '#1A1A2E', color: 'var(--danger)', border: '1px solid rgba(255,107,53,0.3)' }}>
                     SIN STAGE ASIGNADO
                   </span>
-                  <div className="h-px flex-1" style={{ background: '#1E1E2E' }} />
+                  <div className="h-px flex-1" style={{ background: 'var(--border-default)' }} />
                 </div>
                 {templates.filter(t => !STAGE_OPTIONS.includes(t.stage)).map(t => (
                   <div key={t.id} className="rounded-xl border px-4 py-3 flex items-center gap-3 mb-2"
                     style={{ background: '#0D0D14', borderColor: 'rgba(255,107,53,0.2)' }}>
-                    <span className="text-xs flex-1 truncate" style={{ color: '#E0E0F0' }}>{t.meta_template_name}</span>
+                    <span className="text-xs flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{t.meta_template_name}</span>
                     <button onClick={() => startEdit(t)}
                       className="text-xs px-2 py-1 rounded-lg"
-                      style={{ background: 'rgba(255,107,53,0.1)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)' }}>
+                      style={{ background: 'rgba(255,107,53,0.1)', color: 'var(--danger)', border: '1px solid rgba(255,107,53,0.3)' }}>
                       Asignar stage
                     </button>
                   </div>
@@ -4011,7 +4011,7 @@ function NexoTemplatesPanel({
             )}
 
             {/* Note */}
-            <p className="text-[10px] mono text-center pt-1" style={{ color: '#2E2E4E' }}>
+            <p className="text-xs mono text-center pt-1" style={{ color: '#2E2E4E' }}>
               EL SYNC PRESERVA TUS ASIGNACIONES DE STAGE · SOLO ACTUALIZA STATUS Y CONTENIDO
             </p>
           </div>
@@ -4083,17 +4083,17 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
   const isAdsConfigured = cred && cred.credentials.ad_account_id && cred.credentials.marketing_api_token
 
   return (
-    <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+    <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between border-b border-[#1E1E2E]">
+      <div className="px-5 py-4 flex items-center justify-between border-b border-[var(--border-default)]">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
             style={{ background: 'rgba(0,176,246,0.1)', border: '1px solid rgba(0,176,246,0.2)' }}>
             📡
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads — CAPI + Marketing API</p>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mt-0.5">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Meta Ads — CAPI + Marketing API</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest mt-0.5">
               {isCAPIConfigured ? `Pixel: ${cred.credentials.pixel_id}` : 'CAPI sin configurar'}
               {isAdsConfigured ? ` · Ads: ${cred.credentials.ad_account_id}` : ' · Marketing API sin configurar'}
             </p>
@@ -4104,20 +4104,20 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
             {isCAPIConfigured && (
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md"
                 style={{ background: 'rgba(0,255,148,0.08)', border: '1px solid rgba(0,255,148,0.2)' }}>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse"/>
-                <span className="mono text-[8px] text-[#00FF94] tracking-widest">CAPI</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse"/>
+                <span className="mono text-[8px] text-[var(--success)] tracking-widest">CAPI</span>
               </div>
             )}
             {isAdsConfigured && (
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md"
                 style={{ background: 'rgba(0,20,173,0.15)', border: '1px solid rgba(0,20,173,0.4)' }}>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0014ad] animate-pulse"/>
-                <span className="mono text-[8px] text-[#00b0f6] tracking-widest">ADS API</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse"/>
+                <span className="mono text-[8px] text-[var(--accent)] tracking-widest">ADS API</span>
               </div>
             )}
           </div>
           <button onClick={() => setEditing(e => !e)}
-            className="px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all">
+            className="px-3 py-1.5 rounded-lg border border-[var(--border-default)] mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all">
             {editing ? 'CANCELAR' : (isCAPIConfigured || isAdsConfigured) ? 'EDITAR' : 'CONFIGURAR'}
           </button>
         </div>
@@ -4129,14 +4129,14 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
           {/* CAPI section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-[#1E1E2E]"/>
-              <span className="mono text-[9px] text-[#00FF94] tracking-widest">CONVERSIONS API (CAPI)</span>
-              <div className="h-px flex-1 bg-[#1E1E2E]"/>
+              <div className="h-px flex-1 bg-[var(--border-default)]"/>
+              <span className="mono text-xs text-[var(--success)] tracking-widest">CONVERSIONS API (CAPI)</span>
+              <div className="h-px flex-1 bg-[var(--border-default)]"/>
             </div>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
               style={{ borderColor: 'rgba(0,176,246,0.3)', background: 'rgba(0,176,246,0.05)' }}>
-              <Info size={12} style={{ color: '#00b0f6', flexShrink: 0, marginTop: 1 }}/>
-              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+              <Info size={12} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }}/>
+              <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">
                 Events Manager → Pixel → Configuración → API de conversiones → Generar token
               </p>
             </div>
@@ -4147,14 +4147,14 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
           {/* Marketing API section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-[#1E1E2E]"/>
-              <span className="mono text-[9px] text-[#0014ad] tracking-widest">MARKETING API (COSTOS REALES)</span>
-              <div className="h-px flex-1 bg-[#1E1E2E]"/>
+              <div className="h-px flex-1 bg-[var(--border-default)]"/>
+              <span className="mono text-xs text-[var(--primary)] tracking-widest">MARKETING API (COSTOS REALES)</span>
+              <div className="h-px flex-1 bg-[var(--border-default)]"/>
             </div>
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
               style={{ borderColor: 'rgba(0,20,173,0.3)', background: 'rgba(0,20,173,0.05)' }}>
-              <Info size={12} style={{ color: '#0014ad', flexShrink: 0, marginTop: 1 }}/>
-              <p className="mono text-[9px] text-[#4A4A6A] leading-relaxed">
+              <Info size={12} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: 1 }}/>
+              <p className="mono text-xs text-[var(--text-muted)] leading-relaxed">
                 Meta Business Manager → Administrador de anuncios → ID de cuenta publicitaria (formato: 123456789)
               </p>
             </div>
@@ -4165,7 +4165,7 @@ function MetaAdsCard({ onToast }: { onToast: (type: Toast['type'], msg: string) 
           <button onClick={handleSave}
             disabled={saving}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all disabled:opacity-30"
-            style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+            style={{ background: 'linear-gradient(135deg,var(--primary),#00a7e3)' }}>
             {saving
               ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/> GUARDANDO...</>
               : <><CheckCircle size={12}/> GUARDAR META ADS</>
@@ -4293,15 +4293,15 @@ function MetaAdsIntelligencePanel({
   // Not configured state
   if (adsConfigured === false) {
     return (
-      <div className="rounded-2xl border border-[#1E1E2E] p-6" style={{ background: '#111118' }}>
+      <div className="rounded-2xl border border-[var(--border-default)] p-6" style={{ background: 'var(--bg-card)' }}>
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
             style={{ background: 'rgba(0,20,173,0.1)', border: '1px solid rgba(0,20,173,0.3)' }}>
             📊
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads Intelligence</p>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mt-1">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Meta Ads Intelligence</p>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest mt-1">
               Configura tu Ad Account ID y Marketing API Token en Configuración → Credenciales para ver costos reales.
             </p>
           </div>
@@ -4314,7 +4314,7 @@ function MetaAdsIntelligencePanel({
 
   return (
     <div className="rounded-2xl border overflow-hidden"
-      style={{ background: '#111118', borderColor: 'rgba(0,20,173,0.3)' }}>
+      style={{ background: 'var(--bg-card)', borderColor: 'rgba(0,20,173,0.3)' }}>
 
       {/* ── Header ── */}
       <div className="px-5 py-4 border-b flex items-center justify-between"
@@ -4325,14 +4325,14 @@ function MetaAdsIntelligencePanel({
             📊
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#E0E0F0]">Meta Ads Intelligence</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Meta Ads Intelligence</p>
             {insight && (
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-0.5">
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mt-0.5">
                 {insight.date_start && insight.date_stop
                   ? `${insight.date_start} → ${insight.date_stop}`
                   : dateRange.replace('last_', 'ÚLTIMOS ').replace('d', ' DÍAS')}
                 {' · '}
-                <span style={{ color: '#4A4A6A' }}>actualizado {new Date(insight.fetched_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span style={{ color: 'var(--text-muted)' }}>actualizado {new Date(insight.fetched_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}</span>
               </p>
             )}
           </div>
@@ -4346,7 +4346,7 @@ function MetaAdsIntelligencePanel({
               <select
                 value={objectiveFilter}
                 onChange={e => setObjectiveFilter(e.target.value)}
-                className="bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1.5 mono text-[10px] text-[#4A4A6A] outline-none hover:border-[#2E2E4E] transition-colors"
+                className="bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg px-2 py-1.5 mono text-xs text-[var(--text-muted)] outline-none hover:border-[#2E2E4E] transition-colors"
               >
                 <option value="all">Todos los objetivos</option>
                 {objectives.map(o => (
@@ -4359,7 +4359,7 @@ function MetaAdsIntelligencePanel({
          <select
             value={dateRange}
             onChange={e => setDateRange(e.target.value)}
-            className="bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg px-2 py-1.5 mono text-[10px] text-[#4A4A6A] outline-none hover:border-[#2E2E4E] transition-colors"
+            className="bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg px-2 py-1.5 mono text-xs text-[var(--text-muted)] outline-none hover:border-[#2E2E4E] transition-colors"
           >
             <option value="last_7d">7 días</option>
             <option value="last_14d">14 días</option>
@@ -4374,7 +4374,7 @@ function MetaAdsIntelligencePanel({
           <button
             onClick={() => fetchInsights(true)}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-default)] mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all disabled:opacity-40"
           >
             <RefreshCw size={11} className={loading ? 'animate-spin' : ''}/>
             ACTUALIZAR
@@ -4384,8 +4384,8 @@ function MetaAdsIntelligencePanel({
 
       {/* ── Error ── */}
       {error && (
-        <div className="mx-5 mt-4 px-4 py-3 rounded-xl border border-[#FF6B35] bg-[#FF6B3510]">
-          <p className="mono text-[10px] text-[#FF6B35]">⚠ {error}</p>
+        <div className="mx-5 mt-4 px-4 py-3 rounded-xl border border-[var(--danger)] bg-[var(--danger)10]">
+          <p className="mono text-xs text-[var(--danger)]">⚠ {error}</p>
         </div>
       )}
 
@@ -4393,7 +4393,7 @@ function MetaAdsIntelligencePanel({
       {loading && !insight && (
         <div className="p-5 grid grid-cols-4 gap-4">
           {[1,2,3,4].map(i => (
-            <div key={i} className="rounded-xl border border-[#1E1E2E] p-4 h-20 animate-pulse" style={{ background: '#0A0A0F' }}/>
+            <div key={i} className="rounded-xl border border-[var(--border-default)] p-4 h-20 animate-pulse" style={{ background: 'var(--bg-base)' }}/>
           ))}
         </div>
       )}
@@ -4403,14 +4403,14 @@ function MetaAdsIntelligencePanel({
           {/* ── KPIs ── */}
           <div className="p-5 grid grid-cols-4 gap-4">
             {[
-              { label: 'SPEND TOTAL', value: fmt$(insight.total_spend), color: '#FF6B35', icon: '💸' },
-              { label: 'LEADS META', value: fmtK(insight.total_leads), color: '#00b0f6', icon: '🎯' },
-              { label: 'COSTO POR LEAD', value: insight.cost_per_lead ? fmt$(insight.cost_per_lead) : '—', color: '#FFB800', icon: '📍' },
-              { label: 'CPC', value: insight.cpc ? fmt$(insight.cpc) : '—', color: '#00FF94', icon: '🖱️' },
+              { label: 'SPEND TOTAL', value: fmt$(insight.total_spend), color: 'var(--danger)', icon: '💸' },
+              { label: 'LEADS META', value: fmtK(insight.total_leads), color: 'var(--accent)', icon: '🎯' },
+              { label: 'COSTO POR LEAD', value: insight.cost_per_lead ? fmt$(insight.cost_per_lead) : '—', color: 'var(--warning)', icon: '📍' },
+              { label: 'CPC', value: insight.cpc ? fmt$(insight.cpc) : '—', color: 'var(--success)', icon: '🖱️' },
             ].map(kpi => (
-              <div key={kpi.label} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
+              <div key={kpi.label} className="rounded-xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-base)' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">{kpi.label}</p>
+                  <p className="mono text-xs text-[var(--text-muted)] tracking-widest">{kpi.label}</p>
                   <span className="text-sm">{kpi.icon}</span>
                 </div>
                 <p className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
@@ -4428,25 +4428,25 @@ function MetaAdsIntelligencePanel({
             return top10.length > 0 && (
               <div className="px-5 pb-5">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">TOP CAMPAÑAS POR SPEND</p>
+                  <p className="mono text-xs text-[var(--text-muted)] tracking-widest">TOP CAMPAÑAS POR SPEND</p>
                   {filteredCampaigns.length > 10 && (
-                    <p className="mono text-[9px] text-[#4A4A6A]">mostrando 10 de {filteredCampaigns.length}</p>
+                    <p className="mono text-xs text-[var(--text-muted)]">mostrando 10 de {filteredCampaigns.length}</p>
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
                   {top10.map((c, i) => {
                     const pct = (c.spend / maxSpend) * 100
-                    const barColor = i === 0 ? '#0014ad' : i === 1 ? '#00b0f6' : i === 2 ? '#FFB800' : '#2A2A4A'
-                    const objColor = c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f6'
-                      : c.objective === 'MESSAGES' ? '#00FF94'
-                      : c.objective === 'CONVERSIONS' ? '#FFB800'
-                      : '#4A4A6A'
+                    const barColor = i === 0 ? 'var(--primary)' : i === 1 ? 'var(--accent)' : i === 2 ? 'var(--warning)' : '#2A2A4A'
+                    const objColor = c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? 'var(--accent)'
+                      : c.objective === 'MESSAGES' ? 'var(--success)'
+                      : c.objective === 'CONVERSIONS' ? 'var(--warning)'
+                      : 'var(--text-muted)'
                     return (
                       <div key={i} className="group">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="mono text-[9px] text-[#4A4A6A] w-4 flex-shrink-0">{i + 1}</span>
-                            <span className="text-[11px] text-[#E0E0F0] truncate max-w-[280px]" title={c.campaign_name}>
+                            <span className="mono text-xs text-[var(--text-muted)] w-4 flex-shrink-0">{i + 1}</span>
+                            <span className="text-[11px] text-[var(--text-primary)] truncate max-w-[280px]" title={c.campaign_name}>
                               {c.campaign_name}
                             </span>
                             <span className="mono text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0"
@@ -4456,14 +4456,14 @@ function MetaAdsIntelligencePanel({
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                             {c.leads > 0 && (
-                              <span className="mono text-[9px] text-[#00b0f6]">{c.leads} leads</span>
+                              <span className="mono text-xs text-[var(--accent)]">{c.leads} leads</span>
                             )}
-                            <span className="mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>
+                            <span className="mono text-[11px] font-bold" style={{ color: 'var(--danger)' }}>
                               ${c.spend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </div>
-                        <div className="h-1.5 rounded-full w-full" style={{ background: '#1E1E2E' }}>
+                        <div className="h-1.5 rounded-full w-full" style={{ background: 'var(--border-default)' }}>
                           <div className="h-1.5 rounded-full transition-all duration-500"
                             style={{ width: `${pct}%`, background: barColor }} />
                         </div>
@@ -4481,16 +4481,16 @@ function MetaAdsIntelligencePanel({
               ? insight.campaigns
               : insight.campaigns.filter(c => c.objective === objectiveFilter)
           return filteredCampaigns.length > 0 && (
-            <div className="border-t border-[#1E1E2E] overflow-hidden">
+            <div className="border-t border-[var(--border-default)] overflow-hidden">
               <div className="px-5 py-3 flex items-center justify-between">
-                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">EMBUDO DE COSTOS — CAMPAÑA A COMPRADOR</p>
+                <p className="mono text-xs text-[var(--text-muted)] tracking-widest">EMBUDO DE COSTOS — CAMPAÑA A COMPRADOR</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-[#1E1E2E]">
+                    <tr className="border-b border-[var(--border-default)]">
                        {['CAMPAÑA','OBJETIVO','SPEND','IMPRESIONES','CLICKS','CPM','CPC','LEADS','CPL','COMPRADORES KANSHI','CPB REAL'].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left mono text-[8px] text-[#4A4A6A] tracking-widest whitespace-nowrap">{h}</th>
+                        <th key={h} className="px-4 py-2.5 text-left mono text-[8px] text-[var(--text-muted)] tracking-widest whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -4500,54 +4500,54 @@ function MetaAdsIntelligencePanel({
                       const compradores = compradorMap[matchKey] || 0
                       const cpb = compradores > 0 ? c.spend / compradores : null
                       return (
-                        <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#0A0A0F] transition-colors">
+                        <tr key={i} className="border-b border-[var(--border-default)] hover:bg-[var(--bg-base)] transition-colors">
                           <td className="px-4 py-3">
-                            <p className="text-xs text-[#E0E0F0] max-w-[160px] truncate">{c.campaign_name}</p>
+                            <p className="text-xs text-[var(--text-primary)] max-w-[160px] truncate">{c.campaign_name}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="mono text-[9px] px-2 py-0.5 rounded-full border"
+                            <span className="mono text-xs px-2 py-0.5 rounded-full border"
                               style={{
-                                color: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f6'
-                                  : c.objective === 'MESSAGES' ? '#00FF94'
-                                  : c.objective === 'CONVERSIONS' ? '#FFB800'
-                                  : '#4A4A6A',
-                                borderColor: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f630'
-                                  : c.objective === 'MESSAGES' ? '#00FF9430'
-                                  : c.objective === 'CONVERSIONS' ? '#FFB80030'
-                                  : '#1E1E2E',
-                                background: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? '#00b0f610'
-                                  : c.objective === 'MESSAGES' ? '#00FF9410'
-                                  : c.objective === 'CONVERSIONS' ? '#FFB80010'
+                                color: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? 'var(--accent)'
+                                  : c.objective === 'MESSAGES' ? 'var(--success)'
+                                  : c.objective === 'CONVERSIONS' ? 'var(--warning)'
+                                  : 'var(--text-muted)',
+                                borderColor: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? 'var(--accent)30'
+                                  : c.objective === 'MESSAGES' ? 'var(--success)30'
+                                  : c.objective === 'CONVERSIONS' ? 'var(--warning)30'
+                                  : 'var(--border-default)',
+                                background: c.objective === 'LEAD_GENERATION' || c.objective === 'OUTCOME_LEADS' ? 'var(--accent)10'
+                                  : c.objective === 'MESSAGES' ? 'var(--success)10'
+                                  : c.objective === 'CONVERSIONS' ? 'var(--warning)10'
                                   : 'transparent',
                               }}>
                               {objLabel(c.objective)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: 'var(--danger)' }}>
                             {fmt$(c.spend)}
                           </td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">
                             {fmtK(c.impressions)}
                           </td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">
                             {fmtK(c.clicks)}
                           </td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">
                             {fmt$(c.cpm)}
                           </td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">
                             {fmt$(c.cpc)}
                           </td>
-                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#00b0f6' }}>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: 'var(--accent)' }}>
                             {c.leads > 0 ? c.leads : '—'}
                           </td>
-                          <td className="px-4 py-3 mono text-[10px]" style={{ color: c.cost_per_lead > 0 ? '#FFB800' : '#4A4A6A' }}>
+                          <td className="px-4 py-3 mono text-xs" style={{ color: c.cost_per_lead > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>
                             {c.cost_per_lead > 0 ? fmt$(c.cost_per_lead) : '—'}
                           </td>
-                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: compradores > 0 ? '#00FF94' : '#4A4A6A' }}>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: compradores > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
                             {compradores > 0 ? compradores : '—'}
                           </td>
-                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: cpb ? '#00FF94' : '#4A4A6A' }}>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: cpb ? 'var(--success)' : 'var(--text-muted)' }}>
                             {cpb ? fmt$(cpb) : '—'}
                           </td>
                         </tr>
@@ -4565,18 +4565,18 @@ function MetaAdsIntelligencePanel({
                       const totCPC = totClicks > 0 ? totSpend / totClicks : null
                       return (
                         <tr style={{ background: 'rgba(0,20,173,0.05)' }}>
-                          <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A] tracking-widest">
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)] tracking-widest">
                             {isFiltered ? `SUBTOTAL (${objLabel(objectiveFilter)})` : 'TOTALES'}
                           </td>
-                          <td className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
-                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#FF6B35' }}>{fmt$(totSpend)}</td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(totImpressions)}</td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{fmtK(totClicks)}</td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{totCPM ? fmt$(totCPM) : '—'}</td>
-                          <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">{totCPC ? fmt$(totCPC) : '—'}</td>
-                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: '#00b0f6' }}>{totLeads}</td>
-                          <td className="px-4 py-3 mono text-[10px]" style={{ color: '#FFB800' }}>{totCPL ? fmt$(totCPL) : '—'}</td>
-                          <td colSpan={2} className="px-4 py-3 mono text-[9px] text-[#4A4A6A]">—</td>
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">—</td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: 'var(--danger)' }}>{fmt$(totSpend)}</td>
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">{fmtK(totImpressions)}</td>
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">{fmtK(totClicks)}</td>
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">{totCPM ? fmt$(totCPM) : '—'}</td>
+                          <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">{totCPC ? fmt$(totCPC) : '—'}</td>
+                          <td className="px-4 py-3 mono text-[11px] font-bold" style={{ color: 'var(--accent)' }}>{totLeads}</td>
+                          <td className="px-4 py-3 mono text-xs" style={{ color: 'var(--warning)' }}>{totCPL ? fmt$(totCPL) : '—'}</td>
+                          <td colSpan={2} className="px-4 py-3 mono text-xs text-[var(--text-muted)]">—</td>
                         </tr>
                       )
                     })()}
@@ -4588,8 +4588,8 @@ function MetaAdsIntelligencePanel({
 
           {insight.campaigns.length === 0 && (
             <div className="px-5 pb-5 flex items-center gap-2">
-              <AlertCircle size={12} className="text-[#4A4A6A]"/>
-              <p className="mono text-[10px] text-[#4A4A6A]">
+              <AlertCircle size={12} className="text-[var(--text-muted)]"/>
+              <p className="mono text-xs text-[var(--text-muted)]">
                 Sin campañas activas en el período seleccionado.
               </p>
             </div>
@@ -4647,14 +4647,14 @@ function JourneySection({
           style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
           {icon}
         </div>
-        <div className="w-px flex-1 mt-1" style={{ background: '#1E1E2E', minHeight: '8px' }}/>
+        <div className="w-px flex-1 mt-1" style={{ background: 'var(--border-default)', minHeight: '8px' }}/>
       </div>
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex items-center justify-between mb-2 gap-2">
-          <span className="mono text-[9px] font-bold tracking-widest flex-shrink-0" style={{ color }}>{label}</span>
-          <span className="mono text-[9px] text-[#2E2E4E] flex-shrink-0">{date}</span>
+          <span className="mono text-xs font-bold tracking-widest flex-shrink-0" style={{ color }}>{label}</span>
+          <span className="mono text-xs text-[#2E2E4E] flex-shrink-0">{date}</span>
         </div>
-        <div className="rounded-xl border border-[#1E1E2E] p-3" style={{ background: '#111118' }}>
+        <div className="rounded-xl border border-[var(--border-default)] p-3" style={{ background: 'var(--bg-card)' }}>
           {children}
         </div>
       </div>
@@ -4715,8 +4715,8 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
 
   if (!phone) return null
 
-  const segC = (s: string) => s === 'caliente' ? '#FF6B35' : s === 'templado' ? '#FFB800' : '#00b0f6'
-  const scoreC = (n: number) => n >= 76 ? '#00FF94' : n >= 51 ? '#FF6B35' : n >= 26 ? '#FFB800' : '#00b0f6'
+  const segC = (s: string) => s === 'caliente' ? 'var(--danger)' : s === 'templado' ? 'var(--warning)' : 'var(--accent)'
+  const scoreC = (n: number) => n >= 76 ? 'var(--success)' : n >= 51 ? 'var(--danger)' : n >= 26 ? 'var(--warning)' : 'var(--accent)'
 
   const initials = (data?.contact?.name || phone || '?')
     .split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
@@ -4728,9 +4728,9 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
   const capiEvents: Array<{ label: string; ts: string; color: string }> = []
   if (data?.scoreBreakdown) {
     const sb = data.scoreBreakdown
-    if (sb.capi_warm_sent_at)  capiEvents.push({ label: 'WarmLead → Meta',    ts: sb.capi_warm_sent_at,  color: '#00b0f6' })
-    if (sb.capi_hot_sent_at)   capiEvents.push({ label: 'HotLead → Meta',     ts: sb.capi_hot_sent_at,   color: '#FFB800' })
-    if (sb.capi_ready_sent_at) capiEvents.push({ label: 'ReadyLead → Meta',   ts: sb.capi_ready_sent_at, color: '#FF6B35' })
+    if (sb.capi_warm_sent_at)  capiEvents.push({ label: 'WarmLead → Meta',    ts: sb.capi_warm_sent_at,  color: 'var(--accent)' })
+    if (sb.capi_hot_sent_at)   capiEvents.push({ label: 'HotLead → Meta',     ts: sb.capi_hot_sent_at,   color: 'var(--warning)' })
+    if (sb.capi_ready_sent_at) capiEvents.push({ label: 'ReadyLead → Meta',   ts: sb.capi_ready_sent_at, color: 'var(--danger)' })
     if (sb.capi_buyer_sent_at) capiEvents.push({ label: 'BuyerProfile → Meta',ts: sb.capi_buyer_sent_at, color: '#C084FC' })
     capiEvents.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime())
   }
@@ -4742,61 +4742,61 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
   return (
     <div className="fixed inset-0 z-[300] flex justify-end" onClick={onClose}>
       <div
-        className="w-full max-w-md h-full border-l border-[#1E1E2E] overflow-y-auto flex flex-col"
-        style={{ background: '#0A0A0F', boxShadow: '-32px 0 80px rgba(0,0,0,0.85)', animation: 'slideInRight 0.2s ease' }}
+        className="w-full max-w-md h-full border-l border-[var(--border-default)] overflow-y-auto flex flex-col"
+        style={{ background: 'var(--bg-base)', boxShadow: '-32px 0 80px rgba(0,0,0,0.85)', animation: 'slideInRight 0.2s ease' }}
         onClick={e => e.stopPropagation()}>
 
         {/* ── Header ── */}
-        <div className="px-6 py-5 border-b border-[#1E1E2E] sticky top-0 z-10 flex-shrink-0"
+        <div className="px-6 py-5 border-b border-[var(--border-default)] sticky top-0 z-10 flex-shrink-0"
           style={{ background: 'rgba(10,10,15,0.97)' }}>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mono text-[11px] font-bold"
                 style={{
-                  background: data?.contact ? `${segC(data.contact.segmento)}20` : '#1E1E2E',
-                  color: data?.contact ? segC(data.contact.segmento) : '#4A4A6A',
+                  background: data?.contact ? `${segC(data.contact.segmento)}20` : 'var(--border-default)',
+                  color: data?.contact ? segC(data.contact.segmento) : 'var(--text-muted)',
                   border: `1px solid ${data?.contact ? segC(data.contact.segmento) + '40' : '#2A2A3A'}`,
                 }}>
                 {loading ? '…' : initials}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-[#E0E0F0] text-sm truncate">
+                <p className="font-bold text-[var(--text-primary)] text-sm truncate">
                   {data?.contact?.name || phone}
                 </p>
-                <p className="mono text-[9px] text-[#4A4A6A]">{phone}</p>
+                <p className="mono text-xs text-[var(--text-muted)]">{phone}</p>
               </div>
             </div>
             <button onClick={onClose}
-              className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group ml-3 flex-shrink-0">
-              <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+              className="p-2 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group ml-3 flex-shrink-0">
+              <X size={12} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/>
             </button>
           </div>
 
           {data?.contact && (
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               {data.contact.kanshi_score > 0 && (
-                <span className="mono text-[10px] font-bold px-2 py-0.5 rounded-full"
+                <span className="mono text-xs font-bold px-2 py-0.5 rounded-full"
                   style={{ color: scoreC(data.contact.kanshi_score), background: `${scoreC(data.contact.kanshi_score)}15`, border: `1px solid ${scoreC(data.contact.kanshi_score)}30` }}>
                   ⚡ {data.contact.kanshi_score} KANSHI
                 </span>
               )}
               {data.contact.kanshi_segment && (
-                <span className="mono text-[9px] px-2 py-0.5 rounded-full"
+                <span className="mono text-xs px-2 py-0.5 rounded-full"
                   style={{ color: scoreC(data.contact.kanshi_score), background: `${scoreC(data.contact.kanshi_score)}10` }}>
                   {data.contact.kanshi_segment.toUpperCase()}
                 </span>
               )}
               {data.contact.agent_stage && <StagePill stage={data.contact.agent_stage}/>}
               {data.sales.length > 0 && (
-                <span className="mono text-[9px] px-2 py-0.5 rounded-full font-bold"
-                  style={{ color: '#00FF94', background: '#00FF9415', border: '1px solid #00FF9430' }}>
+                <span className="mono text-xs px-2 py-0.5 rounded-full font-bold"
+                  style={{ color: 'var(--success)', background: 'var(--success)15', border: '1px solid var(--success)30' }}>
                   💰 COMPRADOR
                 </span>
               )}
             </div>
           )}
 
-          <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-3">LEAD JOURNEY COMPLETO</p>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest mt-3">LEAD JOURNEY COMPLETO</p>
         </div>
 
         {/* ── Loading ── */}
@@ -4804,8 +4804,8 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
           <div className="flex items-center justify-center flex-1 py-20">
             <div className="flex flex-col items-center gap-3">
               <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">CARGANDO JOURNEY...</p>
+                style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}/>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">CARGANDO JOURNEY...</p>
             </div>
           </div>
         )}
@@ -4816,7 +4816,7 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
 
             {/* 1. Primer clic UTM */}
             {data.utmRows.length > 0 && (
-              <JourneySection icon="🎯" label="PRIMER CLIC UTM" date={fmtDate(data.utmRows[0].registered_at)} color="#00b0f6">
+              <JourneySection icon="🎯" label="PRIMER CLIC UTM" date={fmtDate(data.utmRows[0].registered_at)} color="var(--accent)">
                 <div className="space-y-2">
                   {[
                     { k: 'CAMPAÑA',    v: data.utmRows[0].utm_campaign },
@@ -4829,12 +4829,12 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
                         : null },
                   ].filter(x => x.v).map(x => (
                     <div key={x.k} className="flex items-start gap-2">
-                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
-                      <span className="text-[11px] text-[#E0E0F0] break-all leading-relaxed">{x.v}</span>
+                      <span className="mono text-[8px] text-[var(--text-muted)] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
+                      <span className="text-[11px] text-[var(--text-primary)] break-all leading-relaxed">{x.v}</span>
                     </div>
                   ))}
                   {data.utmRows.length > 1 && (
-                    <p className="mono text-[9px] text-[#4A4A6A] pt-1">
+                    <p className="mono text-xs text-[var(--text-muted)] pt-1">
                       +{data.utmRows.length - 1} clic{data.utmRows.length > 2 ? 's' : ''} adicional{data.utmRows.length > 2 ? 'es' : ''}
                     </p>
                   )}
@@ -4844,7 +4844,7 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
 
             {/* 2. Perfil SAM */}
             {data.contact && (data.contact.dolor_declarado || data.contact.sueno_declarado || data.contact.engagement_score > 0) && (
-              <JourneySection icon="💬" label="INTERACCIONES SAM" date={fmtDate(data.contact.updated_at)} color="#0014ad">
+              <JourneySection icon="💬" label="INTERACCIONES SAM" date={fmtDate(data.contact.updated_at)} color="var(--primary)">
                 <div className="space-y-2">
                   {[
                     { k: 'ENGAGEMENT', v: data.contact.engagement_score > 0 ? `${data.contact.engagement_score} / 14 pts` : null },
@@ -4854,8 +4854,8 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
                     { k: 'RESUMEN',    v: data.contact.resumen_perfil?.slice(0, 110) },
                   ].filter(x => x.v).map(x => (
                     <div key={x.k} className="flex items-start gap-2">
-                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
-                      <span className="text-[11px] text-[#E0E0F0] leading-relaxed">{x.v}</span>
+                      <span className="mono text-[8px] text-[var(--text-muted)] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
+                      <span className="text-[11px] text-[var(--text-primary)] leading-relaxed">{x.v}</span>
                     </div>
                   ))}
                 </div>
@@ -4873,16 +4873,16 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
                 <div className="space-y-2">
                   {Object.entries(qr.responses).slice(0, 7).map(([k, v]) => (
                     <div key={k} className="flex items-start gap-2">
-                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-28 flex-shrink-0 pt-0.5 truncate">
+                      <span className="mono text-[8px] text-[var(--text-muted)] tracking-widest w-28 flex-shrink-0 pt-0.5 truncate">
                         {k.replace(/_/g, ' ')}
                       </span>
-                      <span className="text-[11px] text-[#E0E0F0] leading-relaxed break-words">
+                      <span className="text-[11px] text-[var(--text-primary)] leading-relaxed break-words">
                         {String(v).slice(0, 90)}
                       </span>
                     </div>
                   ))}
                   {Object.keys(qr.responses).length > 7 && (
-                    <p className="mono text-[9px] text-[#4A4A6A]">+{Object.keys(qr.responses).length - 7} campos más</p>
+                    <p className="mono text-xs text-[var(--text-muted)]">+{Object.keys(qr.responses).length - 7} campos más</p>
                   )}
                 </div>
               </JourneySection>
@@ -4890,7 +4890,7 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
 
             {/* 4. Score breakdown */}
             {data.scoreBreakdown && (
-              <JourneySection icon="📈" label="KANSHI SCORE BREAKDOWN" date={fmtDate(data.scoreBreakdown.updated_at)} color="#FFB800">
+              <JourneySection icon="📈" label="KANSHI SCORE BREAKDOWN" date={fmtDate(data.scoreBreakdown.updated_at)} color="var(--warning)">
                 <div className="space-y-2.5">
                   {[
                     { k: 'FIT PERFIL', v: data.scoreBreakdown.profile_fit,        max: 25 },
@@ -4899,37 +4899,37 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
                     { k: 'FUENTE',     v: data.scoreBreakdown.source_quality,      max: 15 },
                   ].map(d => {
                     const pct = d.max > 0 ? (d.v / d.max) * 100 : 0
-                    const c = pct >= 70 ? '#00FF94' : pct >= 40 ? '#FFB800' : '#FF6B35'
+                    const c = pct >= 70 ? 'var(--success)' : pct >= 40 ? 'var(--warning)' : 'var(--danger)'
                     return (
                       <div key={d.k} className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{d.k}</span>
-                          <span className="mono text-[10px] font-bold" style={{ color: c }}>{d.v} / {d.max}</span>
+                          <span className="mono text-xs text-[var(--text-muted)] tracking-widest">{d.k}</span>
+                          <span className="mono text-xs font-bold" style={{ color: c }}>{d.v} / {d.max}</span>
                         </div>
-                        <div className="h-1 rounded-full" style={{ background: '#1E1E2E' }}>
+                        <div className="h-1 rounded-full" style={{ background: 'var(--border-default)' }}>
                           <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: c }}/>
                         </div>
                       </div>
                     )
                   })}
                   {/* Total */}
-                  <div className="pt-2 border-t border-[#1E1E2E] flex items-center justify-between">
-                    <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">TOTAL KANSHI</span>
+                  <div className="pt-2 border-t border-[var(--border-default)] flex items-center justify-between">
+                    <span className="mono text-xs text-[var(--text-muted)] tracking-widest">TOTAL KANSHI</span>
                     <span className="mono text-sm font-bold" style={{ color: scoreC(data.scoreBreakdown.kanshi_score) }}>
                       {data.scoreBreakdown.kanshi_score}
                     </span>
                   </div>
                   {/* CAPI events */}
                   {capiEvents.length > 0 && (
-                    <div className="pt-2 border-t border-[#1E1E2E] space-y-1.5">
-                      <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mb-2">SEÑALES ENVIADAS A META CAPI</p>
+                    <div className="pt-2 border-t border-[var(--border-default)] space-y-1.5">
+                      <p className="mono text-[8px] text-[var(--text-muted)] tracking-widest mb-2">SEÑALES ENVIADAS A META CAPI</p>
                       {capiEvents.map(ev => (
                         <div key={ev.label} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full" style={{ background: ev.color }}/>
-                            <span className="mono text-[9px]" style={{ color: ev.color }}>{ev.label}</span>
+                            <span className="mono text-xs" style={{ color: ev.color }}>{ev.label}</span>
                           </div>
-                          <span className="mono text-[9px] text-[#4A4A6A]">{fmtDate(ev.ts)}</span>
+                          <span className="mono text-xs text-[var(--text-muted)]">{fmtDate(ev.ts)}</span>
                         </div>
                       ))}
                     </div>
@@ -4940,7 +4940,7 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
 
             {/* 5. Venta */}
             {data.sales.map(sale => (
-              <JourneySection key={sale.id} icon="💰" label="VENTA CONFIRMADA" date={fmtDate(sale.sale_date)} color="#00FF94">
+              <JourneySection key={sale.id} icon="💰" label="VENTA CONFIRMADA" date={fmtDate(sale.sale_date)} color="var(--success)">
                 <div className="space-y-2">
                   {[
                     { k: 'MONTO',    v: `$${sale.amount.toLocaleString()} ${sale.currency}` },
@@ -4953,9 +4953,9 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
                         : '⏳ Pendiente' },
                   ].filter(x => x.v).map(x => (
                     <div key={x.k} className="flex items-start gap-2">
-                      <span className="mono text-[8px] text-[#4A4A6A] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
+                      <span className="mono text-[8px] text-[var(--text-muted)] tracking-widest w-20 flex-shrink-0 pt-0.5">{x.k}</span>
                       <span className="text-[11px] font-medium break-all"
-                        style={{ color: x.k === 'MONTO' ? '#00FF94' : '#E0E0F0' }}>
+                        style={{ color: x.k === 'MONTO' ? 'var(--success)' : 'var(--text-primary)' }}>
                         {x.v}
                       </span>
                     </div>
@@ -4968,8 +4968,8 @@ function LeadJourneyDrawer({ phone, onClose }: { phone: string | null; onClose: 
             {!hasData && (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <span className="text-3xl">🔍</span>
-                <p className="mono text-[11px] text-[#4A4A6A]">Sin datos disponibles para este lead</p>
-                <p className="mono text-[9px] text-[#2E2E4E]">{phone}</p>
+                <p className="mono text-[11px] text-[var(--text-muted)]">Sin datos disponibles para este lead</p>
+                <p className="mono text-xs text-[#2E2E4E]">{phone}</p>
               </div>
             )}
           </div>
@@ -5129,7 +5129,7 @@ function SalaDeControlTab({
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <span className="text-5xl">🏯</span>
-        <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para activar la Sala de Control</p>
+        <p className="mono text-[11px] text-[var(--text-muted)]">Selecciona un proyecto para activar la Sala de Control</p>
       </div>
     )
   }
@@ -5141,28 +5141,28 @@ function SalaDeControlTab({
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-8">
         <div className="text-center space-y-3">
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">CARRITO ABRE EN</p>
-          <p className="text-6xl font-bold tabular-nums tracking-tight" style={{ color: '#00b0f6', fontFamily: 'monospace' }}>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">CARRITO ABRE EN</p>
+          <p className="text-6xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>
             {formatCountdown(cartOpen)}
           </p>
-          <p className="mono text-[10px] text-[#4A4A6A]">
+          <p className="mono text-xs text-[var(--text-muted)]">
             {format(cartOpen, "dd 'de' MMMM yyyy · HH:mm")}
           </p>
         </div>
-        <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#FFB800]/30"
+        <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--warning)]/30"
           style={{ background: 'rgba(255,184,0,0.06)' }}>
-          <div className="w-2 h-2 rounded-full bg-[#FFB800] animate-pulse"/>
-          <span className="mono text-[10px] text-[#FFB800] tracking-widest">SALA EN STANDBY — LISTA PARA ACTIVARSE</span>
+          <div className="w-2 h-2 rounded-full bg-[var(--warning)] animate-pulse"/>
+          <span className="mono text-xs text-[var(--warning)] tracking-widest">SALA EN STANDBY — LISTA PARA ACTIVARSE</span>
         </div>
         {/* Meta preview */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-          <div className="rounded-xl border border-[#1E1E2E] p-4 text-center" style={{ background: '#111118' }}>
-            <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mb-1">META VENTAS</p>
-            <p className="text-xl font-bold text-[#E0E0F0]">{salesGoal > 0 ? salesGoal : '—'}</p>
+          <div className="rounded-xl border border-[var(--border-default)] p-4 text-center" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-[8px] text-[var(--text-muted)] tracking-widest mb-1">META VENTAS</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">{salesGoal > 0 ? salesGoal : '—'}</p>
           </div>
-          <div className="rounded-xl border border-[#1E1E2E] p-4 text-center" style={{ background: '#111118' }}>
-            <p className="mono text-[8px] text-[#4A4A6A] tracking-widest mb-1">LEADS LISTOS</p>
-            <p className="text-xl font-bold" style={{ color: leadsReady.length > 0 ? '#FFB800' : '#4A4A6A' }}>
+          <div className="rounded-xl border border-[var(--border-default)] p-4 text-center" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-[8px] text-[var(--text-muted)] tracking-widest mb-1">LEADS LISTOS</p>
+            <p className="text-xl font-bold" style={{ color: leadsReady.length > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>
               {leadsReady.length}
             </p>
           </div>
@@ -5178,26 +5178,26 @@ function SalaDeControlTab({
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2">
-          <Lock size={12} className="text-[#4A4A6A]"/>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">SALA DE CONTROL — SIN FECHAS CONFIGURADAS</p>
+          <Lock size={12} className="text-[var(--text-muted)]"/>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">SALA DE CONTROL — SIN FECHAS CONFIGURADAS</p>
         </div>
-        <div className="rounded-2xl border border-[#1E1E2E] p-10 flex flex-col items-center gap-4" style={{ background: '#111118' }}>
+        <div className="rounded-2xl border border-[var(--border-default)] p-10 flex flex-col items-center gap-4" style={{ background: 'var(--bg-card)' }}>
           <span className="text-4xl">🔒</span>
-          <p className="mono text-[11px] text-[#4A4A6A] text-center">
-            Configura <span className="text-[#00b0f6]">Cart Open</span> y <span className="text-[#00b0f6]">Cart Close</span> en el proyecto para activar la Sala de Control
+          <p className="mono text-[11px] text-[var(--text-muted)] text-center">
+            Configura <span className="text-[var(--accent)]">Cart Open</span> y <span className="text-[var(--accent)]">Cart Close</span> en el proyecto para activar la Sala de Control
           </p>
-          <p className="mono text-[9px] text-[#2E2E4E]">Configuración del proyecto → Fechas de carrito</p>
+          <p className="mono text-xs text-[#2E2E4E]">Configuración del proyecto → Fechas de carrito</p>
         </div>
         {/* Resumen si hay ventas de todos modos */}
         {totalSales > 0 && (
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: 'VENTAS TOTALES', value: totalSales, color: '#00FF94' },
-              { label: 'INGRESOS', value: `$${totalRevenue.toLocaleString()}`, color: '#00b0f6' },
-              { label: 'TICKET PROM.', value: totalSales > 0 ? `$${Math.round(totalRevenue/totalSales).toLocaleString()}` : '—', color: '#FFB800' },
+              { label: 'VENTAS TOTALES', value: totalSales, color: 'var(--success)' },
+              { label: 'INGRESOS', value: `$${totalRevenue.toLocaleString()}`, color: 'var(--accent)' },
+              { label: 'TICKET PROM.', value: totalSales > 0 ? `$${Math.round(totalRevenue/totalSales).toLocaleString()}` : '—', color: 'var(--warning)' },
             ].map(k => (
-              <div key={k.label} className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
-                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-2">{k.label}</p>
+              <div key={k.label} className="rounded-2xl border border-[var(--border-default)] p-5" style={{ background: 'var(--bg-card)' }}>
+                <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-2">{k.label}</p>
                 <p className="text-2xl font-bold" style={{ color: k.color }}>{k.value}</p>
               </div>
             ))}
@@ -5214,33 +5214,33 @@ function SalaDeControlTab({
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#4A4A6A]"/>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">SALA DE CONTROL — CARRITO CERRADO</p>
+          <div className="w-2 h-2 rounded-full bg-[var(--text-muted)]"/>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">SALA DE CONTROL — CARRITO CERRADO</p>
         </div>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: 'VENTAS FINALES', value: totalSales, sub: `meta ${salesGoal}`, color: '#00FF94' },
-            { label: 'INGRESOS', value: `$${totalRevenue.toLocaleString()}`, sub: `meta $${revenueGoal.toLocaleString()}`, color: '#00b0f6' },
-            { label: 'TICKET PROM.', value: totalSales > 0 ? `$${Math.round(totalRevenue/totalSales).toLocaleString()}` : '—', sub: `precio: $${project.product_price?.toLocaleString() || '—'}`, color: '#FFB800' },
-            { label: 'CUMPLIMIENTO', value: `${Math.round(progressPct)}%`, sub: salesGoal > 0 ? (progressPct >= 100 ? '🎉 Meta alcanzada' : 'de meta') : 'sin meta', color: progressPct >= 100 ? '#00FF94' : '#FFB800' },
+            { label: 'VENTAS FINALES', value: totalSales, sub: `meta ${salesGoal}`, color: 'var(--success)' },
+            { label: 'INGRESOS', value: `$${totalRevenue.toLocaleString()}`, sub: `meta $${revenueGoal.toLocaleString()}`, color: 'var(--accent)' },
+            { label: 'TICKET PROM.', value: totalSales > 0 ? `$${Math.round(totalRevenue/totalSales).toLocaleString()}` : '—', sub: `precio: $${project.product_price?.toLocaleString() || '—'}`, color: 'var(--warning)' },
+            { label: 'CUMPLIMIENTO', value: `${Math.round(progressPct)}%`, sub: salesGoal > 0 ? (progressPct >= 100 ? '🎉 Meta alcanzada' : 'de meta') : 'sin meta', color: progressPct >= 100 ? 'var(--success)' : 'var(--warning)' },
           ].map(k => (
-            <div key={k.label} className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-2">{k.label}</p>
+            <div key={k.label} className="rounded-2xl border border-[var(--border-default)] p-5" style={{ background: 'var(--bg-card)' }}>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-2">{k.label}</p>
               <p className="text-2xl font-bold" style={{ color: k.color }}>{k.value}</p>
-              <p className="mono text-[9px] text-[#4A4A6A] mt-1">{k.sub}</p>
+              <p className="mono text-xs text-[var(--text-muted)] mt-1">{k.sub}</p>
             </div>
           ))}
         </div>
         {velocityData.length > 0 && (
-          <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">VELOCIDAD DE VENTAS — HISTORIAL DEL CARRITO</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-5" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-4">VELOCIDAD DE VENTAS — HISTORIAL DEL CARRITO</p>
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={velocityData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
-                <YAxis tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false}/>
-                <Tooltip contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8 }}
-                  labelStyle={{ color: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }}
-                  itemStyle={{ color: '#00FF94', fontSize: 10, fontFamily: 'monospace' }}
+                <XAxis dataKey="hour" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false}/>
+                <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 8 }}
+                  labelStyle={{ color: 'var(--text-muted)', fontSize: 9, fontFamily: 'monospace' }}
+                  itemStyle={{ color: 'var(--success)', fontSize: 10, fontFamily: 'monospace' }}
                   formatter={(v: number) => [`${v} ventas`, '']}/>
                 <Bar dataKey="ventas" fill="#00FF94" radius={[4,4,0,0]} maxBarSize={32} opacity={0.6}/>
               </BarChart>
@@ -5260,18 +5260,18 @@ function SalaDeControlTab({
       {/* Header LIVE */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#00FF94] animate-pulse"/>
-          <p className="mono text-[11px] text-[#E0E0F0] tracking-widest font-bold">SALA DE CONTROL</p>
-          <span className="mono text-[9px] px-2.5 py-0.5 rounded-full border border-[#00FF94]/30 text-[#00FF94]"
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--success)] animate-pulse"/>
+          <p className="mono text-[11px] text-[var(--text-primary)] tracking-widest font-bold">SALA DE CONTROL</p>
+          <span className="mono text-xs px-2.5 py-0.5 rounded-full border border-[var(--success)]/30 text-[var(--success)]"
             style={{ background: 'rgba(0,255,148,0.08)' }}>
             CARRITO ABIERTO · EN VIVO
           </span>
         </div>
         {cartClose && (
           <div className="flex items-center gap-2">
-            <Clock size={12} className="text-[#FF6B35]"/>
-            <p className="mono text-[10px] text-[#4A4A6A]">CIERRA EN</p>
-            <p className="mono text-sm font-bold tabular-nums tracking-tight" style={{ color: '#FF6B35', fontFamily: 'monospace' }}>
+            <Clock size={12} className="text-[var(--danger)]"/>
+            <p className="mono text-xs text-[var(--text-muted)]">CIERRA EN</p>
+            <p className="mono text-sm font-bold tabular-nums tracking-tight" style={{ color: 'var(--danger)', fontFamily: 'monospace' }}>
               {formatCountdown(cartClose)}
             </p>
           </div>
@@ -5285,43 +5285,43 @@ function SalaDeControlTab({
             label: 'VENTAS',
             value: `${totalSales}${salesGoal > 0 ? ` / ${salesGoal}` : ''}`,
             sub: salesGoal > 0 ? `${Math.round(progressPct)}% completado` : 'sin meta',
-            color: '#00FF94', icon: '🎯', progress: salesGoal > 0 ? progressPct : null,
+            color: 'var(--success)', icon: '🎯', progress: salesGoal > 0 ? progressPct : null,
           },
           {
             label: 'INGRESOS',
             value: `$${totalRevenue.toLocaleString()}`,
             sub: revenueGoal > 0 ? `meta $${revenueGoal.toLocaleString()}` : '',
-            color: '#00FF94', icon: '💰', progress: null,
+            color: 'var(--success)', icon: '💰', progress: null,
           },
           {
             label: 'TICKET PROM.',
             value: totalSales > 0 ? `$${Math.round(totalRevenue / totalSales).toLocaleString()}` : '—',
             sub: project.product_price ? `precio $${project.product_price.toLocaleString()}` : '',
-            color: '#FFB800', icon: '🎫', progress: null,
+            color: 'var(--warning)', icon: '🎫', progress: null,
           },
           {
             label: 'VELOCIDAD',
             value: `${currentVelocity}/h`,
             sub: 'última hora',
-            color: currentVelocity > 0 ? '#00b0f6' : '#4A4A6A', icon: '⚡', progress: null,
+            color: currentVelocity > 0 ? 'var(--accent)' : 'var(--text-muted)', icon: '⚡', progress: null,
           },
           {
             label: 'PROYECCIÓN',
             value: projectedSales > 0 ? `~${projectedSales}` : '—',
             sub: 'ventas al cierre',
-            color: (salesGoal > 0 && projectedSales >= salesGoal) ? '#00FF94' : '#FFB800', icon: '🔮', progress: null,
+            color: (salesGoal > 0 && projectedSales >= salesGoal) ? 'var(--success)' : 'var(--warning)', icon: '🔮', progress: null,
           },
         ].map(kpi => (
-          <div key={kpi.label} className="rounded-2xl border border-[#1E1E2E] p-4 relative overflow-hidden" style={{ background: '#111118' }}>
+          <div key={kpi.label} className="rounded-2xl border border-[var(--border-default)] p-4 relative overflow-hidden" style={{ background: 'var(--bg-card)' }}>
             <div className="flex items-center justify-between mb-1">
-              <p className="mono text-[8px] text-[#4A4A6A] tracking-widest">{kpi.label}</p>
+              <p className="mono text-[8px] text-[var(--text-muted)] tracking-widest">{kpi.label}</p>
               <span className="text-sm">{kpi.icon}</span>
             </div>
             <p className="text-xl font-bold tabular-nums" style={{ color: kpi.color }}>{kpi.value}</p>
-            {kpi.sub && <p className="mono text-[8px] text-[#4A4A6A] mt-0.5">{kpi.sub}</p>}
+            {kpi.sub && <p className="mono text-[8px] text-[var(--text-muted)] mt-0.5">{kpi.sub}</p>}
             {kpi.progress !== null && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E2E]">
-                <div className="h-full transition-all duration-1000" style={{ width: `${kpi.progress}%`, background: '#00FF94' }}/>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--border-default)]">
+                <div className="h-full transition-all duration-1000" style={{ width: `${kpi.progress}%`, background: 'var(--success)' }}/>
               </div>
             )}
           </div>
@@ -5332,24 +5332,24 @@ function SalaDeControlTab({
       <div className="grid grid-cols-2 gap-5">
 
         {/* Velocity chart */}
-        <div className="rounded-2xl border border-[#1E1E2E] p-5" style={{ background: '#111118' }}>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">VENTAS POR HORA</p>
+        <div className="rounded-2xl border border-[var(--border-default)] p-5" style={{ background: 'var(--bg-card)' }}>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-4">VENTAS POR HORA</p>
           {velocityData.length > 0 ? (
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={velocityData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
-                <YAxis tick={{ fontSize: 9, fill: '#4A4A6A', fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false}/>
+                <XAxis dataKey="hour" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false}/>
                 <Tooltip
-                  contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8 }}
-                  labelStyle={{ color: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }}
-                  itemStyle={{ color: '#00FF94', fontSize: 10, fontFamily: 'monospace' }}
+                  contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 8 }}
+                  labelStyle={{ color: 'var(--text-muted)', fontSize: 9, fontFamily: 'monospace' }}
+                  itemStyle={{ color: 'var(--success)', fontSize: 10, fontFamily: 'monospace' }}
                   formatter={(v: number) => [`${v} ventas`, '']}
                 />
                 <Bar dataKey="ventas" radius={[4,4,0,0]} maxBarSize={32}>
                   {velocityData.map((_, i) => (
                     <Cell
                       key={i}
-                      fill={i === velocityData.length - 1 ? '#00b0f6' : '#00FF94'}
+                      fill={i === velocityData.length - 1 ? 'var(--accent)' : 'var(--success)'}
                       opacity={i === velocityData.length - 1 ? 1 : 0.65}
                     />
                   ))}
@@ -5358,44 +5358,44 @@ function SalaDeControlTab({
             </ResponsiveContainer>
           ) : (
             <div className="flex flex-col items-center justify-center h-40 gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse"/>
-              <p className="mono text-[10px] text-[#4A4A6A]">Esperando primera venta...</p>
+              <div className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse"/>
+              <p className="mono text-xs text-[var(--text-muted)]">Esperando primera venta...</p>
             </div>
           )}
         </div>
 
         {/* Feed realtime */}
-        <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
-          <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between">
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">ÚLTIMAS VENTAS</p>
+        <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-card)' }}>
+          <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">ÚLTIMAS VENTAS</p>
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse"/>
-              <span className="mono text-[8px] text-[#00FF94]">LIVE</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse"/>
+              <span className="mono text-[8px] text-[var(--success)]">LIVE</span>
             </div>
           </div>
-          <div className="divide-y divide-[#1E1E2E] overflow-y-auto" style={{ maxHeight: 200 }}>
+          <div className="divide-y divide-[var(--border-default)] overflow-y-auto" style={{ maxHeight: 200 }}>
             {loading ? (
               <div className="flex items-center justify-center py-10">
-                <div className="w-4 h-4 border-2 border-[#00FF94] border-t-transparent rounded-full animate-spin"/>
+                <div className="w-4 h-4 border-2 border-[var(--success)] border-t-transparent rounded-full animate-spin"/>
               </div>
             ) : sales.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
                 <span className="text-2xl">⏳</span>
-                <p className="mono text-[10px] text-[#4A4A6A]">Esperando ventas en tiempo real...</p>
+                <p className="mono text-xs text-[var(--text-muted)]">Esperando ventas en tiempo real...</p>
               </div>
             ) : sales.slice(0, 12).map(sale => (
-              <div key={sale.id} className="px-5 py-3 flex items-center justify-between hover:bg-[#0A0A0F] transition-colors">
+              <div key={sale.id} className="px-5 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-colors">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold"
-                    style={{ background: '#1E1E2E', color: '#E0E0F0' }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ background: 'var(--border-default)', color: 'var(--text-primary)' }}>
                     {(sale.wa_contacts?.name || sale.phone_number || '?')[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-xs text-[#E0E0F0]">{sale.wa_contacts?.name || sale.phone_number}</p>
-                    <p className="mono text-[8px] text-[#4A4A6A]">{format(new Date(sale.sale_date), 'HH:mm:ss')}</p>
+                    <p className="text-xs text-[var(--text-primary)]">{sale.wa_contacts?.name || sale.phone_number}</p>
+                    <p className="mono text-[8px] text-[var(--text-muted)]">{format(new Date(sale.sale_date), 'HH:mm:ss')}</p>
                   </div>
                 </div>
-                <p className="mono text-sm font-bold" style={{ color: '#00FF94' }}>
+                <p className="mono text-sm font-bold" style={{ color: 'var(--success)' }}>
                   ${sale.amount.toLocaleString()}
                 </p>
               </div>
@@ -5409,36 +5409,36 @@ function SalaDeControlTab({
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,184,0,0.25)' }}>
           <div className="px-5 py-4 border-b flex items-center gap-3"
             style={{ background: 'rgba(255,184,0,0.06)', borderColor: 'rgba(255,184,0,0.15)' }}>
-            <Flame size={14} className="text-[#FFB800]"/>
-            <p className="mono text-[10px] text-[#FFB800] tracking-widest font-bold">
+            <Flame size={14} className="text-[var(--warning)]"/>
+            <p className="mono text-xs text-[var(--warning)] tracking-widest font-bold">
               {leadsReady.length} LEADS LISTOS — SIN COMPRAR AÚN
             </p>
-            <span className="mono text-[8px] text-[#4A4A6A]">score ≥ 75 · actuar ahora</span>
+            <span className="mono text-[8px] text-[var(--text-muted)]">score ≥ 75 · actuar ahora</span>
           </div>
-          <div className="divide-y divide-[#1E1E2E]" style={{ background: '#111118' }}>
+          <div className="divide-y divide-[var(--border-default)]" style={{ background: 'var(--bg-card)' }}>
             {leadsReady.slice(0, 8).map(lead => (
-              <div key={lead.id} className="px-5 py-3 flex items-center justify-between hover:bg-[#0A0A0F] transition-colors">
+              <div key={lead.id} className="px-5 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold"
-                    style={{ background: '#1E1E2E', color: '#E0E0F0' }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ background: 'var(--border-default)', color: 'var(--text-primary)' }}>
                     {(lead.name || '?')[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-xs text-[#E0E0F0]">{lead.name || lead.phone_number}</p>
-                    <p className="mono text-[8px] text-[#4A4A6A]">{lead.agent_stage} · {lead.kanshi_segment}</p>
+                    <p className="text-xs text-[var(--text-primary)]">{lead.name || lead.phone_number}</p>
+                    <p className="mono text-[8px] text-[var(--text-muted)]">{lead.agent_stage} · {lead.kanshi_segment}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className="mono text-[9px] font-bold px-2.5 py-0.5 rounded-full border"
+                    className="mono text-xs font-bold px-2.5 py-0.5 rounded-full border"
                     style={{
-                      borderColor: lead.kanshi_score >= 90 ? '#FF6B35' : '#FFB800',
-                      color:       lead.kanshi_score >= 90 ? '#FF6B35' : '#FFB800',
+                      borderColor: lead.kanshi_score >= 90 ? 'var(--danger)' : 'var(--warning)',
+                      color:       lead.kanshi_score >= 90 ? 'var(--danger)' : 'var(--warning)',
                       background:  lead.kanshi_score >= 90 ? 'rgba(255,107,53,0.1)' : 'rgba(255,184,0,0.1)',
                     }}>
                     {lead.kanshi_score}
                   </span>
-                  <span className="mono text-[8px] text-[#4A4A6A]">
+                  <span className="mono text-[8px] text-[var(--text-muted)]">
                     {lead.kanshi_score >= 90 ? '🔴 LISTO' : '🟠 CALIENTE'}
                   </span>
                 </div>
@@ -5446,7 +5446,7 @@ function SalaDeControlTab({
             ))}
             {leadsReady.length > 8 && (
               <div className="px-5 py-3 text-center">
-                <span className="mono text-[9px] text-[#4A4A6A]">+{leadsReady.length - 8} leads más con score ≥ 75</span>
+                <span className="mono text-xs text-[var(--text-muted)]">+{leadsReady.length - 8} leads más con score ≥ 75</span>
               </div>
             )}
           </div>
@@ -5485,9 +5485,9 @@ interface TrafickerAdRow {
 }
 
 const SIGNAL_CFG = {
-  ESCALAR:  { color: '#00FF94', bg: '#00FF9415', icon: '🟢' },
-  MANTENER: { color: '#FFB800', bg: '#FFB80015', icon: '🟡' },
-  PAUSAR:   { color: '#FF6B35', bg: '#FF6B3515', icon: '🔴' },
+  ESCALAR:  { color: 'var(--success)', bg: 'var(--success)15', icon: '🟢' },
+  MANTENER: { color: 'var(--warning)', bg: 'var(--warning)15', icon: '🟡' },
+  PAUSAR:   { color: 'var(--danger)', bg: 'var(--danger)15', icon: '🔴' },
 }
 
 function exportTrafickerCSV(rows: TrafickerAdRow[]) {
@@ -5679,14 +5679,14 @@ function TrafickerTab({
   }, [allRows])
 
   const SortIcon = ({ col }: { col: keyof TrafickerAdRow }) => (
-    <span className="ml-1 opacity-40" style={{ color: sortCol===col ? '#00b0f6' : undefined, opacity: sortCol===col ? 1 : 0.3 }}>
+    <span className="ml-1 opacity-40" style={{ color: sortCol===col ? 'var(--accent)' : undefined, opacity: sortCol===col ? 1 : 0.3 }}>
       {sortCol===col ? (sortDir==='asc' ? '↑' : '↓') : '↕'}
     </span>
   )
 
   if (!activeProjectId) return (
     <div className="flex items-center justify-center h-64">
-      <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para ver la tabla Traficker</p>
+      <p className="mono text-[11px] text-[var(--text-muted)]">Selecciona un proyecto para ver la tabla Traficker</p>
     </div>
   )
 
@@ -5696,18 +5696,18 @@ function TrafickerTab({
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">OPTIMIZACIÓN POR CALIDAD DE LEAD</p>
-          <p className="text-lg font-bold text-[#E0E0F0]">Tabla Traficker</p>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">OPTIMIZACIÓN POR CALIDAD DE LEAD</p>
+          <p className="text-lg font-bold text-[var(--text-primary)]">Tabla Traficker</p>
         </div>
         <div className="flex items-center gap-2">
           {loading && (
-            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6' }}/>
+            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)' }}/>
           )}
           <button
             onClick={() => exportTrafickerCSV(filteredRows)}
             disabled={filteredRows.length === 0}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E] mono text-[10px] text-[#4A4A6A] hover:text-[#E0E0F0] hover:border-[#2E2E4E] transition-all disabled:opacity-30"
-            style={{ background: '#111118' }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border-default)] mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#2E2E4E] transition-all disabled:opacity-30"
+            style={{ background: 'var(--bg-card)' }}
           >
             <TrendingDown size={11}/> EXPORTAR CSV
           </button>
@@ -5718,15 +5718,15 @@ function TrafickerTab({
       {summary && !loading && (
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
           {[
-            { label: 'TOTAL LEADS',       value: summary.totalLeads,       color: '#00b0f6', fmt: (v: number) => v.toString() },
-            { label: 'TASA RESPUESTA',    value: summary.avgRespRate,      color: summary.avgRespRate >= 40 ? '#00FF94' : '#FFB800', fmt: (v: number) => `${v}%` },
-            { label: 'SCORE PROMEDIO',    value: summary.avgScore ?? 0,    color: (summary.avgScore??0)>=50?'#00FF94':(summary.avgScore??0)>=30?'#FFB800':'#FF6B35', fmt: (v: number) => v > 0 ? v.toString() : '—' },
+            { label: 'TOTAL LEADS',       value: summary.totalLeads,       color: 'var(--accent)', fmt: (v: number) => v.toString() },
+            { label: 'TASA RESPUESTA',    value: summary.avgRespRate,      color: summary.avgRespRate >= 40 ? 'var(--success)' : 'var(--warning)', fmt: (v: number) => `${v}%` },
+            { label: 'SCORE PROMEDIO',    value: summary.avgScore ?? 0,    color: (summary.avgScore??0)>=50?'var(--success)':(summary.avgScore??0)>=30?'var(--warning)':'var(--danger)', fmt: (v: number) => v > 0 ? v.toString() : '—' },
             { label: 'LEADS CALIFICADOS', value: summary.totalQual,        color: '#C084FC', fmt: (v: number) => v.toString() },
-            { label: 'ANUNCIOS ESCALAR',  value: summary.escalar,          color: '#00FF94', fmt: (v: number) => `${v} 🟢` },
-            { label: 'ANUNCIOS PAUSAR',   value: summary.pausar,           color: '#FF6B35', fmt: (v: number) => `${v} 🔴` },
+            { label: 'ANUNCIOS ESCALAR',  value: summary.escalar,          color: 'var(--success)', fmt: (v: number) => `${v} 🟢` },
+            { label: 'ANUNCIOS PAUSAR',   value: summary.pausar,           color: 'var(--danger)', fmt: (v: number) => `${v} 🔴` },
           ].map(kpi => (
-            <div key={kpi.label} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-1">{kpi.label}</p>
+            <div key={kpi.label} className="rounded-xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-card)' }}>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-1">{kpi.label}</p>
               <p className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.fmt(kpi.value)}</p>
             </div>
           ))}
@@ -5735,56 +5735,56 @@ function TrafickerTab({
 
       {/* ── T4: Filtros ── */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1 p-1 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
+        <div className="flex items-center gap-1 p-1 rounded-xl border border-[var(--border-default)]" style={{ background: 'var(--bg-card)' }}>
           {(['TODOS','ESCALAR','MANTENER','PAUSAR'] as const).map(opt => (
             <button key={opt} onClick={() => setFilterSignal(opt)}
-              className="px-3 py-1.5 rounded-lg mono text-[10px] font-bold transition-all"
+              className="px-3 py-1.5 rounded-lg mono text-xs font-bold transition-all"
               style={{
-                background: filterSignal===opt ? (opt==='TODOS'?'#1E1E2E':SIGNAL_CFG[opt as 'ESCALAR'|'MANTENER'|'PAUSAR']?.bg ?? '#1E1E2E') : 'transparent',
-                color: filterSignal===opt ? (opt==='TODOS'?'#E0E0F0':SIGNAL_CFG[opt as 'ESCALAR'|'MANTENER'|'PAUSAR']?.color ?? '#E0E0F0') : '#4A4A6A',
+                background: filterSignal===opt ? (opt==='TODOS'?'var(--border-default)':SIGNAL_CFG[opt as 'ESCALAR'|'MANTENER'|'PAUSAR']?.bg ?? 'var(--border-default)') : 'transparent',
+                color: filterSignal===opt ? (opt==='TODOS'?'var(--text-primary)':SIGNAL_CFG[opt as 'ESCALAR'|'MANTENER'|'PAUSAR']?.color ?? 'var(--text-primary)') : 'var(--text-muted)',
               }}>
               {opt}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
-          <span className="mono text-[10px] text-[#4A4A6A]">MIN LEADS</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border-default)]" style={{ background: 'var(--bg-card)' }}>
+          <span className="mono text-xs text-[var(--text-muted)]">MIN LEADS</span>
           <select value={filterMinLeads} onChange={e => setFilterMinLeads(Number(e.target.value))}
-            className="bg-transparent mono text-[10px] text-[#E0E0F0] outline-none">
-            {[1,3,5,10,20].map(n => <option key={n} value={n} style={{ background: '#111118' }}>{n}+</option>)}
+            className="bg-transparent mono text-xs text-[var(--text-primary)] outline-none">
+            {[1,3,5,10,20].map(n => <option key={n} value={n} style={{ background: 'var(--bg-card)' }}>{n}+</option>)}
           </select>
         </div>
-        <span className="mono text-[10px] text-[#4A4A6A]">
+        <span className="mono text-xs text-[var(--text-muted)]">
           {filteredRows.length} de {allRows.length} anuncios
         </span>
       </div>
 
       {/* ── T3: Tabla dinámica ── */}
       {loading ? (
-        <div className="rounded-2xl border border-[#1E1E2E] flex items-center justify-center py-20" style={{ background: '#111118' }}>
+        <div className="rounded-2xl border border-[var(--border-default)] flex items-center justify-center py-20" style={{ background: 'var(--bg-card)' }}>
           <div className="text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: '#00b0f6' }}/>
-            <p className="mono text-[11px] text-[#4A4A6A] tracking-widest">CARGANDO DATOS DE ANUNCIOS...</p>
+            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: 'var(--accent)' }}/>
+            <p className="mono text-[11px] text-[var(--text-muted)] tracking-widest">CARGANDO DATOS DE ANUNCIOS...</p>
           </div>
         </div>
       ) : filteredRows.length === 0 ? (
-        <div className="rounded-2xl border border-[#1E1E2E] flex flex-col items-center justify-center py-20 gap-4" style={{ background: '#111118' }}>
+        <div className="rounded-2xl border border-[var(--border-default)] flex flex-col items-center justify-center py-20 gap-4" style={{ background: 'var(--bg-card)' }}>
           <BarChart2 size={28} style={{ color: '#2E2E4E' }}/>
-          <p className="mono text-[11px] text-[#4A4A6A]">
+          <p className="mono text-[11px] text-[var(--text-muted)]">
             {allRows.length === 0 ? 'Sin datos UTM para este proyecto' : 'Sin anuncios con los filtros actuales'}
           </p>
           {allRows.length === 0 && (
-            <p className="mono text-[9px] text-[#2E2E4E] text-center max-w-xs">
+            <p className="mono text-xs text-[#2E2E4E] text-center max-w-xs">
               Los leads deben llegar con utm_content en la URL para aparecer aquí
             </p>
           )}
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
+        <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-card)' }}>
           <div className="overflow-x-auto">
             <table className="w-full" style={{ minWidth: '900px' }}>
               <thead>
-                <tr className="border-b border-[#1E1E2E]" style={{ background: '#0A0A0F' }}>
+                <tr className="border-b border-[var(--border-default)]" style={{ background: 'var(--bg-base)' }}>
                   {[
                     { label: 'SEÑAL',         col: 'signal' as keyof TrafickerAdRow },
                     { label: 'ANUNCIO',        col: 'utm_content' as keyof TrafickerAdRow },
@@ -5800,8 +5800,8 @@ function TrafickerTab({
                   ].map((h, i) => (
                     <th key={i}
                       onClick={h.col ? () => toggleSort(h.col!) : undefined}
-                      className={`px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap ${h.col ? 'cursor-pointer hover:text-[#E0E0F0] select-none' : ''}`}
-                      style={{ color: h.col && sortCol===h.col ? '#00b0f6' : undefined }}>
+                      className={`px-4 py-3 text-left mono text-xs text-[var(--text-muted)] tracking-widest font-normal whitespace-nowrap ${h.col ? 'cursor-pointer hover:text-[var(--text-primary)] select-none' : ''}`}
+                      style={{ color: h.col && sortCol===h.col ? 'var(--accent)' : undefined }}>
                       {h.label}{h.col && <SortIcon col={h.col}/>}
                     </th>
                   ))}
@@ -5812,38 +5812,38 @@ function TrafickerTab({
                   const sig = SIGNAL_CFG[row.signal]
                   const segTotal = row.seg_frio + row.seg_templado + row.seg_caliente + row.seg_listo || 1
                   return (
-                    <tr key={i} className="border-b border-[#1E1E2E] hover:bg-[#0D0D14] transition-colors">
+                    <tr key={i} className="border-b border-[var(--border-default)] hover:bg-[#0D0D14] transition-colors">
 
                       {/* Señal */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
-                          <span className="mono text-[9px] font-bold px-2 py-1 rounded-lg whitespace-nowrap"
+                          <span className="mono text-xs font-bold px-2 py-1 rounded-lg whitespace-nowrap"
                             style={{ color: sig.color, background: sig.bg, border: `1px solid ${sig.color}30` }}>
                             {sig.icon} {row.signal}
                           </span>
-                          <span className="mono text-[8px] text-[#4A4A6A] max-w-[90px] leading-tight">{row.signal_reason}</span>
+                          <span className="mono text-[8px] text-[var(--text-muted)] max-w-[90px] leading-tight">{row.signal_reason}</span>
                         </div>
                       </td>
 
                       {/* Anuncio */}
                       <td className="px-4 py-3 max-w-[180px]">
-                        <p className="text-xs font-medium text-[#E0E0F0] truncate" title={row.utm_content}>{row.utm_content}</p>
-                        <p className="mono text-[9px] text-[#4A4A6A] truncate">{row.utm_source ?? '—'} · {row.utm_campaign ?? '—'}</p>
+                        <p className="text-xs font-medium text-[var(--text-primary)] truncate" title={row.utm_content}>{row.utm_content}</p>
+                        <p className="mono text-xs text-[var(--text-muted)] truncate">{row.utm_source ?? '—'} · {row.utm_campaign ?? '—'}</p>
                       </td>
 
                       {/* Leads */}
                       <td className="px-4 py-3">
-                        <p className="mono text-sm font-bold text-[#E0E0F0]">{row.total_leads}</p>
+                        <p className="mono text-sm font-bold text-[var(--text-primary)]">{row.total_leads}</p>
                       </td>
 
                       {/* Tasa respuesta */}
                       <td className="px-4 py-3">
                         <div className="space-y-1">
-                          <p className="mono text-sm font-bold" style={{ color: row.resp_rate>=50?'#00FF94':row.resp_rate>=25?'#FFB800':'#FF6B35' }}>
+                          <p className="mono text-sm font-bold" style={{ color: row.resp_rate>=50?'var(--success)':row.resp_rate>=25?'var(--warning)':'var(--danger)' }}>
                             {row.resp_rate}%
                           </p>
-                          <div className="h-1 w-14 rounded-full bg-[#1E1E2E]">
-                            <div className="h-full rounded-full" style={{ width:`${row.resp_rate}%`, background: row.resp_rate>=50?'#00FF94':row.resp_rate>=25?'#FFB800':'#FF6B35' }}/>
+                          <div className="h-1 w-14 rounded-full bg-[var(--border-default)]">
+                            <div className="h-full rounded-full" style={{ width:`${row.resp_rate}%`, background: row.resp_rate>=50?'var(--success)':row.resp_rate>=25?'var(--warning)':'var(--danger)' }}/>
                           </div>
                         </div>
                       </td>
@@ -5852,20 +5852,20 @@ function TrafickerTab({
                       <td className="px-4 py-3">
                         {row.avg_score !== null ? (
                           <div className="flex items-center gap-1.5">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 mono text-[10px] font-bold"
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 mono text-xs font-bold"
                               style={{
-                                borderColor: row.avg_score>=76?'#00FF94':row.avg_score>=51?'#FF6B35':row.avg_score>=26?'#FFB800':'#00b0f6',
-                                color:       row.avg_score>=76?'#00FF94':row.avg_score>=51?'#FF6B35':row.avg_score>=26?'#FFB800':'#00b0f6',
+                                borderColor: row.avg_score>=76?'var(--success)':row.avg_score>=51?'var(--danger)':row.avg_score>=26?'var(--warning)':'var(--accent)',
+                                color:       row.avg_score>=76?'var(--success)':row.avg_score>=51?'var(--danger)':row.avg_score>=26?'var(--warning)':'var(--accent)',
                               }}>
                               {row.avg_score}
                             </div>
                           </div>
-                        ) : <span className="mono text-[10px] text-[#2E2E4E]">—</span>}
+                        ) : <span className="mono text-xs text-[#2E2E4E]">—</span>}
                       </td>
 
                       {/* Engagement */}
                       <td className="px-4 py-3">
-                        <span className="mono text-sm font-bold" style={{ color: (row.avg_engagement??0)>=5?'#00FF94':(row.avg_engagement??0)>=3?'#FFB800':'#4A4A6A' }}>
+                        <span className="mono text-sm font-bold" style={{ color: (row.avg_engagement??0)>=5?'var(--success)':(row.avg_engagement??0)>=3?'var(--warning)':'var(--text-muted)' }}>
                           {row.avg_engagement !== null ? `★${row.avg_engagement}` : '—'}
                         </span>
                       </td>
@@ -5873,48 +5873,48 @@ function TrafickerTab({
                       {/* Calificados */}
                       <td className="px-4 py-3">
                         <p className="mono text-sm font-bold" style={{ color: '#C084FC' }}>{row.qualified_leads}</p>
-                        <p className="mono text-[9px] text-[#4A4A6A]">score ≥ 60</p>
+                        <p className="mono text-xs text-[var(--text-muted)]">score ≥ 60</p>
                       </td>
 
                       {/* Quiz */}
                       <td className="px-4 py-3">
-                        <p className="mono text-sm font-bold" style={{ color: row.quiz_rate>=50?'#00FF94':row.quiz_rate>=25?'#FFB800':'#4A4A6A' }}>
+                        <p className="mono text-sm font-bold" style={{ color: row.quiz_rate>=50?'var(--success)':row.quiz_rate>=25?'var(--warning)':'var(--text-muted)' }}>
                           {row.quiz_rate}%
                         </p>
-                        <p className="mono text-[9px] text-[#4A4A6A]">{row.quiz_completed} leads</p>
+                        <p className="mono text-xs text-[var(--text-muted)]">{row.quiz_completed} leads</p>
                       </td>
 
                       {/* Segmentos mini-bar */}
                       <td className="px-4 py-3">
                         <div className="flex h-2 w-20 rounded-full overflow-hidden gap-px">
-                          {row.seg_listo    > 0 && <div style={{ flex: row.seg_listo,    background: '#00FF94' }} title={`Listo: ${row.seg_listo}`}/>}
-                          {row.seg_caliente > 0 && <div style={{ flex: row.seg_caliente, background: '#FF6B35' }} title={`Caliente: ${row.seg_caliente}`}/>}
-                          {row.seg_templado > 0 && <div style={{ flex: row.seg_templado, background: '#FFB800' }} title={`Templado: ${row.seg_templado}`}/>}
-                          {row.seg_frio     > 0 && <div style={{ flex: row.seg_frio,     background: '#00b0f6' }} title={`Frío: ${row.seg_frio}`}/>}
+                          {row.seg_listo    > 0 && <div style={{ flex: row.seg_listo,    background: 'var(--success)' }} title={`Listo: ${row.seg_listo}`}/>}
+                          {row.seg_caliente > 0 && <div style={{ flex: row.seg_caliente, background: 'var(--danger)' }} title={`Caliente: ${row.seg_caliente}`}/>}
+                          {row.seg_templado > 0 && <div style={{ flex: row.seg_templado, background: 'var(--warning)' }} title={`Templado: ${row.seg_templado}`}/>}
+                          {row.seg_frio     > 0 && <div style={{ flex: row.seg_frio,     background: 'var(--accent)' }} title={`Frío: ${row.seg_frio}`}/>}
                         </div>
-                        <p className="mono text-[8px] text-[#4A4A6A] mt-1">
-                          {row.seg_listo > 0 && <span style={{ color: '#00FF94' }}>{row.seg_listo}L </span>}
-                          {row.seg_caliente > 0 && <span style={{ color: '#FF6B35' }}>{row.seg_caliente}C </span>}
-                          {row.seg_templado > 0 && <span style={{ color: '#FFB800' }}>{row.seg_templado}T </span>}
-                          {row.seg_frio > 0 && <span style={{ color: '#00b0f6' }}>{row.seg_frio}F</span>}
+                        <p className="mono text-[8px] text-[var(--text-muted)] mt-1">
+                          {row.seg_listo > 0 && <span style={{ color: 'var(--success)' }}>{row.seg_listo}L </span>}
+                          {row.seg_caliente > 0 && <span style={{ color: 'var(--danger)' }}>{row.seg_caliente}C </span>}
+                          {row.seg_templado > 0 && <span style={{ color: 'var(--warning)' }}>{row.seg_templado}T </span>}
+                          {row.seg_frio > 0 && <span style={{ color: 'var(--accent)' }}>{row.seg_frio}F</span>}
                         </p>
                       </td>
 
                       {/* Dolor top */}
                       <td className="px-4 py-3 max-w-[160px]">
                         {row.top_dolor ? (
-                          <p className="text-[11px] text-[#E0E0F0] truncate" title={row.top_dolor}>{row.top_dolor}</p>
+                          <p className="text-[11px] text-[var(--text-primary)] truncate" title={row.top_dolor}>{row.top_dolor}</p>
                         ) : (
-                          <span className="mono text-[9px] text-[#2E2E4E]">sin datos</span>
+                          <span className="mono text-xs text-[#2E2E4E]">sin datos</span>
                         )}
                       </td>
 
                       {/* CPL estimado */}
                       <td className="px-4 py-3">
                         {row.cpl !== null ? (
-                          <p className="mono text-sm font-bold text-[#FFB800]">${row.cpl}</p>
+                          <p className="mono text-sm font-bold text-[var(--warning)]">${row.cpl}</p>
                         ) : (
-                          <span className="mono text-[9px] text-[#2E2E4E]">sin presupuesto</span>
+                          <span className="mono text-xs text-[#2E2E4E]">sin presupuesto</span>
                         )}
                       </td>
 
@@ -5926,17 +5926,17 @@ function TrafickerTab({
           </div>
 
           {/* Footer de tabla */}
-          <div className="px-5 py-3 border-t border-[#1E1E2E] flex items-center justify-between"
-               style={{ background: '#0A0A0F' }}>
-            <p className="mono text-[9px] text-[#4A4A6A]">
+          <div className="px-5 py-3 border-t border-[var(--border-default)] flex items-center justify-between"
+               style={{ background: 'var(--bg-base)' }}>
+            <p className="mono text-xs text-[var(--text-muted)]">
               {filteredRows.reduce((a,r) => a+r.total_leads, 0)} leads · {filteredRows.length} anuncios
               {adBudget && ` · Presupuesto $${adBudget.toLocaleString()}`}
             </p>
             <div className="flex items-center gap-4">
               {(['listo','caliente','templado','frio'] as const).map(s => (
                 <div key={s} className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ background: s==='listo'?'#00FF94':s==='caliente'?'#FF6B35':s==='templado'?'#FFB800':'#00b0f6' }}/>
-                  <span className="mono text-[9px] text-[#4A4A6A] capitalize">{s}</span>
+                  <div className="w-2 h-2 rounded-full" style={{ background: s==='listo'?'var(--success)':s==='caliente'?'var(--danger)':s==='templado'?'var(--warning)':'var(--accent)' }}/>
+                  <span className="mono text-xs text-[var(--text-muted)] capitalize">{s}</span>
                 </div>
               ))}
             </div>
@@ -5996,9 +5996,9 @@ function LeadMiniTimeline({
     calentando: 'Calent.', lives: 'Lives', clases: 'Clases', VIP: 'VIP', comprador: 'Comprador',
   }
   const STAGE_COLOR: Record<string, string> = {
-    nuevo: '#4A4A6A', descubrimiento: '#4A4A6A', perfilando_1: '#00b0f6',
-    perfilando_2: '#00b0f6', perfilando_3: '#00b0f6', perfil_completo: '#0014ad',
-    calentando: '#FFB800', lives: '#00FF94', clases: '#00FF94', VIP: '#C084FC', comprador: '#00FF94',
+    nuevo: 'var(--text-muted)', descubrimiento: 'var(--text-muted)', perfilando_1: 'var(--accent)',
+    perfilando_2: 'var(--accent)', perfilando_3: 'var(--accent)', perfil_completo: 'var(--primary)',
+    calentando: 'var(--warning)', lives: 'var(--success)', clases: 'var(--success)', VIP: '#C084FC', comprador: 'var(--success)',
   }
 
   const sorted = [...rows]
@@ -6009,7 +6009,7 @@ function LeadMiniTimeline({
 
   return (
     <div>
-      <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">
+      <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">
         ACTIVIDAD RECIENTE — {rows.length} LEADS
       </p>
       <div className="space-y-0">
@@ -6031,44 +6031,44 @@ function LeadMiniTimeline({
               {/* Línea de tiempo */}
               <div className="flex flex-col items-center flex-shrink-0 w-6 pt-1.5">
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ background: lead ? '#00b0f6' : '#2A2A3A', border: '1px solid #1E1E2E' }}/>
-                {!isLast && <div className="w-px flex-1 mt-1" style={{ background: '#1E1E2E', minHeight: '16px' }}/>}
+                  style={{ background: lead ? 'var(--accent)' : '#2A2A3A', border: '1px solid var(--border-default)' }}/>
+                {!isLast && <div className="w-px flex-1 mt-1" style={{ background: 'var(--border-default)', minHeight: '16px' }}/>}
               </div>
 
               {/* Contenido del evento */}
               <div className={`flex items-center gap-2 flex-1 py-1.5 ${!isLast ? 'pb-2' : ''}`}>
                 {/* Avatar */}
                 <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mono text-[8px] font-bold"
-                  style={{ background: lead ? '#0014ad20' : '#1E1E2E', color: lead ? '#00b0f6' : '#4A4A6A', border: `1px solid ${lead ? '#0014ad40' : '#2A2A3A'}` }}>
+                  style={{ background: lead ? 'var(--primary)20' : 'var(--border-default)', color: lead ? 'var(--accent)' : 'var(--text-muted)', border: `1px solid ${lead ? 'var(--primary)40' : '#2A2A3A'}` }}>
                   {initials}
                 </div>
 
                 {/* Nombre / teléfono */}
                 <div className="flex-1 min-w-0">
-                  <span className="text-[11px] font-medium text-[#E0E0F0] truncate block">
+                  <span className="text-[11px] font-medium text-[var(--text-primary)] truncate block">
                     {lead?.name || row.phone_number}
                   </span>
                   {lead?.name && (
-                    <span className="mono text-[9px] text-[#2E2E4E] truncate block">{row.phone_number}</span>
+                    <span className="mono text-xs text-[#2E2E4E] truncate block">{row.phone_number}</span>
                   )}
                 </div>
 
                 {/* Tiempo relativo */}
-                <span className="mono text-[9px] text-[#4A4A6A] flex-shrink-0">
+                <span className="mono text-xs text-[var(--text-muted)] flex-shrink-0">
                   {timeAgo(row.registered_at)}
                 </span>
 
                 {/* Badge Quiz */}
                 <span className="mono text-[8px] px-1.5 py-0.5 rounded flex-shrink-0"
                   style={hasQuiz
-                    ? { color: '#00FF94', background: '#00FF9415', border: '1px solid #00FF9430' }
-                    : { color: '#2E2E4E', background: '#1E1E2E', border: '1px solid #2A2A3A' }}>
+                    ? { color: 'var(--success)', background: 'var(--success)15', border: '1px solid var(--success)30' }
+                    : { color: '#2E2E4E', background: 'var(--border-default)', border: '1px solid #2A2A3A' }}>
                   {hasQuiz ? 'QUIZ ✓' : 'sin quiz'}
                 </span>
 
                 {/* Badge Score */}
                 {score > 0 && (
-                  <span className="mono text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+                  <span className="mono text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0"
                     style={{ color: scoreColor, background: `${scoreColor}15`, border: `1px solid ${scoreColor}30` }}>
                     {score}
                   </span>
@@ -6077,7 +6077,7 @@ function LeadMiniTimeline({
                 {/* Badge Stage */}
                 {stage && (
                   <span className="mono text-[8px] px-1.5 py-0.5 rounded flex-shrink-0"
-                    style={{ color: STAGE_COLOR[stage] || '#4A4A6A', background: `${STAGE_COLOR[stage] || '#4A4A6A'}15` }}>
+                    style={{ color: STAGE_COLOR[stage] || 'var(--text-muted)', background: `${STAGE_COLOR[stage] || 'var(--text-muted)'}15` }}>
                     {STAGE_LABELS[stage] || stage}
                   </span>
                 )}
@@ -6091,7 +6091,7 @@ function LeadMiniTimeline({
           )
         })}
         {rows.length > 6 && (
-          <p className="mono text-[9px] text-[#2E2E4E] pl-9 pt-1">
+          <p className="mono text-xs text-[#2E2E4E] pl-9 pt-1">
             +{rows.length - 6} leads más en esta campaña
           </p>
         )}
@@ -6239,7 +6239,7 @@ function FuentesTab({
   }
 
   const sourcePlatformColor = (p: string|null) =>
-    p === 'facebook' || p === 'ghl' ? '#00b0f6' : p === 'instagram' ? '#C084FC' : '#4A4A6A'
+    p === 'facebook' || p === 'ghl' ? 'var(--accent)' : p === 'instagram' ? '#C084FC' : 'var(--text-muted)'
 
   // AT3a: Set de teléfonos con quiz completado (O(1) lookup en LeadMiniTimeline)
   const quizPhones = useMemo(() => new Set(quizResponses.map(q => q.phone_number)), [quizResponses])
@@ -6256,19 +6256,19 @@ function FuentesTab({
     const objective = metaCampaignMap[key]
     if (!objective) {
       return (
-        <span className="mono text-[9px] px-2 py-0.5 rounded-full"
-          style={{ color: '#4A4A6A', background: '#4A4A6A18', border: '1px solid #4A4A6A30' }}>
+        <span className="mono text-xs px-2 py-0.5 rounded-full"
+          style={{ color: 'var(--text-muted)', background: 'var(--text-muted)18', border: '1px solid var(--text-muted)30' }}>
           Orgánico
         </span>
       )
     }
-    const color = objective === 'LEAD_GENERATION' || objective === 'OUTCOME_LEADS' ? '#00b0f6'
-      : objective === 'MESSAGES' ? '#00FF94'
-      : objective === 'CONVERSIONS' ? '#FFB800'
-      : '#00b0f6'
+    const color = objective === 'LEAD_GENERATION' || objective === 'OUTCOME_LEADS' ? 'var(--accent)'
+      : objective === 'MESSAGES' ? 'var(--success)'
+      : objective === 'CONVERSIONS' ? 'var(--warning)'
+      : 'var(--accent)'
     const label = OBJECTIVE_LABELS_F[objective] || objective
     return (
-      <span className="mono text-[9px] px-2 py-0.5 rounded-full"
+      <span className="mono text-xs px-2 py-0.5 rounded-full"
         style={{ color, background: `${color}10`, border: `1px solid ${color}30` }}>
         {label}
       </span>
@@ -6313,7 +6313,7 @@ function FuentesTab({
   
   if (loading) return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#00b0f6', borderTopColor: 'transparent' }}/>
+      <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}/>
     </div>
   )
 
@@ -6322,48 +6322,48 @@ function FuentesTab({
       {/* Header stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'TOTAL LEADS', value: totals.leads, color: '#00b0f6' },
-          { label: 'LEADS CALIENTES', value: totals.calientes, sub: totals.leads > 0 ? `${Math.round((totals.calientes/totals.leads)*100)}%` : '0%', color: '#FF6B35' },
-          { label: 'COMPRADORES', value: totals.compradores, sub: totals.leads > 0 ? `${Math.round((totals.compradores/totals.leads)*100)}% conv.` : '—', color: '#00FF94' },
-          { label: 'FUENTES ACTIVAS', value: groups.length, color: '#FFB800' },
+          { label: 'TOTAL LEADS', value: totals.leads, color: 'var(--accent)' },
+          { label: 'LEADS CALIENTES', value: totals.calientes, sub: totals.leads > 0 ? `${Math.round((totals.calientes/totals.leads)*100)}%` : '0%', color: 'var(--danger)' },
+          { label: 'COMPRADORES', value: totals.compradores, sub: totals.leads > 0 ? `${Math.round((totals.compradores/totals.leads)*100)}% conv.` : '—', color: 'var(--success)' },
+          { label: 'FUENTES ACTIVAS', value: groups.length, color: 'var(--warning)' },
         ].map(m => (
-          <div key={m.label} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
-            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-1">{m.label}</p>
+          <div key={m.label} className="rounded-xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-card)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-1">{m.label}</p>
             <div className="flex items-end gap-2">
               <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
-              {m.sub && <p className="mono text-[10px] text-[#4A4A6A] mb-1">{m.sub}</p>}
+              {m.sub && <p className="mono text-xs text-[var(--text-muted)] mb-1">{m.sub}</p>}
             </div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
-        <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between">
+      <div className="rounded-xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-card)' }}>
+        <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
           <div>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">FUENTES DE TRÁFICO</p>
-            {activeProject && <p className="text-sm font-medium text-[#E0E0F0] mt-0.5">{activeProject.name}</p>}
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">FUENTES DE TRÁFICO</p>
+            {activeProject && <p className="text-sm font-medium text-[var(--text-primary)] mt-0.5">{activeProject.name}</p>}
           </div>
           {!adBudget && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#FFB80030] bg-[#FFB80008]">
-              <AlertCircle size={10} style={{ color: '#FFB800' }}/>
-              <span className="mono text-[9px] text-[#4A4A6A]">CPL/CPV disponible con presupuesto de ads configurado</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--warning)30] bg-[var(--warning)08]">
+              <AlertCircle size={10} style={{ color: 'var(--warning)' }}/>
+              <span className="mono text-xs text-[var(--text-muted)]">CPL/CPV disponible con presupuesto de ads configurado</span>
             </div>
           )}
         </div>
         {groups.length === 0 ? (
           <div className="px-5 py-16 text-center">
             <TrendingUp size={24} className="text-[#2A2A3A] mx-auto mb-3"/>
-            <p className="text-[#4A4A6A] text-sm">Sin datos UTM registrados aún</p>
-            <p className="mono text-[10px] text-[#2A2A4A] mt-1">Los UTMs se capturan cuando un lead llega desde una landing con parámetros</p>
+            <p className="text-[var(--text-muted)] text-sm">Sin datos UTM registrados aún</p>
+            <p className="mono text-xs text-[#2A2A4A] mt-1">Los UTMs se capturan cuando un lead llega desde una landing con parámetros</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#1E1E2E]">
+                <tr className="border-b border-[var(--border-default)]">
                   {['CAMPAÑA','FUENTE','ANUNCIO','LEADS','CALIENTES','COMPRADORES','SCORE PROM','CPL EST.','CPV EST.','OBJETIVO',''].map(h => (
-                    <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest font-normal whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left mono text-xs text-[var(--text-muted)] tracking-widest font-normal whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -6384,13 +6384,13 @@ function FuentesTab({
 
                   const FunnelBar = ({ label, value, color }: { label: string; value: number; color: string }) => (
                     <div className="flex items-center gap-3">
-                      <span className="mono text-[9px] text-[#4A4A6A] w-28 flex-shrink-0 tracking-widest">{label}</span>
-                      <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1E1E2E' }}>
+                      <span className="mono text-xs text-[var(--text-muted)] w-28 flex-shrink-0 tracking-widest">{label}</span>
+                      <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--border-default)' }}>
                         <div className="h-full rounded-full transition-all duration-700"
                           style={{ width: total > 0 ? `${Math.round((value / total) * 100)}%` : '0%', background: color }}/>
                       </div>
-                      <span className="mono text-[10px] font-bold w-6 text-right" style={{ color }}>{value}</span>
-                      <span className="mono text-[9px] text-[#4A4A6A] w-8 text-right">
+                      <span className="mono text-xs font-bold w-6 text-right" style={{ color }}>{value}</span>
+                      <span className="mono text-xs text-[var(--text-muted)] w-8 text-right">
                         {total > 0 ? `${Math.round((value / total) * 100)}%` : '0%'}
                       </span>
                     </div>
@@ -6400,55 +6400,55 @@ function FuentesTab({
                     <>
                       {/* ── Fila principal ── */}
                       <tr key={`row-${i}`}
-                        className="border-b border-[#1E1E2E] hover:bg-[#16161F] transition-colors cursor-pointer"
+                        className="border-b border-[var(--border-default)] hover:bg-[#16161F] transition-colors cursor-pointer"
                         onClick={() => toggleExpand(key)}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className={`w-4 h-4 rounded flex items-center justify-center transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
-                              style={{ background: '#1E1E2E' }}>
-                              <ChevronRight size={9} className="text-[#4A4A6A]"/>
+                              style={{ background: 'var(--border-default)' }}>
+                              <ChevronRight size={9} className="text-[var(--text-muted)]"/>
                             </div>
-                            <p className="text-sm font-medium text-[#E0E0F0]">{g.campaign}</p>
+                            <p className="text-sm font-medium text-[var(--text-primary)]">{g.campaign}</p>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="mono text-[10px] px-2 py-0.5 rounded-full"
+                          <span className="mono text-xs px-2 py-0.5 rounded-full"
                             style={{ color: sourcePlatformColor(g.source), background: `${sourcePlatformColor(g.source)}15` }}>
                             {g.source || '—'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="mono text-[10px] text-[#4A4A6A]">{g.content || '—'}</span>
+                          <span className="mono text-xs text-[var(--text-muted)]">{g.content || '—'}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="mono text-sm font-bold text-[#E0E0F0]">{g.totalLeads}</span>
+                          <span className="mono text-sm font-bold text-[var(--text-primary)]">{g.totalLeads}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="mono text-sm text-[#E0E0F0]">{g.calientes}</span>
-                            <span className="mono text-[10px]" style={{ color: g.calPct >= 40 ? '#00FF94' : g.calPct >= 20 ? '#FFB800' : '#FF6B35' }}>
+                            <span className="mono text-sm text-[var(--text-primary)]">{g.calientes}</span>
+                            <span className="mono text-xs" style={{ color: g.calPct >= 40 ? 'var(--success)' : g.calPct >= 20 ? 'var(--warning)' : 'var(--danger)' }}>
                               {g.calPct}%
                             </span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="mono text-sm text-[#E0E0F0]">{g.compradores}</span>
+                            <span className="mono text-sm text-[var(--text-primary)]">{g.compradores}</span>
                             {g.compradores > 0 && (
-                              <span className="mono text-[10px]" style={{ color: '#00FF94' }}>{g.convPct}%</span>
+                              <span className="mono text-xs" style={{ color: 'var(--success)' }}>{g.convPct}%</span>
                             )}
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           {g.avgKanshiScore > 0 ? (
                             <span className="mono text-sm font-bold"
-                              style={{ color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' }}>
+                              style={{ color: g.avgKanshiScore>=76?'var(--success)':g.avgKanshiScore>=51?'var(--danger)':g.avgKanshiScore>=26?'var(--warning)':'var(--accent)' }}>
                               {g.avgKanshiScore}
                             </span>
-                          ) : <span className="mono text-[10px] text-[#2E2E4E]">—</span>}
+                          ) : <span className="mono text-xs text-[#2E2E4E]">—</span>}
                         </td>
-                        <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? '#E0E0F0' : '#4A4A6A' }}>{cpl(g)}</td>
-                        <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? '#00FF94' : '#4A4A6A' }}>{cpv(g)}</td>
+                        <td className="px-4 py-3 mono text-sm" style={{ color: adBudget ? 'var(--text-primary)' : 'var(--text-muted)' }}>{cpl(g)}</td>
+                        <td className="px-4 py-3 mono text-sm" style={{ color: adBudget && g.compradores > 0 ? 'var(--success)' : 'var(--text-muted)' }}>{cpv(g)}</td>
                         {/* AT2: Columna OBJETIVO — match utm_campaign vs meta_ads_insights */}
                         <td className="px-4 py-3">
                           {objBadgeInFuentes(g.campaign)}
@@ -6456,41 +6456,41 @@ function FuentesTab({
                         <td className="px-4 py-3">
                           <button
                             onClick={e => { e.stopPropagation(); setSelectedGroup(g) }}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[#1E1E2E] hover:border-[#00b0f6] transition-colors group">
-                            <Eye size={10} className="text-[#4A4A6A] group-hover:text-[#00b0f6]"/>
-                            <span className="mono text-[9px] text-[#4A4A6A] group-hover:text-[#00b0f6]">leads</span>
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent)] transition-colors group">
+                            <Eye size={10} className="text-[var(--text-muted)] group-hover:text-[var(--accent)]"/>
+                            <span className="mono text-xs text-[var(--text-muted)] group-hover:text-[var(--accent)]">leads</span>
                           </button>
                         </td>
                       </tr>
 
                       {/* ── Panel expandible ── */}
                       {isExpanded && (
-                        <tr key={`funnel-${i}`} className="border-b border-[#1E1E2E]">
+                        <tr key={`funnel-${i}`} className="border-b border-[var(--border-default)]">
                           <td colSpan={11} className="px-6 py-5" style={{ background: '#0D0D14' }}>
                             <div className="space-y-5">
 
                               {/* Funnel + métricas */}
                               <div className="flex items-start gap-8">
                                 <div className="flex-1 space-y-2.5">
-                                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">EMBUDO DE CONVERSIÓN</p>
-                                  <FunnelBar label="REGISTRADOS"  value={total}         color="#00b0f6"/>
-                                  <FunnelBar label="SAM ACTIVOS"  value={samActivos}    color="#0014ad"/>
-                                  <FunnelBar label="CALIFICADOS"  value={calificados}   color="#FFB800"/>
-                                  <FunnelBar label="SCORE ≥ 70"   value={scoreAlto}     color="#FF6B35"/>
-                                  <FunnelBar label="COMPRADORES"  value={g.compradores} color="#00FF94"/>
+                                  <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">EMBUDO DE CONVERSIÓN</p>
+                                  <FunnelBar label="REGISTRADOS"  value={total}         color="var(--accent)"/>
+                                  <FunnelBar label="SAM ACTIVOS"  value={samActivos}    color="var(--primary)"/>
+                                  <FunnelBar label="CALIFICADOS"  value={calificados}   color="var(--warning)"/>
+                                  <FunnelBar label="SCORE ≥ 70"   value={scoreAlto}     color="var(--danger)"/>
+                                  <FunnelBar label="COMPRADORES"  value={g.compradores} color="var(--success)"/>
                                 </div>
                                 <div className="w-48 space-y-2 flex-shrink-0">
-                                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">MÉTRICAS</p>
+                                  <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">MÉTRICAS</p>
                                   {[
-                                    { label: 'ACTIVACIÓN SAM', value: total>0?`${Math.round((samActivos/total)*100)}%`:'—', color: '#00b0f6' },
-                                    { label: 'TASA CALIDAD',   value: total>0?`${Math.round((calificados/total)*100)}%`:'—', color: '#FFB800' },
-                                    { label: 'CPL EST.',       value: cpl(g), color: '#E0E0F0' },
-                                    { label: 'CPV EST.',       value: cpv(g), color: g.compradores>0?'#00FF94':'#4A4A6A' },
+                                    { label: 'ACTIVACIÓN SAM', value: total>0?`${Math.round((samActivos/total)*100)}%`:'—', color: 'var(--accent)' },
+                                    { label: 'TASA CALIDAD',   value: total>0?`${Math.round((calificados/total)*100)}%`:'—', color: 'var(--warning)' },
+                                    { label: 'CPL EST.',       value: cpl(g), color: 'var(--text-primary)' },
+                                    { label: 'CPV EST.',       value: cpv(g), color: g.compradores>0?'var(--success)':'var(--text-muted)' },
                                     { label: 'SCORE PROM.',    value: g.avgKanshiScore>0?`${g.avgKanshiScore}`:'—',
-                                      color: g.avgKanshiScore>=76?'#00FF94':g.avgKanshiScore>=51?'#FF6B35':g.avgKanshiScore>=26?'#FFB800':'#00b0f6' },
+                                      color: g.avgKanshiScore>=76?'var(--success)':g.avgKanshiScore>=51?'var(--danger)':g.avgKanshiScore>=26?'var(--warning)':'var(--accent)' },
                                   ].map(m => (
-                                    <div key={m.label} className="flex items-center justify-between py-1.5 border-b border-[#1E1E2E]">
-                                      <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">{m.label}</span>
+                                    <div key={m.label} className="flex items-center justify-between py-1.5 border-b border-[var(--border-default)]">
+                                      <span className="mono text-xs text-[var(--text-muted)] tracking-widest">{m.label}</span>
                                       <span className="mono text-[11px] font-bold" style={{ color: m.color }}>{m.value}</span>
                                     </div>
                                   ))}
@@ -6501,32 +6501,32 @@ function FuentesTab({
                               {(() => {
                                 const dist = buildQuizDistribution(g)
                                 if (dist.length === 0) return (
-                                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[#1E1E2E]" style={{ background: '#111118' }}>
-                                    <BookOpen size={11} style={{ color: '#4A4A6A' }}/>
-                                    <span className="mono text-[9px] text-[#4A4A6A] tracking-widest">
+                                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[var(--border-default)]" style={{ background: 'var(--bg-card)' }}>
+                                    <BookOpen size={11} style={{ color: 'var(--text-muted)' }}/>
+                                    <span className="mono text-xs text-[var(--text-muted)] tracking-widest">
                                       SIN DATOS DE QUIZ — los gráficos aparecen cuando lleguen respuestas del quiz de registro
                                     </span>
                                   </div>
                                 )
                                 return (
                                   <div>
-                                    <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">
+                                    <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">
                                       DISTRIBUCIÓN QUIZ DE REGISTRO — {dist[0]?.total} respuestas
                                     </p>
                                     <div className="grid grid-cols-2 gap-4">
                                       {dist.map((q, qi) => (
-                                        <div key={qi} className="rounded-xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
-                                          <p className="mono text-[9px] text-[#00b0f6] tracking-widest mb-3 truncate">{q.question}</p>
+                                        <div key={qi} className="rounded-xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-card)' }}>
+                                          <p className="mono text-xs text-[var(--accent)] tracking-widest mb-3 truncate">{q.question}</p>
                                           <div className="space-y-2">
                                             {q.data.map((d, di) => (
                                               <div key={di} className="flex items-center gap-2">
-                                                <span className="mono text-[9px] text-[#4A4A6A] w-32 truncate flex-shrink-0">{d.name}</span>
-                                                <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1E1E2E' }}>
+                                                <span className="mono text-xs text-[var(--text-muted)] w-32 truncate flex-shrink-0">{d.name}</span>
+                                                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--border-default)' }}>
                                                   <div className="h-full rounded-full transition-all duration-700"
-                                                    style={{ width:`${d.pct}%`, background: di===0?'#00b0f6':di===1?'#FFB800':di===2?'#FF6B35':'#4A4A6A' }}/>
+                                                    style={{ width:`${d.pct}%`, background: di===0?'var(--accent)':di===1?'var(--warning)':di===2?'var(--danger)':'var(--text-muted)' }}/>
                                                 </div>
-                                                <span className="mono text-[9px] font-bold w-7 text-right"
-                                                  style={{ color: di===0?'#00b0f6':di===1?'#FFB800':di===2?'#FF6B35':'#4A4A6A' }}>
+                                                <span className="mono text-xs font-bold w-7 text-right"
+                                                  style={{ color: di===0?'var(--accent)':di===1?'var(--warning)':di===2?'var(--danger)':'var(--text-muted)' }}>
                                                   {d.pct}%
                                                 </span>
                                               </div>
@@ -6588,38 +6588,38 @@ function CampaignLeadPanel({
 }) {
   return (
     <div className="fixed inset-0 z-[200] flex justify-end" onClick={onClose}>
-      <div className="w-full max-w-lg h-full border-l border-[#1E1E2E] overflow-y-auto"
+      <div className="w-full max-w-lg h-full border-l border-[var(--border-default)] overflow-y-auto"
         style={{ background: '#0D0D14', boxShadow: '-24px 0 80px rgba(0,0,0,0.7)', animation: 'slideInRight 0.2s ease' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#1E1E2E] sticky top-0 z-10" style={{ background: 'rgba(13,13,20,0.97)' }}>
+        <div className="px-6 py-5 border-b border-[var(--border-default)] sticky top-0 z-10" style={{ background: 'rgba(13,13,20,0.97)' }}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">LEADS DE CAMPAÑA</p>
-              <p className="font-bold text-[#E0E0F0] text-base mt-0.5 truncate">{group.campaign}</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">LEADS DE CAMPAÑA</p>
+              <p className="font-bold text-[var(--text-primary)] text-base mt-0.5 truncate">{group.campaign}</p>
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                 {group.source && (
-                  <span className="mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: '#00b0f6', background: '#00b0f620' }}>{group.source}</span>
+                  <span className="mono text-xs px-2 py-0.5 rounded-full" style={{ color: 'var(--accent)', background: 'var(--accent)20' }}>{group.source}</span>
                 )}
                 {group.content && (
-                  <span className="mono text-[9px] text-[#4A4A6A]">{group.content}</span>
+                  <span className="mono text-xs text-[var(--text-muted)]">{group.content}</span>
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-lg border border-[#1E1E2E] hover:border-[#FF6B35] transition-colors group ml-3 flex-shrink-0">
-              <X size={12} className="text-[#4A4A6A] group-hover:text-[#FF6B35]"/>
+            <button onClick={onClose} className="p-2 rounded-lg border border-[var(--border-default)] hover:border-[var(--danger)] transition-colors group ml-3 flex-shrink-0">
+              <X size={12} className="text-[var(--text-muted)] group-hover:text-[var(--danger)]"/>
             </button>
           </div>
           {/* Mini stats */}
           <div className="grid grid-cols-3 gap-2 mt-4">
             {[
-              { label: 'LEADS', value: group.totalLeads, color: '#00b0f6' },
-              { label: 'CALIENTES', value: `${group.calientes} (${group.calPct}%)`, color: '#FF6B35' },
-              { label: 'COMPRADORES', value: group.compradores, color: '#00FF94' },
+              { label: 'LEADS', value: group.totalLeads, color: 'var(--accent)' },
+              { label: 'CALIENTES', value: `${group.calientes} (${group.calPct}%)`, color: 'var(--danger)' },
+              { label: 'COMPRADORES', value: group.compradores, color: 'var(--success)' },
             ].map(s => (
-              <div key={s.label} className="rounded-lg border border-[#1E1E2E] p-2.5" style={{ background: '#111118' }}>
-                <p className="mono text-[8px] text-[#4A4A6A] tracking-widest">{s.label}</p>
+              <div key={s.label} className="rounded-lg border border-[var(--border-default)] p-2.5" style={{ background: 'var(--bg-card)' }}>
+                <p className="mono text-[8px] text-[var(--text-muted)] tracking-widest">{s.label}</p>
                 <p className="mono text-sm font-bold mt-0.5" style={{ color: s.color }}>{s.value}</p>
               </div>
             ))}
@@ -6627,7 +6627,7 @@ function CampaignLeadPanel({
         </div>
 
         {/* Lead list */}
-        <div className="divide-y divide-[#1E1E2E]">
+        <div className="divide-y divide-[var(--border-default)]">
           {group.rows.map((row, i) => {
             const lead = row.matched_contact_id ? leadMap[row.matched_contact_id] : null
             const name = row.first_name ? `${row.first_name} ${row.last_name || ''}`.trim() : row.phone_number
@@ -6638,13 +6638,13 @@ function CampaignLeadPanel({
                 onClick={onLeadClick ? () => onLeadClick(row.phone_number) : undefined}>
                 {/* Avatar */}
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: lead ? `${segColor(lead.segmento)}20` : '#1E1E2E' }}>
+                  style={{ background: lead ? `${segColor(lead.segmento)}20` : 'var(--border-default)' }}>
                   <User size={12} style={{ color: lead ? segColor(lead.segmento) : '#4A4A6A' }}/>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#E0E0F0] truncate">{name}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)] truncate">{name}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="mono text-[9px] text-[#4A4A6A]">{row.phone_number}</span>
+                    <span className="mono text-xs text-[var(--text-muted)]">{row.phone_number}</span>
                     {lead && lead.segmento && (
                       <span className="mono text-[8px] px-1.5 py-0.5 rounded-full" style={{ color: segColor(lead.segmento), background: `${segColor(lead.segmento)}15` }}>
                         {lead.segmento}
@@ -6656,10 +6656,10 @@ function CampaignLeadPanel({
                   {lead ? (
                     <StagePill stage={lead.agent_stage}/>
                   ) : (
-                    <span className="mono text-[9px] text-[#2A2A4A]">sin match</span>
+                    <span className="mono text-xs text-[#2A2A4A]">sin match</span>
                   )}
                 {(lead?.engagement_score ?? 0) > 0 && (
-                    <span className="mono text-[9px] font-bold" style={{ color: scoreColor(lead!.engagement_score) }}>★{lead!.engagement_score}</span>
+                    <span className="mono text-xs font-bold" style={{ color: scoreColor(lead!.engagement_score) }}>★{lead!.engagement_score}</span>
                   )}
                 </div>
               </div>
@@ -6759,37 +6759,37 @@ function HotmartImportSection({
   }
 
   return (
-    <div className="rounded-2xl border overflow-hidden" style={{ background: '#111118', borderColor: '#FFB800' }}>
+    <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--warning)' }}>
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between"
+      <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between"
            style={{ background: 'rgba(255,184,0,0.05)' }}>
         <div>
-          <p className="mono text-[10px] tracking-widest font-bold" style={{ color: '#FFB800' }}>
+          <p className="mono text-xs tracking-widest font-bold" style={{ color: 'var(--warning)' }}>
             COMPRADORES HOTMART
           </p>
-          <p className="text-xs text-[#E0E0F0] mt-0.5">
+          <p className="text-xs text-[var(--text-primary)] mt-0.5">
             Importa historial de ventas · Meta CAPI retroactivo automático
           </p>
         </div>
         {stats && stats.total > 0 && (
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">IMPORTADOS</p>
-              <p className="text-sm font-bold" style={{ color: '#FFB800' }}>{stats.total.toLocaleString()}</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">IMPORTADOS</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--warning)' }}>{stats.total.toLocaleString()}</p>
             </div>
             <div className="text-right">
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">MATCH WA</p>
-              <p className="text-sm font-bold" style={{ color: stats.match_rate >= 50 ? '#00FF94' : '#00b0f6' }}>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">MATCH WA</p>
+              <p className="text-sm font-bold" style={{ color: stats.match_rate >= 50 ? 'var(--success)' : 'var(--accent)' }}>
                 {stats.match_rate}%
               </p>
             </div>
             <div className="text-right">
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">CAPI ENVIADO</p>
-              <p className="text-sm font-bold text-[#E0E0F0]">{stats.capi_sent}</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">CAPI ENVIADO</p>
+              <p className="text-sm font-bold text-[var(--text-primary)]">{stats.capi_sent}</p>
             </div>
             <div className="text-right">
-              <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">REVENUE HIST.</p>
-              <p className="text-sm font-bold" style={{ color: '#00FF94' }}>${stats.total_revenue.toLocaleString()}</p>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">REVENUE HIST.</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--success)' }}>${stats.total_revenue.toLocaleString()}</p>
             </div>
           </div>
         )}
@@ -6804,7 +6804,7 @@ function HotmartImportSection({
           onClick={() => fileRef.current?.click()}
           className="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition-all py-10"
           style={{
-            borderColor: dragging ? '#FFB800' : '#2E2E4E',
+            borderColor: dragging ? 'var(--warning)' : '#2E2E4E',
             background: dragging ? 'rgba(255,184,0,0.05)' : 'transparent',
           }}
         >
@@ -6812,32 +6812,32 @@ function HotmartImportSection({
 
           {importing ? (
             <>
-              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#FFB800' }}/>
-              <p className="mono text-[11px] text-[#4A4A6A] tracking-widest">PROCESANDO CSV...</p>
-              <p className="text-xs text-[#4A4A6A]">Normalizando teléfonos · Deduplicando · Enviando CAPI</p>
+              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--warning)' }}/>
+              <p className="mono text-[11px] text-[var(--text-muted)] tracking-widest">PROCESANDO CSV...</p>
+              <p className="text-xs text-[var(--text-muted)]">Normalizando teléfonos · Deduplicando · Enviando CAPI</p>
             </>
           ) : (
             <>
               <div className="w-12 h-12 rounded-2xl border border-[#2E2E4E] flex items-center justify-center"
-                   style={{ background: '#0A0A0F' }}>
-                <Upload size={20} style={{ color: '#FFB800' }}/>
+                   style={{ background: 'var(--bg-base)' }}>
+                <Upload size={20} style={{ color: 'var(--warning)' }}/>
               </div>
               <div className="text-center">
-                <p className="text-sm font-bold text-[#E0E0F0]">
+                <p className="text-sm font-bold text-[var(--text-primary)]">
                   {dragging ? 'Suelta el archivo aquí' : 'Arrastra tu CSV de Hotmart'}
                 </p>
-                <p className="mono text-[10px] text-[#4A4A6A] mt-1">
+                <p className="mono text-xs text-[var(--text-muted)] mt-1">
                   o haz clic para seleccionar · Solo Aprobado + Completo se importan
                 </p>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#2E2E4E] mono text-[10px] text-[#4A4A6A]">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#2E2E4E] mono text-xs text-[var(--text-muted)]">
                 <span>Exportar desde Hotmart</span>
                 <span>→</span>
                 <span>Ventas</span>
                 <span>→</span>
                 <span>Historial de Transacciones</span>
                 <span>→</span>
-                <span style={{ color: '#FFB800' }}>Exportar CSV</span>
+                <span style={{ color: 'var(--warning)' }}>Exportar CSV</span>
               </div>
             </>
           )}
@@ -6845,35 +6845,35 @@ function HotmartImportSection({
 
         {/* Resultado de la importación */}
         {result && (
-          <div className="mt-4 rounded-xl border border-[#1E1E2E] p-4 space-y-3" style={{ background: '#0A0A0F' }}>
+          <div className="mt-4 rounded-xl border border-[var(--border-default)] p-4 space-y-3" style={{ background: 'var(--bg-base)' }}>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse"/>
-              <p className="mono text-[10px] text-[#00FF94] tracking-widest font-bold">IMPORTACIÓN COMPLETADA</p>
+              <div className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse"/>
+              <p className="mono text-xs text-[var(--success)] tracking-widest font-bold">IMPORTACIÓN COMPLETADA</p>
             </div>
             <div className="grid grid-cols-5 gap-3">
               {[
-                { label: 'CSV TOTAL',    value: result.total_csv,        color: '#E0E0F0' },
-                { label: 'VÁLIDOS',      value: result.valid_rows,       color: '#00b0f6' },
-                { label: 'IMPORTADOS',   value: result.inserted,         color: '#00FF94' },
-                { label: 'MATCH WA',     value: result.matched_contacts, color: '#FFB800' },
-                { label: 'DUPLICADOS',   value: result.skipped_dup,      color: '#4A4A6A' },
+                { label: 'CSV TOTAL',    value: result.total_csv,        color: 'var(--text-primary)' },
+                { label: 'VÁLIDOS',      value: result.valid_rows,       color: 'var(--accent)' },
+                { label: 'IMPORTADOS',   value: result.inserted,         color: 'var(--success)' },
+                { label: 'MATCH WA',     value: result.matched_contacts, color: 'var(--warning)' },
+                { label: 'DUPLICADOS',   value: result.skipped_dup,      color: 'var(--text-muted)' },
               ].map(s => (
-                <div key={s.label} className="text-center rounded-xl border border-[#1E1E2E] py-3" style={{ background: '#111118' }}>
+                <div key={s.label} className="text-center rounded-xl border border-[var(--border-default)] py-3" style={{ background: 'var(--bg-card)' }}>
                   <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
-                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mt-0.5">{s.label}</p>
+                  <p className="mono text-xs text-[var(--text-muted)] tracking-widest mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>
             {result.capi_sent > 0 && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(0,176,246,0.08)', border: '1px solid rgba(0,176,246,0.2)' }}>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00b0f6]"/>
-                <p className="mono text-[10px] text-[#00b0f6]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"/>
+                <p className="mono text-xs text-[var(--accent)]">
                   {result.capi_sent} eventos Purchase enviados a Meta CAPI con fecha histórica retroactiva
                 </p>
               </div>
             )}
             {result.skipped_no_phone > 0 && (
-              <p className="mono text-[9px] text-[#4A4A6A]">
+              <p className="mono text-xs text-[var(--text-muted)]">
                 ⚠ {result.skipped_no_phone} filas omitidas por teléfono inválido o vacío
               </p>
             )}
@@ -6928,10 +6928,10 @@ function BuyerAnalysisPanel({
 
           // Segmentos
           const segMap: Record<string, { label: string; color: string }> = {
-            frio:     { label: 'Frío',     color: '#00b0f6' },
-            templado: { label: 'Templado', color: '#FFB800' },
-            caliente: { label: 'Caliente', color: '#FF6B35' },
-            fuego:    { label: 'Fuego',    color: '#FF6B35' },
+            frio:     { label: 'Frío',     color: 'var(--accent)' },
+            templado: { label: 'Templado', color: 'var(--warning)' },
+            caliente: { label: 'Caliente', color: 'var(--danger)' },
+            fuego:    { label: 'Fuego',    color: 'var(--danger)' },
           }
           const segCounts: Record<string, number> = {}
           buyerRows.forEach(b => {
@@ -6940,7 +6940,7 @@ function BuyerAnalysisPanel({
           })
           setScoreDistribution(
             Object.entries(segCounts)
-              .map(([seg, count]) => ({ segment: segMap[seg]?.label || seg, count, color: segMap[seg]?.color || '#4A4A6A' }))
+              .map(([seg, count]) => ({ segment: segMap[seg]?.label || seg, count, color: segMap[seg]?.color || 'var(--text-muted)' }))
               .sort((a, b) => b.count - a.count)
           )
 
@@ -6993,22 +6993,22 @@ function BuyerAnalysisPanel({
   const capiPct = stats.total > 0 ? Math.round((stats.capi_sent / stats.total) * 100) : 0
 
   return (
-    <div className="rounded-2xl border overflow-hidden" style={{ background: '#111118', borderColor: '#0014ad' }}>
+    <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--primary)' }}>
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between"
+      <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between"
            style={{ background: 'rgba(0,20,173,0.07)' }}>
         <div>
-          <p className="mono text-[10px] tracking-widest font-bold" style={{ color: '#00b0f6' }}>
+          <p className="mono text-xs tracking-widest font-bold" style={{ color: 'var(--accent)' }}>
             ANÁLISIS DE COMPRADORES
           </p>
-          <p className="text-xs text-[#E0E0F0] mt-0.5">
+          <p className="text-xs text-[var(--text-primary)] mt-0.5">
             Avatar del comprador real · Quiz × historial Hotmart
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
              style={{ background: 'rgba(0,176,246,0.08)', border: '1px solid rgba(0,176,246,0.2)' }}>
-          <Brain size={12} style={{ color: '#00b0f6' }}/>
-          <span className="mono text-[10px] text-[#00b0f6]">{stats.matched} leads identificados</span>
+          <Brain size={12} style={{ color: 'var(--accent)' }}/>
+          <span className="mono text-xs text-[var(--accent)]">{stats.matched} leads identificados</span>
         </div>
       </div>
 
@@ -7018,77 +7018,77 @@ function BuyerAnalysisPanel({
         <div className="grid grid-cols-4 gap-4">
 
           {/* Match Rate */}
-          <div className="rounded-2xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#0A0A0F' }}>
-            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">MATCH WA</p>
-            <p className="text-2xl font-bold" style={{ color: stats.match_rate >= 50 ? '#00FF94' : '#00b0f6' }}>
+          <div className="rounded-2xl border border-[var(--border-default)] p-4 space-y-2" style={{ background: 'var(--bg-base)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">MATCH WA</p>
+            <p className="text-2xl font-bold" style={{ color: stats.match_rate >= 50 ? 'var(--success)' : 'var(--accent)' }}>
               {stats.match_rate}%
             </p>
-            <div className="h-1.5 rounded-full bg-[#1E1E2E]">
+            <div className="h-1.5 rounded-full bg-[var(--border-default)]">
               <div className="h-1.5 rounded-full transition-all"
-                   style={{ width: `${Math.min(stats.match_rate, 100)}%`, background: stats.match_rate >= 50 ? '#00FF94' : '#00b0f6' }}/>
+                   style={{ width: `${Math.min(stats.match_rate, 100)}%`, background: stats.match_rate >= 50 ? 'var(--success)' : 'var(--accent)' }}/>
             </div>
-            <p className="mono text-[9px] text-[#4A4A6A]">{stats.matched} de {stats.total} compradores</p>
+            <p className="mono text-xs text-[var(--text-muted)]">{stats.matched} de {stats.total} compradores</p>
           </div>
 
           {/* Avg KANSHI Score */}
-          <div className="rounded-2xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#0A0A0F' }}>
-            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">SCORE PROMEDIO</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-4 space-y-2" style={{ background: 'var(--bg-base)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">SCORE PROMEDIO</p>
             {loadingInsights ? (
-              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin mt-1" style={{ borderColor: '#0014ad' }}/>
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin mt-1" style={{ borderColor: 'var(--primary)' }}/>
             ) : avgScore !== null ? (
               <>
                 <p className="text-2xl font-bold" style={{ color: scoreColor(avgScore) }}>{avgScore}</p>
-                <div className="h-1.5 rounded-full bg-[#1E1E2E]">
+                <div className="h-1.5 rounded-full bg-[var(--border-default)]">
                   <div className="h-1.5 rounded-full" style={{ width: `${avgScore}%`, background: scoreColor(avgScore) }}/>
                 </div>
-                <p className="mono text-[9px] text-[#4A4A6A]">KANSHI Score compradores</p>
+                <p className="mono text-xs text-[var(--text-muted)]">KANSHI Score compradores</p>
               </>
             ) : (
-              <p className="mono text-[10px] text-[#4A4A6A] pt-1">Sin match WA</p>
+              <p className="mono text-xs text-[var(--text-muted)] pt-1">Sin match WA</p>
             )}
           </div>
 
           {/* CAPI Coverage */}
-          <div className="rounded-2xl border border-[#1E1E2E] p-4 space-y-2" style={{ background: '#0A0A0F' }}>
-            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">COBERTURA CAPI</p>
-            <p className="text-2xl font-bold text-[#E0E0F0]">{capiPct}%</p>
-            <div className="h-1.5 rounded-full bg-[#1E1E2E]">
-              <div className="h-1.5 rounded-full bg-[#00b0f6]" style={{ width: `${capiPct}%` }}/>
+          <div className="rounded-2xl border border-[var(--border-default)] p-4 space-y-2" style={{ background: 'var(--bg-base)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest">COBERTURA CAPI</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{capiPct}%</p>
+            <div className="h-1.5 rounded-full bg-[var(--border-default)]">
+              <div className="h-1.5 rounded-full bg-[var(--accent)]" style={{ width: `${capiPct}%` }}/>
             </div>
-            <p className="mono text-[9px] text-[#4A4A6A]">{stats.capi_sent} eventos Meta enviados</p>
+            <p className="mono text-xs text-[var(--text-muted)]">{stats.capi_sent} eventos Meta enviados</p>
           </div>
 
           {/* Segmentos */}
-          <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
-            <p className="mono text-[9px] text-[#4A4A6A] tracking-widest mb-3">SEGMENTOS</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-base)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-3">SEGMENTOS</p>
             {loadingInsights ? (
-              <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0014ad' }}/>
+              <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--primary)' }}/>
             ) : scoreDistribution.length > 0 ? (
               <div className="space-y-2">
                 {scoreDistribution.map(s => (
                   <div key={s.segment} className="flex items-center justify-between">
-                    <span className="mono text-[9px] text-[#4A4A6A]">{s.segment}</span>
-                    <span className="mono text-[10px] font-bold" style={{ color: s.color }}>{s.count}</span>
+                    <span className="mono text-xs text-[var(--text-muted)]">{s.segment}</span>
+                    <span className="mono text-xs font-bold" style={{ color: s.color }}>{s.count}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mono text-[9px] text-[#4A4A6A]">Sin datos score</p>
+              <p className="mono text-xs text-[var(--text-muted)]">Sin datos score</p>
             )}
           </div>
         </div>
 
         {/* Chart Campañas */}
         {campaignData.length > 0 && (
-          <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
-            <p className="mono text-[10px] text-[#4A4A6A] tracking-widest mb-4">COMPRADORES POR CAMPAÑA</p>
+          <div className="rounded-2xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-base)' }}>
+            <p className="mono text-xs text-[var(--text-muted)] tracking-widest mb-4">COMPRADORES POR CAMPAÑA</p>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={campaignData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" tick={{ fill: '#4A4A6A', fontSize: 9, fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
-                <YAxis tick={{ fill: '#4A4A6A', fontSize: 9 }} axisLine={false} tickLine={false}/>
+                <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 9, fontFamily: 'monospace' }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false}/>
                 <Tooltip
-                  contentStyle={{ background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8, fontSize: 11 }}
-                  labelStyle={{ color: '#E0E0F0' }}
+                  contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 8, fontSize: 11 }}
+                  labelStyle={{ color: 'var(--text-primary)' }}
                   formatter={(value: number, name: string) => [
                     name === 'sales' ? `${value} compradores` : `$${value.toLocaleString()}`,
                     name === 'sales' ? 'Ventas' : 'Revenue'
@@ -7100,12 +7100,12 @@ function BuyerAnalysisPanel({
             </ResponsiveContainer>
             <div className="flex items-center gap-5 mt-2">
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-sm" style={{ background: '#0014ad' }}/>
-                <span className="mono text-[9px] text-[#4A4A6A]">VENTAS</span>
+                <div className="w-2 h-2 rounded-sm" style={{ background: 'var(--primary)' }}/>
+                <span className="mono text-xs text-[var(--text-muted)]">VENTAS</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-sm" style={{ background: '#00b0f6' }}/>
-                <span className="mono text-[9px] text-[#4A4A6A]">REVENUE</span>
+                <div className="w-2 h-2 rounded-sm" style={{ background: 'var(--accent)' }}/>
+                <span className="mono text-xs text-[var(--text-muted)]">REVENUE</span>
               </div>
             </div>
           </div>
@@ -7113,23 +7113,23 @@ function BuyerAnalysisPanel({
 
         {/* Quiz Insights */}
         {!loadingInsights && quizInsights.length > 0 && (
-          <div className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#0A0A0F' }}>
+          <div className="rounded-2xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-base)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen size={12} style={{ color: '#00b0f6' }}/>
-              <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">
+              <BookOpen size={12} style={{ color: 'var(--accent)' }}/>
+              <p className="mono text-xs text-[var(--text-muted)] tracking-widest">
                 TOP RESPUESTAS QUIZ — COMPRADORES REALES
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {quizInsights.map((insight, i) => (
-                <div key={i} className="rounded-xl border border-[#1E1E2E] p-3" style={{ background: '#111118' }}>
-                  <p className="mono text-[9px] text-[#4A4A6A] tracking-widest truncate mb-1">
+                <div key={i} className="rounded-xl border border-[var(--border-default)] p-3" style={{ background: 'var(--bg-card)' }}>
+                  <p className="mono text-xs text-[var(--text-muted)] tracking-widest truncate mb-1">
                     {insight.key.replace(/_/g, ' ').toUpperCase().slice(0, 28)}
                   </p>
-                  <p className="text-xs font-bold text-[#E0E0F0] truncate">{insight.value}</p>
+                  <p className="text-xs font-bold text-[var(--text-primary)] truncate">{insight.value}</p>
                   <div className="flex items-center gap-1 mt-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]"/>
-                    <span className="mono text-[9px] text-[#00FF94]">{insight.count} compradores</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)]"/>
+                    <span className="mono text-xs text-[var(--success)]">{insight.count} compradores</span>
                   </div>
                 </div>
               ))}
@@ -7139,8 +7139,8 @@ function BuyerAnalysisPanel({
 
         {loadingInsights && (
           <div className="flex items-center justify-center py-6 gap-2">
-            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0014ad' }}/>
-            <p className="mono text-[10px] text-[#4A4A6A]">Analizando perfil de compradores...</p>
+            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--primary)' }}/>
+            <p className="mono text-xs text-[var(--text-muted)]">Analizando perfil de compradores...</p>
           </div>
         )}
       </div>
@@ -7244,11 +7244,11 @@ function VentasTab({
   const revenuePct = salesGoal > 0 && project?.product_price
     ? Math.min(100, ((metrics?.total_revenue ?? 0) / (salesGoal * project.product_price)) * 100) : 0
 
-  const segmentColor = (seg: string) => seg === 'fuego' ? '#FF6B35' : seg === 'caliente' ? '#FFB800' : seg === 'tibio' ? '#00b0f6' : '#4A4A6A'
+  const segmentColor = (seg: string) => seg === 'fuego' ? 'var(--danger)' : seg === 'caliente' ? 'var(--warning)' : seg === 'tibio' ? 'var(--accent)' : 'var(--text-muted)'
 
   if (!activeProjectId) return (
     <div className="flex items-center justify-center h-64">
-      <p className="mono text-[11px] text-[#4A4A6A]">Selecciona un proyecto para ver ventas</p>
+      <p className="mono text-[11px] text-[var(--text-muted)]">Selecciona un proyecto para ver ventas</p>
     </div>
   )
 
@@ -7257,53 +7257,53 @@ function VentasTab({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">MÓDULO DE VENTAS</p>
-          <p className="text-lg font-bold text-[#E0E0F0]">{project?.product_name || 'Ventas'}</p>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">MÓDULO DE VENTAS</p>
+          <p className="text-lg font-bold text-[var(--text-primary)]">{project?.product_name || 'Ventas'}</p>
         </div>
         <button onClick={() => setShowForm(s => !s)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl mono text-[11px] font-bold tracking-widest text-white transition-all"
-          style={{ background: 'linear-gradient(135deg,#0014ad,#00a7e3)' }}>
+          style={{ background: 'linear-gradient(135deg,var(--primary),#00a7e3)' }}>
           <Plus size={12}/> REGISTRAR VENTA
         </button>
         <button onClick={() => setShowHotmart(s => !s)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl mono text-[11px] font-bold tracking-widest transition-all"
-          style={{ background: showHotmart ? '#1a1a2e' : '#111118', border: '1px solid #FFB800', color: '#FFB800' }}>
+          style={{ background: showHotmart ? '#1a1a2e' : 'var(--bg-card)', border: '1px solid var(--warning)', color: 'var(--warning)' }}>
           <Upload size={12}/> IMPORTAR HOTMART
         </button>
       </div>
 
       {/* Form */}
       {showForm && (
-        <div className="rounded-2xl border border-[#1E1E2E] p-5 space-y-4" style={{ background: '#111118' }}>
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">NUEVA VENTA MANUAL</p>
+        <div className="rounded-2xl border border-[var(--border-default)] p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">NUEVA VENTA MANUAL</p>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">TELÉFONO (E.164)</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">TELÉFONO (E.164)</label>
               <input value={formPhone} onChange={e => setFormPhone(e.target.value)}
                 placeholder="+593999999999"
-                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A]"/>
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-muted)]"/>
             </div>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">MONTO (USD)</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">MONTO (USD)</label>
               <input value={formAmount} onChange={e => setFormAmount(e.target.value)}
                 placeholder="997" type="number"
-                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A]"/>
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-muted)]"/>
             </div>
             <div>
-              <label className="mono text-[10px] text-[#4A4A6A] tracking-widest block mb-2">PRODUCTO</label>
+              <label className="mono text-xs text-[var(--text-muted)] tracking-widest block mb-2">PRODUCTO</label>
               <input value={formProduct} onChange={e => setFormProduct(e.target.value)}
                 placeholder={project?.product_name || 'Nombre producto'}
-                className="w-full bg-[#0A0A0F] border border-[#1E1E2E] rounded-xl px-4 py-3 text-sm text-[#E0E0F0] outline-none focus:border-[#0014ad] placeholder:text-[#4A4A6A]"/>
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-muted)]"/>
             </div>
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setShowForm(false)}
-              className="px-4 py-2 rounded-xl border border-[#1E1E2E] mono text-[11px] text-[#4A4A6A] hover:text-[#E0E0F0] transition-all">
+              className="px-4 py-2 rounded-xl border border-[var(--border-default)] mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all">
               CANCELAR
             </button>
             <button onClick={handleRegisterSale} disabled={!formPhone.trim() || !formAmount.trim() || saving}
               className="flex items-center gap-2 px-5 py-2 rounded-xl mono text-[11px] font-bold text-white disabled:opacity-30 transition-all"
-              style={{ background: 'linear-gradient(135deg,#00FF94,#00b0f6)', color: '#0A0A0F' }}>
+              style={{ background: 'linear-gradient(135deg,var(--success),var(--accent))', color: 'var(--bg-base)' }}>
               {saving ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/> : <CheckCircle size={12}/>}
               {saving ? 'GUARDANDO...' : 'CONFIRMAR VENTA'}
             </button>
@@ -7315,20 +7315,20 @@ function VentasTab({
       {metrics && (
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: 'INGRESOS TOTALES', value: `$${metrics.total_revenue.toLocaleString()}`, color: '#00FF94', icon: '💰' },
-            { label: 'VENTAS', value: `${metrics.total_sales}${salesGoal > 0 ? ` / ${salesGoal}` : ''}`, color: '#00b0f6', icon: '🎯' },
-            { label: 'TICKET PROMEDIO', value: `$${Math.round(metrics.avg_ticket).toLocaleString()}`, color: '#FFB800', icon: '🎫' },
-            { label: 'META INGRESOS', value: `${Math.round(revenuePct)}%`, color: revenuePct >= 100 ? '#00FF94' : '#0014ad', icon: '📈' },
+            { label: 'INGRESOS TOTALES', value: `$${metrics.total_revenue.toLocaleString()}`, color: 'var(--success)', icon: '💰' },
+            { label: 'VENTAS', value: `${metrics.total_sales}${salesGoal > 0 ? ` / ${salesGoal}` : ''}`, color: 'var(--accent)', icon: '🎯' },
+            { label: 'TICKET PROMEDIO', value: `$${Math.round(metrics.avg_ticket).toLocaleString()}`, color: 'var(--warning)', icon: '🎫' },
+            { label: 'META INGRESOS', value: `${Math.round(revenuePct)}%`, color: revenuePct >= 100 ? 'var(--success)' : 'var(--primary)', icon: '📈' },
           ].map(kpi => (
-            <div key={kpi.label} className="rounded-2xl border border-[#1E1E2E] p-4" style={{ background: '#111118' }}>
+            <div key={kpi.label} className="rounded-2xl border border-[var(--border-default)] p-4" style={{ background: 'var(--bg-card)' }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="mono text-[9px] text-[#4A4A6A] tracking-widest">{kpi.label}</p>
+                <p className="mono text-xs text-[var(--text-muted)] tracking-widest">{kpi.label}</p>
                 <span className="text-base">{kpi.icon}</span>
               </div>
               <p className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
               {kpi.label === 'VENTAS' && salesGoal > 0 && (
-                <div className="mt-2 h-1 rounded-full bg-[#1E1E2E]">
-                  <div className="h-1 rounded-full transition-all" style={{ width: `${progressPct}%`, background: '#00b0f6' }}/>
+                <div className="mt-2 h-1 rounded-full bg-[var(--border-default)]">
+                  <div className="h-1 rounded-full transition-all" style={{ width: `${progressPct}%`, background: 'var(--accent)' }}/>
                 </div>
               )}
             </div>
@@ -7337,70 +7337,70 @@ function VentasTab({
       )}
 
       {/* Tabla */}
-      <div className="rounded-2xl border border-[#1E1E2E] overflow-hidden" style={{ background: '#111118' }}>
-        <div className="px-5 py-4 border-b border-[#1E1E2E] flex items-center justify-between">
-          <p className="mono text-[10px] text-[#4A4A6A] tracking-widest">REGISTRO DE VENTAS</p>
-          <button onClick={fetchSales} className="p-1.5 rounded-lg border border-[#1E1E2E] hover:border-[#2E2E4E] transition-colors">
-            <RefreshCw size={11} className={`text-[#4A4A6A] ${loading ? 'animate-spin' : ''}`}/>
+      <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-card)' }}>
+        <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
+          <p className="mono text-xs text-[var(--text-muted)] tracking-widest">REGISTRO DE VENTAS</p>
+          <button onClick={fetchSales} className="p-1.5 rounded-lg border border-[var(--border-default)] hover:border-[#2E2E4E] transition-colors">
+            <RefreshCw size={11} className={`text-[var(--text-muted)] ${loading ? 'animate-spin' : ''}`}/>
           </button>
         </div>
         {sales.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <span className="text-3xl">💰</span>
-            <p className="mono text-[11px] text-[#4A4A6A]">Sin ventas registradas aún</p>
+            <p className="mono text-[11px] text-[var(--text-muted)]">Sin ventas registradas aún</p>
             <button onClick={() => setShowForm(true)}
-              className="mono text-[10px] text-[#0014ad] hover:text-[#00b0f6] transition-colors">
+              className="mono text-xs text-[var(--primary)] hover:text-[var(--accent)] transition-colors">
               + Registrar primera venta
             </button>
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#1E1E2E]">
+              <tr className="border-b border-[var(--border-default)]">
                 {['FECHA','CONTACTO','MONTO','FUENTE','CAMPAÑA','KANSHI','CAPI'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left mono text-[9px] text-[#4A4A6A] tracking-widest">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left mono text-xs text-[var(--text-muted)] tracking-widest">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sales.map(sale => (
-                <tr key={sale.id} className="border-b border-[#1E1E2E] hover:bg-[#0A0A0F] transition-colors">
-                  <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                <tr key={sale.id} className="border-b border-[var(--border-default)] hover:bg-[var(--bg-base)] transition-colors">
+                  <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">
                     {format(new Date(sale.sale_date), 'dd/MM HH:mm')}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-xs text-[#E0E0F0]">{sale.wa_contacts?.name || '—'}</p>
-                    <p className="mono text-[9px] text-[#4A4A6A]">{sale.phone_number}</p>
+                    <p className="text-xs text-[var(--text-primary)]">{sale.wa_contacts?.name || '—'}</p>
+                    <p className="mono text-xs text-[var(--text-muted)]">{sale.phone_number}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm font-bold" style={{ color: '#00FF94' }}>${sale.amount.toLocaleString()}</p>
-                    <p className="mono text-[9px] text-[#4A4A6A]">{sale.currency}</p>
+                    <p className="text-sm font-bold" style={{ color: 'var(--success)' }}>${sale.amount.toLocaleString()}</p>
+                    <p className="mono text-xs text-[var(--text-muted)]">{sale.currency}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="mono text-[9px] px-2 py-0.5 rounded-full border border-[#1E1E2E] text-[#4A4A6A]">
+                    <span className="mono text-xs px-2 py-0.5 rounded-full border border-[var(--border-default)] text-[var(--text-muted)]">
                       {sale.sale_source}
                     </span>
                   </td>
-                  <td className="px-4 py-3 mono text-[10px] text-[#4A4A6A]">
+                  <td className="px-4 py-3 mono text-xs text-[var(--text-muted)]">
                     {sale.utm_campaign || '—'}
                   </td>
                   <td className="px-4 py-3">
                     {sale.wa_contacts?.kanshi_score ? (
-                      <span className="mono text-[10px] font-bold" style={{ color: segmentColor(sale.wa_contacts.kanshi_segment) }}>
+                      <span className="mono text-xs font-bold" style={{ color: segmentColor(sale.wa_contacts.kanshi_segment) }}>
                         {sale.wa_contacts.kanshi_score}
                       </span>
-                    ) : <span className="text-[#4A4A6A]">—</span>}
+                    ) : <span className="text-[var(--text-muted)]">—</span>}
                   </td>
                   <td className="px-4 py-3">
                     {sale.capi_purchase_sent_at ? (
                       <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]"/>
-                        <span className="mono text-[9px] text-[#00FF94]">ENVIADO</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)]"/>
+                        <span className="mono text-xs text-[var(--success)]">ENVIADO</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#4A4A6A]"/>
-                        <span className="mono text-[9px] text-[#4A4A6A]">PENDIENTE</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)]"/>
+                        <span className="mono text-xs text-[var(--text-muted)]">PENDIENTE</span>
                       </div>
                     )}
                   </td>
