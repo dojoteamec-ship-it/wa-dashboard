@@ -120,6 +120,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
   const [editDesc, setEditDesc]                   = useState('')
   const [editLimit, setEditLimit]                 = useState(500)
   const [editActive, setEditActive]               = useState(true)
+  const [editInviteLink, setEditInviteLink]       = useState('')
   const [savingEdit, setSavingEdit]               = useState(false)
   const [members, setMembers]                     = useState<WhapiMember[]>([])
   const [loadingMembers, setLoadingMembers]       = useState(false)
@@ -213,6 +214,7 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
     setEditDesc(g.description ?? '')
     setEditLimit(g.member_limit)
     setEditActive(g.is_active)
+    setEditInviteLink(g.invite_link ?? '')
     setEditTab('info')
     setMembers([])
     setShowDeleteConfirm(false)
@@ -263,9 +265,13 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         if (!r.ok) throw new Error('Error descripción: ' + JSON.stringify(rd))
       }
 
+      if (editInviteLink && !editInviteLink.startsWith('https://chat.whatsapp.com/')) {
+        throw new Error('El invite link debe empezar con https://chat.whatsapp.com/')
+      }
+
       const { error } = await supabase
         .from('wa_groups')
-        .update({ name: editName, description: editDesc, member_limit: editLimit, is_active: editActive })
+        .update({ name: editName, description: editDesc, member_limit: editLimit, is_active: editActive, invite_link: editInviteLink || null })
         .eq('id', editGroup.id)
       if (error) throw error
 
@@ -1056,6 +1062,13 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
                     <button onClick={() => setEditActive(!editActive)}>
                       {editActive ? <ToggleRight size={28} style={{ color: C.success }} /> : <ToggleLeft size={28} style={{ color: C.muted }} />}
                     </button>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium block mb-1" style={{ color: C.muted }}>Invite link</label>
+                    <input value={editInviteLink} onChange={e => setEditInviteLink(e.target.value)}
+                      placeholder="https://chat.whatsapp.com/..."
+                      className="w-full rounded-xl px-3 py-2.5 text-sm"
+                      style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
                   </div>
                   <div className="rounded-xl p-3" style={{ background: '#FF6B3510', border: '1px solid #FF6B3530' }}>
                     {!showDeleteConfirm ? (
