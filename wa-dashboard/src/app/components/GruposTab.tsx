@@ -384,7 +384,10 @@ export default function GruposTab({ activeProjectId, projects, onToast }: Props)
         headers: { Authorization: `Bearer ${cred.WHAPI_TOKEN}` },
       })
       const data = await res.json()
-      const newLink = `https://chat.whatsapp.com/${data.invite_code}`
+      console.log('[handleRefreshInvite] Whapi response:', data)
+      const inviteCode = data.invite_code || data.code || data.inviteCode || data.invite_link?.split('/').pop()
+      const newLink = inviteCode ? `https://chat.whatsapp.com/${inviteCode}` : data.invite_link || data.link
+      if (!newLink) throw new Error('Whapi no devolvió invite_link. Respuesta: ' + JSON.stringify(data))
       await supabase.from('wa_groups').update({ invite_link: newLink }).eq('id', g.id)
       onToast({ type: 'success', message: '✅ Invite link renovado' })
       await load()
